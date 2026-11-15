@@ -1,10 +1,14 @@
 // Monke Icon Maker: "notify-update" Supabase Edge Function.
-// Sends an update notification to every device that turned notifications on.
-// Only admins can use it: the device list comes from admin_push_targets(), which checks the caller is an admin.
+// Two jobs:
+//  1. Update notifications: an admin sends a message to every device that turned notifications on
+//     (the device list comes from admin_push_targets(), which checks the caller is an admin).
+//  2. Comment notifications ({ type: 'comment', comment_id }): right after someone posts a comment, their browser asks
+//     this function to tell the icon's owner and the other commenters. claim_comment_notification() checks the caller
+//     wrote that comment and that it hasn't been announced yet; the device list is then read with the service key.
 //
 // Secrets it needs (Supabase dashboard > Edge Functions > Secrets):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT   (see GALLERY-SETUP.md)
-// SUPABASE_URL is provided by Supabase automatically.
+// SUPABASE_URL and the service key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEYS) are provided by Supabase automatically.
 //
 // Web Push is done with the standard Web Crypto API (RFC 8291 message encryption + RFC 8292 VAPID), no libraries.
 
@@ -85,8 +89,9 @@ export async function handle(req: Request, env: (k: string) => string | undefine
   if (req.method !== 'POST') return json({ error: 'Use POST' }, 405);
   const vapid = { publicKey: env('VAPID_PUBLIC_KEY') || '', privateKey: env('VAPID_PRIVATE_KEY') || '', subject: env('VAPID_SUBJECT') || '' };
   if (!vapid.publicKey || !vapid.privateKey || !vapid.subject) return json({ error: 'The VAPID secrets are not set up yet.' }, 500);
-  let input: { title?: string; body?: string; url?: string };
+  let input: { title?: string; body?: string; url?: string; type?: string; comment_id?: string };
   try { input = await req.json(); } catch { return json({ error: 'Bad request' }, 400); }
+  if (input.type === 'comment') return handleComment(req, env, vapid, String(input.comment_id || ''), String(input.url || ''));
   const title = String(input.title || '').trim().slice(0, 60), text = String(input.body || '').trim().slice(0, 160);
   if (!title) return json({ error: 'Add a title.' }, 400);
   const url = String(input.url || './').slice(0, 300);
@@ -111,6 +116,40 @@ export async function handle(req: Request, env: (k: string) => string | undefine
   }
   if (gone.length) await fetch(`${base}/rest/v1/rpc/admin_remove_push`, { method: 'POST', headers, body: JSON.stringify({ p_endpoints: gone }) });
   return json({ sent, failed, removed: gone.length, devices: subs.length });
+}
+
+// The project's service key, used only to read the device list for comment notifications.
+function serviceKey(env: (k: string) => string | undefined) {
+  const legacy = env('SUPABASE_SERVICE_ROLE_KEY');
+  if (legacy) return legacy;
+  try { const keys = JSON.parse(env('SUPABASE_SECRET_KEYS') || '{}'); return keys.default || Object.values(keys)[0] || ''; } catch { return ''; }
+}
+const serviceHeaders = (key: string) => ({ apikey: key, 'Content-Type': 'application/json', ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}) });
+
+async function handleComment(req: Request, env: (k: string) => string | undefined, vapid: { publicKey: string; privateKey: string; subject: string }, commentId: string, pageUrl: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(commentId)) return json({ error: 'Bad comment' }, 400);
+  const base = env('SUPABASE_URL');
+  // 1. As the person who called us: is this their brand-new comment, not announced yet? (Marks it announced.)
+  const userHeaders = { Authorization: req.headers.get('Authorization') || '', apikey: req.headers.get('apikey') || '', 'Content-Type': 'application/json' };
+  const claim = await fetch(`${base}/rest/v1/rpc/claim_comment_notification`, { method: 'POST', headers: userHeaders, body: JSON.stringify({ p_comment: commentId }) });
+  if (!claim.ok || (await claim.json()) !== true) return json({ sent: 0, skipped: true });
+  // 2. With the service key: the devices of the icon's owner and the other commenters.
+  const key = serviceKey(env);
+  if (!key) return json({ error: 'No service key available to the function.' }, 500);
+  const t = await fetch(`${base}/rest/v1/rpc/comment_push_targets`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_comment: commentId }) });
+  if (!t.ok) return json({ error: 'Could not read the device list.' }, 500);
+  const targets: { endpoint: string; p256dh: string; auth_secret: string; kind: string; author_name: string; post_title: string; body: string; post_id: string }[] = await t.json();
+  let site = 'https://kaigroves15-hash.github.io/orangemonke/';
+  try { const u = new URL(pageUrl); if (u.protocol === 'https:') site = u.origin + u.pathname.replace(/[^/]*$/, ''); } catch { /* keep the default */ }
+  let sent = 0; const gone: string[] = [];
+  await Promise.all(targets.map(async (s) => {
+    const title = s.kind === 'owner' ? `💬 ${s.author_name} commented on your icon` : `💬 ${s.author_name} also commented on "${s.post_title || 'an icon'}"`;
+    const text = (s.kind === 'owner' && s.post_title ? `"${s.post_title}": ` : '') + s.body;
+    const message = { title: title.slice(0, 80), body: text.slice(0, 160), url: `${site}?comments=${s.post_id}`, tag: `monke-comments-${s.post_id}` };
+    try { const status = await sendPush(s, message, vapid); if (status >= 200 && status < 300) sent++; else if ([400, 404, 410].includes(status)) gone.push(s.endpoint); } catch { /* skip */ }
+  }));
+  if (gone.length) await fetch(`${base}/rest/v1/rpc/service_remove_push`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_endpoints: gone }) });
+  return json({ sent, devices: targets.length, removed: gone.length });
 }
 
 // @ts-ignore: Deno is provided by Supabase Edge Functions

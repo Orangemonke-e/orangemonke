@@ -298,7 +298,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div></section>
 <div class="install-backdrop" id="notifyPop" hidden role="dialog" aria-modal="true" aria-labelledby="notifyTitle">
  <div class="install-card">
-  <div class="install-top"><img src="icon-192.png" alt=""><div><h2 id="notifyTitle">🔔 Never miss an update</h2><p>Get a notification when Monke Icon Maker gets new features, like new accessories and backgrounds.</p></div></div>
+  <div class="install-top"><img src="icon-192.png" alt=""><div><h2 id="notifyTitle">🔔 Never miss an update</h2><p>Get a notification when Monke Icon Maker gets new features, and when someone comments on your icons.</p></div></div>
   <div class="install-btns"><button type="button" class="btn" id="notifyNo">Not now</button><button type="button" class="btn primary" id="notifyYes">Turn on</button></div>
  </div>
 </div>
@@ -339,7 +339,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v50 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v51 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>💬 Comment notifications: if you have notifications on, you'll get one when someone comments on one of your icons, and when someone comments after you on an icon you commented on.</li>
+   <li>Tapping the notification opens that icon's comments straight away.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Sign in on each device you want comment notifications on, with notifications turned on. You won't get notified about your own comments.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v50 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>↶ Undo and ↷ Redo: changed something you didn't mean to? Tap Undo (next to Random Monke) to go back a step, and Redo to go forward again.</li>
@@ -1516,15 +1531,29 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    s.onerror=()=>{loading=null;fail(new Error("Couldn't load the gallery. Check your internet connection."))};document.head.appendChild(s)});
   return loading;
  }
- function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);loadPosts(true)}).catch(e=>{status.textContent=friendly(e)})}
- if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();start()}},{rootMargin:'600px'});io.observe(gal)}else start();
+ // 🔔 If this device has notifications on, link it to the signed-in account, so comments on your icons (and replies
+ // after your comments) reach you. Called when you sign in and when you turn notifications on.
+ async function linkPush(){
+  if(!me||!sb||!('serviceWorker' in navigator)||!('PushManager' in window)||Notification.permission!=='granted')return;
+  try{const sub=await (await navigator.serviceWorker.ready).pushManager.getSubscription();if(!sub)return;const k=sub.toJSON().keys||{};
+   await sb.rpc('subscribe_push',{p_endpoint:sub.endpoint,p_p256dh:k.p256dh,p_auth:k.auth})}catch(e){}
+ }
+ window.linkPushToAccount=linkPush;
+ const linkPost=new URLSearchParams(location.search).get('comments');
+ function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);
+  if(linkPost&&/^[0-9a-f-]{36}$/i.test(linkPost)){
+   // Opened from a comment notification: show that icon's comments.
+   history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});
+   const {data:p}=await sb.from('posts').select(postFields()).eq('id',linkPost).maybeSingle();if(p)openComments(p);
+  }}).catch(e=>{status.textContent=friendly(e)})}
+ if(linkPost)start();else if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();start()}},{rootMargin:'600px'});io.observe(gal)}else start();
 
  // ── Accounts ──
  async function setUser(user,quiet){
   const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();
   if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
-  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);
+  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();
  }
  function renderAcct(){
   const bar=$('acctBar');bar.innerHTML='';
@@ -1746,6 +1775,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    if(await badWords(text)){msg.textContent="That comment has a word that isn't allowed. Try saying it differently.";return}
    const {data,error}=await sb.from('comments').insert({post_id:cmPost.id,body:text}).select(cmFields()).single();
    if(error){msg.textContent=friendly(error);return}
+   sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'comment',comment_id:data.id,url:location.href}}).catch(()=>{}); // tell the owner and other commenters
    $('cmText').value='';$('cmCount').textContent='0/200';const list=$('cmList');list.appendChild(commentRow(data));emptyCheck();list.scrollTop=list.scrollHeight;setCount(cmPost.id,1);
   }finally{send.disabled=!!(profile&&profile.banned)}
  });
@@ -1832,7 +1862,7 @@ const PUSH_KEY='BAgbrTArMUk9N5tkmS3TDq3a9ZdAGLFsoP4FmtCcvAkveINBR3ZrBqSYIKGCb0e8
   const perm=await Notification.requestPermission();if(perm!=='granted'){refresh();return false}
   const r=await reg();let sub=await r.pushManager.getSubscription();
   if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:keyBytes()});
-  await save(sub);refresh();return true;
+  await save(sub);if(window.linkPushToAccount)window.linkPushToAccount();refresh();return true;
  }
  async function turnOff(){const sub=await current();if(sub){try{await rpc('unsubscribe_push',{p_endpoint:sub.endpoint})}catch(e){}await sub.unsubscribe().catch(()=>{})}put(SYNC,'0');refresh()}
  async function refresh(){
