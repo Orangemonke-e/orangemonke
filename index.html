@@ -174,7 +174,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </main>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v31 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v32 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎩 M1N3CR0XVR look: if your monke looks like M1N3CR0XVR's profile (hot-pink fur and the top hat, with no dog), the preset name box suggests “e.g. M1N3CR0XVR”.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing else changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v31 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🐶 Frostdogg look: if your monke looks like Frostdogg's profile (blue-purple fur, the banana headband and the dog), the preset name box suggests “e.g. Frostdogg” instead of “e.g. Orangemonke”.</li>
@@ -786,13 +800,16 @@ function toHsl(h){
  let hu=0;if(d){hu=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hu=(hu*60+360)%360}
  return [hu,s,l];
 }
-// 🐶 Frostdogg: when the design looks like Frostdogg's profile (a blue-purple monke with the banana headband and the dog),
-// the preset name box suggests "Frostdogg" instead of "Orangemonke".
-function looksLikeFrostdogg(){
- const [hu,s,l]=toHsl($('fur').value),hat=$('hat').value;
- return hu>=235&&hu<=280&&s>=.6&&l>=.3&&l<=.65&&$('banana').value==='show'&&hat!=='tophat'&&hat!=='catears'&&$('dog').value!=='none';
-}
-function updateNameHint(){const t='Name this design, e.g. '+(looksLikeFrostdogg()?'Frostdogg':'Orangemonke'),el=$('presetName');if(el.placeholder!==t)el.placeholder=t}
+// 🏷️ Profile lookalikes: when the design looks like one of these profiles, the preset name box suggests that name
+// instead of "Orangemonke". The first match wins.
+const NAME_HINTS=[
+ // Frostdogg: blue-purple monke with the banana headband and the dog.
+ {name:'Frostdogg',test:(hu,s,l,hat)=>hu>=235&&hu<=280&&s>=.6&&l>=.3&&l<=.65&&$('banana').value==='show'&&hat!=='tophat'&&hat!=='catears'&&$('dog').value!=='none'},
+ // M1N3CR0XVR: hot-pink monke in the top hat, no dog.
+ {name:'M1N3CR0XVR',test:(hu,s,l,hat)=>hu>=305&&hu<=345&&s>=.6&&l>=.35&&l<=.7&&hat==='tophat'&&$('dog').value==='none'}
+];
+function nameHint(){const [hu,s,l]=toHsl($('fur').value),hat=$('hat').value,m=NAME_HINTS.find(h=>h.test(hu,s,l,hat));return m?m.name:'Orangemonke'}
+function updateNameHint(){const t='Name this design, e.g. '+nameHint(),el=$('presetName');if(el.placeholder!==t)el.placeholder=t}
 function colourName(h){
  const [hu,s,l]=toHsl(h);
  if(l<.12)return'Shadow';if(l>.9&&s<.3)return'Snow';if(s<.14)return l>.6?'Silver':'Grey';
