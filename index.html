@@ -282,6 +282,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  </div>
  <div class="field" style="margin-top:16px"><label for="fileName">File name (optional)</label><div class="file-name"><input id="fileName" type="text" maxlength="60" placeholder="my-monke-youtube-icon" autocomplete="off" spellcheck="false"><span>.png</span></div></div>
  <button class="btn primary" id="download" style="width:100%;margin-top:10px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
+ <button type="button" class="btn" id="shareLink" style="width:100%;margin-top:8px;padding:12px">🔗 Share design link</button>
  <button type="button" class="btn" id="shareJump" hidden style="width:100%;margin-top:8px;padding:12px">🌍 Share to the community gallery</button>
 </section>
 </main>
@@ -342,7 +343,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v52 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v53 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🔗 Share design link: tap the new button under Download to share your exact design as a link. Send it to a friend, or post it in a comment or on Discord.</li>
+   <li>Anyone who opens the link gets your design loaded, ready to make their own. No account needed.</li>
+   <li>On phones it opens your share menu. On computers it copies the link.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Links include your colours, accessories, badges, background and outline. Uploaded pictures and name tags aren't included.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v52 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎨 Remix: see an icon you love in the community gallery? Tap Remix to load its whole design into the editor (colours, accessories, badges, background and outline), then make it your own.</li>
@@ -1508,6 +1525,31 @@ function fileName(){
 }
 $('fileName').addEventListener('keydown',e=>{if(e.key==='Enter')$('download').click()});
 document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn').onclick=redo;
+// 🔗 Design links: the design (not uploaded pictures or the name tag) packed into the link after "#d=".
+// Settings left at their defaults are skipped to keep links short. Opening a link loads the design.
+function designDefaults(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.defaultChecked:e.tagName==='SELECT'?(e.querySelector('option[selected]')||e.options[0]).value:e.defaultValue});o.bgStyle='solid';return o}
+function designLink(){
+ const st=captureState(),def=designDefaults(),d={};delete st.name;
+ for(const k in st)if(String(st[k])!==String(def[k]))d[k]=st[k];
+ const b=btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+ return location.origin+location.pathname+'#d='+b;
+}
+function readDesignLink(){
+ const m=location.hash.match(/^#d=([A-Za-z0-9_-]{1,4000})$/);if(!m)return false;
+ history.replaceState(null,'',location.pathname+location.search);
+ try{const d=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));if(!d||typeof d!=='object'||Array.isArray(d))throw 0;
+  if(histT)histCommit();if(!histCur)histCur=histSnap(); // so Undo can go back to the design you had
+  delete d.name;applyState(d);drawNow();toast('🔗 Loaded a shared design. Make it your own! (Undo to go back)');return true}
+ catch(e){toast("That design link didn't work. It may have been cut off when it was copied.");return false}
+}
+document.getElementById('shareLink').onclick=async()=>{
+ const url=designLink();
+ if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:'My Monke Icon Maker design',text:'Check out my monke design! Open it to make your own:',url});return}catch(e){if(e&&e.name==='AbortError')return}}
+ try{await navigator.clipboard.writeText(url);toast('🔗 Link copied! Paste it anywhere to share your design.')}
+ catch(e){prompt('Copy this link to share your design:',url)}
+};
+window.addEventListener('hashchange',readDesignLink);
+setTimeout(readDesignLink,0);
 $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download=fileName();a.href=canvas.toDataURL('image/png');a.click()};
 // 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
