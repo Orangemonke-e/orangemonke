@@ -753,6 +753,25 @@ grant execute on function public.claim_like_notification(uuid) to authenticated;
 revoke execute on function public.like_push_targets(uuid, uuid) from public, anon, authenticated;
 grant execute on function public.like_push_targets(uuid, uuid) to service_role;
 
+-- ───────────────────────── Live updates ─────────────────────────
+-- Turns on Supabase Realtime for the gallery, so new icons, likes, reactions, comments and follows show up for
+-- everyone straight away, without refreshing. Realtime follows the same rules as the rest of the site: people only
+-- receive changes they're allowed to see. Private tables (like the notification devices) are not included.
+
+do $$ begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end $$;
+
+do $$ declare t text; begin
+  foreach t in array array['posts', 'comments', 'reactions', 'follows'] loop
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
+
 -- ───────────────────────── Make yourself admin ─────────────────────────
 -- After you've created your own account on the site, run this line once (with your username):
 --   update public.profiles set is_admin = true where username = 'your_username';

@@ -155,6 +155,7 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .gal-sort{display:flex;gap:6px;margin-top:8px}.gal-sort[hidden]{display:none}.gal-sort .btn{padding:5px 10px;font-size:12px}.gal-sort .btn.sel{border-color:var(--accent);color:var(--accent)}
 .like-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
 .like-btn .heart{font-size:16px;line-height:1;color:var(--muted)}.like-btn:hover{border-color:#ff4d6d}.like-btn.on{border-color:#ff4d6d;background:#ff4d6d22}.like-btn.on .heart{color:#ff4d6d}
+.post.fresh{animation:freshIn 4s ease}@keyframes freshIn{0%{box-shadow:0 0 0 3px var(--accent);transform:scale(.97)}15%{transform:scale(1)}100%{box-shadow:0 0 0 0 transparent}}
 .premix{font-size:11px;color:var(--accent)}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);max-width:min(92vw,560px);background:#101116;color:#fff;border:2px solid var(--accent);border-radius:14px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:0 12px 34px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -367,7 +368,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v57 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v58 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>⚡ Live updates: the community gallery now updates by itself. No more refreshing!</li>
+   <li>New icons pop in at the top, likes and reactions update as they happen, comment counts go up, and new comments appear in the comments window while you're reading.</li>
+   <li>Follower counts update on any profile you have open.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Deleted icons disappear for everyone straight away.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Having to refresh the page to see what's new.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v57 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>♥ Like notifications: if you have notifications on, you'll get one when someone likes one of your icons. Tap it to open that icon.</li>
@@ -1698,7 +1715,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  window.linkPushToAccount=linkPush;
  const linkPost=new URLSearchParams(location.search).get('comments'),linkProfile=new URLSearchParams(location.search).get('profile');
- function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);
+ function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);startLive();
   if(linkPost&&/^[0-9a-f-]{36}$/i.test(linkPost)){
    // Opened from a comment notification: show that icon's comments.
    history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});
@@ -1848,14 +1865,14 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  $('galMore').onclick=()=>loadPosts(false);
  let loadId=0;
  async function loadPosts(reset){
-  if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';status.textContent='Loading the gallery…'}
+  if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';cardRefs.clear();likeSetters.clear();reactDraws.clear();status.textContent='Loading the gallery…'}
   let q=sb.from('posts').select(postFields());
   if(sort==='top'&&likesOn&&tab==='all')q=q.order('like_count',{ascending:false});
   q=q.order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
   if(tab==='following'){
    const f=await sb.from('follows').select('followee_id').eq('follower_id',me.id);if(id!==loadId)return;
-   const ids=(f.data||[]).map(r=>r.followee_id);
+   const ids=(f.data||[]).map(r=>r.followee_id);followingIds=new Set(ids);
    if(!ids.length){status.textContent="You're not following anyone yet. Tap someone's name to see their profile and follow them.";$('galMore').hidden=true;return}
    q=q.in('user_id',ids);
   }
@@ -1890,7 +1907,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
     b.onclick=()=>{picking=false;toggleReact(postId,R.id,draw)};row.appendChild(b)});
    const add=el('button','rchip radd',picking?'✕':'☺+');add.type='button';add.title=picking?'Close':'Add a reaction';add.setAttribute('aria-label',add.title);
    add.onclick=()=>{if(!me)return openAcct('in');picking=!picking;draw()};row.appendChild(add)};
-  draw();return row;
+  reactDraws.set(postId,draw);draw();return row;
  }
  async function toggleReact(postId,emoji,redraw){
   if(!me)return openAcct('in');
@@ -1928,7 +1945,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function emptyCheck(){const list=$('cmList');const e=list.querySelector('.cm-empty');if(!list.querySelector('.cm')){if(!e)list.appendChild(el('div','cm-empty','No comments yet. Say something nice!'))}else if(e)e.remove()}
  function commentRow(c){
   const pr=c.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&c.user_id===me.id,admin=profile&&profile.is_admin,ownsPost=me&&cmPost&&cmPost.user_id===me.id;
-  const row=el('div','cm'+(c.hidden?' is-hidden':''));row.appendChild(avatarImg(pr.avatar_path));
+  const row=el('div','cm'+(c.hidden?' is-hidden':''));row.dataset.id=c.id;row.appendChild(avatarImg(pr.avatar_path));
   const main=el('div','cm-main'),who=el('div','cm-who linkish',pr.display_name);who.title='See '+pr.display_name+'\'s profile';who.onclick=()=>openProfile(c.user_id);who.appendChild(el('small',null,'@'+pr.username+' · '+ago(c.created_at)));main.appendChild(who);
   main.appendChild(el('div','cm-body',c.body));
   if((admin||mine)&&c.report_count>0)main.appendChild(el('div','flag',(c.hidden?'Hidden · ':'')+c.report_count+(c.report_count===1?' report':' reports')));
@@ -2047,12 +2064,65 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    b.disabled=false;if(error&&!/duplicate/i.test(error.message)){if(on){myLikes.add(p.id);n++}else{myLikes.delete(p.id);n=Math.max(0,n-1)}p.like_count=n;draw();alert(friendly(error));return}
    if(!on&&!error)sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'like',post_id:p.id,url:location.href}}).catch(()=>{}); // tell the icon's owner
   };
-  draw();return b;
+  likeSetters.set(p.id,v=>{if(b.disabled)return;n=v;p.like_count=v;draw()});draw();return b;
  }
  document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
+ // ── ⚡ Live updates (Supabase Realtime): new icons, likes, reactions, comments and follows show up without refreshing.
+ // Needs supabase/update-14-live.sql. Until then nothing changes: people just refresh like before.
+ const cardRefs=new Map(),likeSetters=new Map(),reactDraws=new Map();let followingIds=new Set(),liveCh=null;
+ function startLive(){
+  if(liveCh||!sb||!sb.channel)return;
+  liveCh=sb.channel('monke-live')
+   .on('postgres_changes',{event:'*',schema:'public',table:'posts'},e=>livePost(e).catch(()=>{}))
+   .on('postgres_changes',{event:'*',schema:'public',table:'comments'},e=>liveComment(e).catch(()=>{}))
+   .on('postgres_changes',{event:'*',schema:'public',table:'reactions'},liveReaction)
+   .on('postgres_changes',{event:'*',schema:'public',table:'follows'},liveFollow)
+   .subscribe();
+ }
+ const emptyStatus=()=>{if(!grid.querySelector('.post'))status.textContent=tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':'No icons shared yet. Be the first!'};
+ async function livePost(e){
+  const n=e.new||{},o=e.old||{};
+  if(e.eventType==='INSERT'){
+   if(!n.id||cardRefs.has(n.id)||tab==='reported'||(tab==='following'&&!followingIds.has(n.user_id)))return;
+   const {data:p}=await sb.from('posts').select(postFields()).eq('id',n.id).maybeSingle();if(!p||cardRefs.has(p.id))return;
+   await loadReactions([p.id]);await loadCommentCounts([p.id]);if(cardRefs.has(p.id))return;
+   const card=postCard(p);card.classList.add('fresh');grid.prepend(card);status.textContent='';setTimeout(()=>card.classList.remove('fresh'),4000);
+  }else if(e.eventType==='UPDATE'){
+   const ref=cardRefs.get(n.id);if(!ref)return;
+   if(typeof n.like_count==='number'&&likeSetters.has(n.id))likeSetters.get(n.id)(n.like_count);
+   const admin=profile&&profile.is_admin,mine=me&&n.user_id===me.id;
+   if(n.hidden&&!admin&&!mine){ref.card.remove();cardRefs.delete(n.id);emptyStatus()}
+  }else if(e.eventType==='DELETE'){
+   const ref=cardRefs.get(o.id);if(ref){ref.card.remove();cardRefs.delete(o.id);emptyStatus()}
+   if(cmPost&&cmPost.id===o.id)closeComments();
+  }
+ }
+ async function liveComment(e){
+  if(!commentsOn)return;
+  if(e.eventType==='INSERT'){
+   const c=e.new;if(!c||!c.id||(me&&c.user_id===me.id))return; // your own comments are already shown
+   setCount(c.post_id,1);
+   if(cmPost&&cmPost.id===c.post_id&&!$('cmList').querySelector(`.cm[data-id="${c.id}"]`)){
+    const {data}=await sb.from('comments').select(cmFields()).eq('id',c.id).maybeSingle();
+    if(data&&cmPost&&cmPost.id===c.post_id&&!$('cmList').querySelector(`.cm[data-id="${c.id}"]`)){const list=$('cmList'),atEnd=list.scrollHeight-list.scrollTop-list.clientHeight<40;list.appendChild(commentRow(data));emptyCheck();if(atEnd)list.scrollTop=list.scrollHeight}
+   }
+  }else if(e.eventType==='DELETE'){
+   const id=e.old&&e.old.id,row=id&&$('cmList').querySelector(`.cm[data-id="${id}"]`);
+   if(row){row.remove();if(cmPost)setCount(cmPost.id,-1);emptyCheck();return}
+   // a comment on another icon was deleted: refresh the comment counts on screen
+   const ids=[...cardRefs.keys()];if(!ids.length)return;await loadCommentCounts(ids);ids.forEach(i=>setCount(i,0));
+  }
+ }
+ function liveReaction(e){
+  const r=e.eventType==='DELETE'?e.old:e.new;if(!r||!r.post_id||(me&&r.user_id===me.id))return; // yours are already shown
+  const counts=rCounts.get(r.post_id)||{};rCounts.set(r.post_id,counts);
+  counts[r.emoji]=Math.max(0,(counts[r.emoji]||0)+(e.eventType==='DELETE'?-1:1));
+  const d=reactDraws.get(r.post_id);if(d)d();
+ }
+ function liveFollow(e){const r=e.eventType==='DELETE'?e.old:e.new;if(r&&pfUser&&(r.followee_id===pfUser||r.follower_id===pfUser))renderPfStats(pfUser)}
  function postCard(p){
   const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
-  const card=el('article','post'+(p.hidden?' is-hidden':''));
+  const card=el('article','post'+(p.hidden?' is-hidden':''));cardRefs.set(p.id,{card,p});
   const img=el('img');img.loading='lazy';img.alt=(p.title||'Monke icon')+' by '+pr.display_name;img.src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;card.appendChild(img);
   const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
   const by=el('div','pby linkish');by.title='See '+pr.display_name+'\'s profile';by.onclick=()=>openProfile(p.user_id);by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
