@@ -1525,9 +1525,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  const noPicsYet=e=>e&&/avatar_path/.test(e.message||'')&&(pics=false,true);
  // 🎨 Remix needs supabase/update-10-remix.sql. Until that's been run, the gallery works without it.
  let remixOn=true,remixSource=null;
- const noRemixYet=e=>e&&/design|remix/.test(e.message||'')&&(remixOn=false,true);
+ const noRemixYet=e=>e&&/design|remix|relationship/i.test(e.message||'')&&(remixOn=false,true); // if anything about Remix isn't ready, carry on without it
  const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
-  +(remixOn?',design,remix_of,remix:posts!posts_remix_of_fkey(title,profiles!posts_user_id_fkey(username))':'');
+  +(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
  const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
