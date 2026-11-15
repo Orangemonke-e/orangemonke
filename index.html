@@ -248,7 +248,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v41 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v42 <span class="tag fix">Fixes</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing new to add in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Loading a preset now resets anything the preset doesn't include back to its default.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Fixed: loading a preset no longer leaves the Fingerpainter or Creator badge on the icon when the preset didn't have it.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v41 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>The Another Axiom Creator badge, for people who have it in Gorilla Tag. It sits on your monke's chest.</li>
@@ -989,7 +1003,10 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}ca
 function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;return o}
 function applyState(o){
  if(!o||typeof o!=='object')return;
- STATE_IDS.forEach(id=>{if(!(id in o))return;const e=$(id),v=o[id];
+ STATE_IDS.forEach(id=>{const e=$(id);
+  // Presets made before a setting existed don't mention it: put that setting back to its default (e.g. no chest badge).
+  if(!(id in o)){if(e.type==='checkbox')e.checked=e.defaultChecked;else if(e.tagName==='SELECT'){const d=e.querySelector('option[selected]')||e.options[0];e.value=d.value}else e.value=e.defaultValue;return}
+  const v=o[id];
   if(e.type==='checkbox'){e.checked=!!v}
   else if(e.type==='color'){if(typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v))e.value=v}
   else if(e.type==='range'){const n=+v;if(isFinite(n))e.value=Math.max(+e.min,Math.min(+e.max,n))}
