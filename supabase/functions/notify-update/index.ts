@@ -143,8 +143,10 @@ async function handleComment(req: Request, env: (k: string) => string | undefine
   try { const u = new URL(pageUrl); if (u.protocol === 'https:') site = u.origin + u.pathname.replace(/[^/]*$/, ''); } catch { /* keep the default */ }
   let sent = 0; const gone: string[] = [];
   await Promise.all(targets.map(async (s) => {
-    const title = s.kind === 'owner' ? `💬 ${s.author_name} commented on your icon` : `💬 ${s.author_name} also commented on "${s.post_title || 'an icon'}"`;
-    const text = (s.kind === 'owner' && s.post_title ? `"${s.post_title}": ` : '') + s.body;
+    // Like a messaging app: the icon in the title, and "Name: comment" in the message, so it's always clear who said it.
+    const icon = s.post_title ? `"${s.post_title}"` : '';
+    const title = s.kind === 'owner' ? `💬 New comment on your icon${icon ? ' ' + icon : ''}` : `💬 New comment on ${icon || 'an icon you commented on'}`;
+    const text = `${s.author_name}: ${s.body}`;
     const message = { title: title.slice(0, 80), body: text.slice(0, 160), url: `${site}?comments=${s.post_id}`, tag: `monke-comments-${s.post_id}` };
     try { const status = await sendPush(s, message, vapid); if (status >= 200 && status < 300) sent++; else if ([400, 404, 410].includes(status)) gone.push(s.endpoint); } catch { /* skip */ }
   }));
