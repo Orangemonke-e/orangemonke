@@ -367,7 +367,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v56 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v57 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>♥ Like notifications: if you have notifications on, you'll get one when someone likes one of your icons. Tap it to open that icon.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Liking and unliking the same icon over and over only notifies its owner once a day, and you're never notified about your own likes.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v56 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>♥ Like button: like your favourite icons in the community gallery. Tap again to unlike.</li>
@@ -2030,7 +2044,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   b.onclick=async()=>{if(!me)return openAcct('in');const on=myLikes.has(p.id);
    if(on){myLikes.delete(p.id);n=Math.max(0,n-1)}else{myLikes.add(p.id);n++}p.like_count=n;draw();b.disabled=true;
    const {error}=on?await sb.from('likes').delete().eq('post_id',p.id).eq('user_id',me.id):await sb.from('likes').insert({post_id:p.id});
-   b.disabled=false;if(error&&!/duplicate/i.test(error.message)){if(on){myLikes.add(p.id);n++}else{myLikes.delete(p.id);n=Math.max(0,n-1)}p.like_count=n;draw();alert(friendly(error))}};
+   b.disabled=false;if(error&&!/duplicate/i.test(error.message)){if(on){myLikes.add(p.id);n++}else{myLikes.delete(p.id);n=Math.max(0,n-1)}p.like_count=n;draw();alert(friendly(error));return}
+   if(!on&&!error)sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'like',post_id:p.id,url:location.href}}).catch(()=>{}); // tell the icon's owner
+  };
   draw();return b;
  }
  document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
