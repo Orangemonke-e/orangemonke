@@ -241,7 +241,25 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v34 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v35 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🌍 Community gallery: see icons other monke creators have made, and share your own with one click.</li>
+   <li>Accounts: create one with a username, a display name and a password. No email needed. Usernames are one of a kind, and everyone starts with the grey monke as their picture.</li>
+   <li>You can change your display name any time. Your username stays the same.</li>
+   <li>🚩 Report button for mean or inappropriate icons. After 3 reports an icon is hidden until it's checked.</li>
+   <li>You can delete icons you've shared.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>A “Share to the community gallery” button under the download button.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v34 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>⭐ Secret subscriber background: subscribers to my YouTube channel get a code. Open “🔒 Got a subscriber code?” in the Backgrounds section and enter it to unlock a background covered in orange monkes.</li>
@@ -977,14 +995,15 @@ $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.downloa
 // 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
 // to be public, and the database rules in setup.sql decide what each person is allowed to do.
-const GALLERY={url:'',key:''};
+const GALLERY={url:'https://qdmudfyxknsluanhjwur.supabase.co',key:'sb_publishable_G0WaMySirJ0XGmtmwW8Hww_AioW5kCM'};
 // Accounts use a username instead of an email. Supabase still needs an email-shaped login, so one is made from the
 // username with this made-up domain. No emails are ever sent to it.
 const ACCOUNT_DOMAIN='users.monke-icon-maker.app';
-const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/dist/umd/supabase.js';
 (function(){
  if(!GALLERY.url||!GALLERY.key)return;
- const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles(username,display_name,avatar_url,is_admin,banned)';
+ // posts link to profiles twice (the poster, and via reports), so name the poster link explicitly.
+ const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,avatar_url,is_admin,banned)';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
  const gal=$('gallery'),grid=$('galGrid'),status=$('galStatus');
