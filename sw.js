@@ -1,7 +1,7 @@
 // Monke Icon Maker service worker: lets the installed app open offline.
 // Pages are fetched fresh when online (so updates show up), with the saved copy as a fallback.
-const CACHE = 'monke-v3';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png', './default-avatar.webp'];
+const CACHE = 'monke-v4';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png', './default-avatar.webp', './react-monke.webp'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

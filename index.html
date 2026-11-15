@@ -128,6 +128,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .post .pbody{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;flex:1}.post .ptitle{font-weight:650;font-size:13px;overflow-wrap:anywhere}
 .post .pby{display:flex;align-items:center;gap:7px;min-width:0}.post .pby .avatar{width:24px;height:24px;border-width:1px}.post .pby span{font-size:12px;line-height:1.2;min-width:0;overflow:hidden}.post .pby small{display:block;color:var(--muted)}
 .post .pmeta{font-size:11px;color:var(--muted)}.post .pact{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.post .pact .btn{padding:5px 8px;font-size:11px}
+.preact{display:flex;flex-wrap:wrap;gap:5px}.rchip{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 7px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:12px;cursor:pointer;transition:.12s}
+.rchip:hover{border-color:var(--accent)}.rchip.on{border-color:var(--accent);background:#ff9b3526}.rchip .rimg{width:18px;height:18px;border-radius:5px;display:block}.rchip .remoji{font-size:14px;line-height:1}.rchip .rn{font-weight:650;font-variant-numeric:tabular-nums}
+.radd{color:var(--muted);font-size:12px}
 .post .flag{font-size:11px;color:#ff8a85}.post.is-hidden{border-color:#e5393588}
 .acct-card h2{font-size:18px;margin:10px 0 12px}.acct-card .field{display:block;margin-bottom:10px}.acct-card .field span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .acct-card .field input{width:100%}.acct-tabs{display:flex;gap:8px}.acct-warn{margin:10px 0 0}.acct-err{color:#ff8a85;font-size:13px;min-height:18px;margin:10px 0}
@@ -244,7 +247,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v38 <span class="tag fix">Fixes</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v39 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>😂 Reactions: react to icons in the community gallery. Tap ☺+ under an icon and pick one.</li>
+   <li>Six reactions to pick from, including a custom orange monke one, plus ❤️ 🔥 😂 😮 👍.</li>
+   <li>Tap a reaction again to take it back. Each person can use each reaction once per icon, and everyone can see the totals.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing else changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v38 <span class="tag fix">Fixes</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🧼 The bad word filter now blocks rude phrases, like “you beach”, while “beach” on its own (and things like “Beach day” or “life's a beach”) is still fine.</li>
@@ -1074,6 +1093,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(/mime type/i.test(m))return 'Use a PNG, JPEG or WebP picture.';
   if(/rate limit|too many/i.test(m))return 'Too many tries. Wait a minute and try again.';
   if(/Failed to fetch|NetworkError|network/i.test(m))return "Couldn't reach the gallery. Check your internet connection.";
+  if(/reactions/i.test(m)&&/row-level security/i.test(m))return "You can't react to that icon.";
   return m||'Something went wrong. Please try again.'};
 
  // Load the Supabase library only when it's needed, so the rest of the page stays fast.
@@ -1089,7 +1109,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
 
  // ── Accounts ──
  async function setUser(user,quiet){
-  const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();
+  const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();
   if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
   renderAcct();if(!quiet)loadPosts(true);
@@ -1224,9 +1244,43 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
   if(noPicsYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
+  await loadReactions(data.map(p=>p.id));if(id!==loadId)return;
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
   status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!';
   $('galMore').hidden=data.length<PAGE;
+ }
+ // ── Reactions: each person can add each emoji once per icon. Needs supabase/update-6-reactions.sql;
+ // until that's been run, reactions just don't show. ──
+ const REACTS=[{id:'monke',img:'react-monke.webp',label:'Monke'},{id:'heart',e:'❤️',label:'Love'},{id:'fire',e:'🔥',label:'Fire'},
+  {id:'laugh',e:'😂',label:'Funny'},{id:'wow',e:'😮',label:'Wow'},{id:'thumbs',e:'👍',label:'Like'}];
+ let reactsOn=true;const rCounts=new Map(),rMine=new Set();
+ async function loadReactions(ids){
+  if(!reactsOn||!ids.length)return;
+  const c=await sb.from('reaction_counts').select('post_id,emoji,n').in('post_id',ids);
+  if(c.error){if(/reaction/i.test(c.error.message||''))reactsOn=false;return}
+  ids.forEach(i=>rCounts.set(i,{}));c.data.forEach(r=>{rCounts.get(r.post_id)[r.emoji]=r.n});
+  if(me){const m=await sb.from('reactions').select('post_id,emoji').eq('user_id',me.id).in('post_id',ids);if(m.data)m.data.forEach(r=>rMine.add(r.post_id+'|'+r.emoji))}
+ }
+ const reactFace=R=>{if(R.img){const i=el('img','rimg');i.src=R.img;i.alt='';return i}return el('span','remoji',R.e)};
+ function reactRow(postId){
+  const row=el('div','preact');let picking=false;
+  const draw=()=>{row.innerHTML='';const counts=rCounts.get(postId)||{};
+   REACTS.forEach(R=>{const n=counts[R.id]||0,on=rMine.has(postId+'|'+R.id);if(!n&&!picking)return;
+    const b=el('button','rchip'+(on?' on':''));b.type='button';b.title=R.label;b.setAttribute('aria-pressed',on);
+    b.setAttribute('aria-label',R.label+' reaction'+(n?', '+n:''));b.appendChild(reactFace(R));if(n)b.appendChild(el('span','rn',String(n)));
+    b.onclick=()=>{picking=false;toggleReact(postId,R.id,draw)};row.appendChild(b)});
+   const add=el('button','rchip radd',picking?'✕':'☺+');add.type='button';add.title=picking?'Close':'Add a reaction';add.setAttribute('aria-label',add.title);
+   add.onclick=()=>{if(!me)return openAcct('in');picking=!picking;draw()};row.appendChild(add)};
+  draw();return row;
+ }
+ async function toggleReact(postId,emoji,redraw){
+  if(!me)return openAcct('in');
+  const key=postId+'|'+emoji,had=rMine.has(key),counts=rCounts.get(postId)||{};rCounts.set(postId,counts);
+  const apply=d=>{counts[emoji]=Math.max(0,(counts[emoji]||0)+d);if(d>0)rMine.add(key);else rMine.delete(key);redraw()};
+  apply(had?-1:1);
+  const {error}=had?await sb.from('reactions').delete().eq('post_id',postId).eq('user_id',me.id).eq('emoji',emoji)
+                   :await sb.from('reactions').insert({post_id:postId,emoji});
+  if(error&&!(!had&&/duplicate/i.test(error.message))){apply(had?1:-1);alert(friendly(error))}
  }
  function postCard(p){
   const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
@@ -1235,6 +1289,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
   const by=el('div','pby');by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
+  if(reactsOn)body.appendChild(reactRow(p.id));
   if((admin||mine)&&p.report_count>0)body.appendChild(el('div','flag',(p.hidden?'Hidden · ':'')+p.report_count+(p.report_count===1?' report':' reports')+(pr.banned?' · account banned':'')));
   const act=el('div','pact');
   const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
