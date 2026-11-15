@@ -244,7 +244,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v36 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v37 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🧼 Bad word filter: icon titles, usernames and display names with bad words aren't allowed in the gallery. They're stopped before they're posted, so nobody sees them.</li>
+   <li>It catches common tricks like swapping letters for numbers or symbols (sh1t, $hit), spacing letters out, and repeating letters.</li>
+   <li>Normal words that happen to contain a bad one, like “class” or “grass”, are still fine.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Any icons that were already posted with a bad word in the title have been removed.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing else removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v36 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🖼 Profile pictures: tap your picture in the gallery to change it. Use the icon you're making right now, upload your own picture, or go back to the grey monke.</li>
@@ -1036,6 +1052,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  const ago=t=>{const s=(Date.now()-new Date(t))/1000;return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':s<604800?Math.floor(s/86400)+' d ago':new Date(t).toLocaleDateString()};
  const friendly=err=>{const m=String(err&&err.message||err||'');
   if(/Invalid login credentials/i.test(m))return 'Wrong username or password.';
+  if(/Database error saving new user/i.test(m))return "That username or display name can't be used. Try another one.";
   if(/already registered|already been registered|duplicate key|profiles_username_key/i.test(m))return 'That username is taken. Try another one.';
   if(/Password should be/i.test(m))return 'That password is too short. Use at least 8 characters.';
   if(/maximum allowed size|too large/i.test(m))return 'That picture is too big.';
@@ -1113,10 +1130,15 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const save=el('button','btn small primary','Save');save.type='button';
   who.replaceWith(inp);bar.querySelectorAll('.btn').forEach(b=>b.remove());bar.appendChild(save);inp.focus();
   const go=async()=>{const v=inp.value.trim();if(!v){inp.focus();return}save.disabled=true;
+   if(await badWords(v)){save.disabled=false;$('shareMsg').textContent=BAD_NAME;inp.focus();return}
    const {error}=await sb.from('profiles').update({display_name:v}).eq('id',me.id);
    if(!error&&profile)profile.display_name=v;renderAcct();if(error)$('shareMsg').textContent=friendly(error);else loadPosts(true)};
   save.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();if(e.key==='Escape')renderAcct()});
  }
+ // Bad word check (the database refuses them anyway; this just warns before anything is uploaded).
+ // If the filter hasn't been set up in Supabase yet, it lets everything through.
+ const badWords=async t=>{if(!t||!sb)return false;const {data,error}=await sb.rpc('has_bad_words',{t});return !error&&data===true};
+ const BAD_NAME="That name has a word that isn't allowed. Try a different one.";
  let mode='in',checkT=null;
  function openAcct(m){setMode(m);$('acctErr').textContent='';$('acctPass').value='';$('acctPop').hidden=false;setTimeout(()=>$('acctUser').focus(),50)}
  function setMode(m){mode=m;const up=m==='up';
@@ -1146,6 +1168,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   go.disabled=true;
   try{const c=await client(),email=u+'@'+ACCOUNT_DOMAIN;let res;
    if(mode==='up'){const {data:free}=await c.rpc('username_available',{name:u});if(free===false)throw new Error('duplicate key');
+    if(await badWords(u)||await badWords(d))throw new Error(BAD_NAME);
     res=await c.auth.signUp({email,password:pw,options:{data:{username:u,display_name:d}}});
     if(!res.error&&!res.data.session)throw new Error('Account made, but it needs email confirmation. (Site owner: turn off "Confirm email" in Supabase.)')}
    else res=await c.auth.signInWithPassword({email,password:pw});
@@ -1162,11 +1185,12 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  $('shareGo').onclick=async()=>{
   if(!me)return openAcct('in');const msg=$('shareMsg'),btn=$('shareGo');btn.disabled=true;msg.textContent='Sharing…';
   try{
+   const title=$('shareTitle').value.trim().slice(0,40)||null;
+   if(await badWords(title)){msg.textContent="Your title has a word that isn't allowed, so it wasn't posted. Try a different title.";$('shareTitle').focus();return}
    drawNow();const c=mk(512);c.getContext('2d').drawImage(canvas,0,0,512,512);
    const blob=await new Promise(r=>c.toBlob(r,'image/webp',.9));const type=blob.type==='image/webp'?'image/webp':'image/png';
    const path=me.id+'/'+Date.now().toString(36)+(type==='image/webp'?'.webp':'.png');
    const up=await sb.storage.from('icons').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
-   const title=$('shareTitle').value.trim().slice(0,40)||null;
    const {data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single();
    if(error){await sb.storage.from('icons').remove([path]);throw error}
    $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
