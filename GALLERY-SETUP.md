@@ -68,7 +68,7 @@ This lets you send a notification to everyone who turned on 🔔 update notifica
 1. **Database:** in **SQL Editor**, run [`supabase/update-8-notifications.sql`](supabase/update-8-notifications.sql) (new projects already have it from `setup.sql`).
 2. **The sender function:**
    1. Open **Edge Functions** in the left sidebar and choose **Deploy a new function** → **Via Editor**.
-   2. Name it exactly `notify-update`.
+   2. Name it `notify-update`. (If Supabase gives it a different name, that's fine: tell Claude, or change `NOTIFY_FUNCTION` near the top of the notifications code in `index.html`. This site uses `smooth-responder`.)
    3. Delete the example code, paste in everything from [`supabase/functions/notify-update/index.ts`](supabase/functions/notify-update/index.ts), and click **Deploy**.
    4. Open the function's **Details**/**Settings** and turn **off** "Verify JWT" (sometimes called "Enforce JWT verification"). The function checks you're an admin itself, through the database.
 3. **The keys:** open **Edge Functions** → **Secrets** and add the three secrets from the private keys file Claude gave you (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Keep that file private; never post the private key anywhere.

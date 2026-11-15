@@ -1722,9 +1722,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  $('sendGo').onclick=async()=>{
   const title=$('sendTitleIn').value.trim(),body=$('sendBody').value.trim(),m=$('sendMsg'),go=$('sendGo');if(!title){m.textContent='Add a title.';return}
   go.disabled=true;m.textContent='Sending…';
-  try{const {data,error}=await sb.functions.invoke('notify-update',{body:{title,body,url:new URL('./',location.href).href}});
+  try{const {data,error}=await sb.functions.invoke(NOTIFY_FUNCTION,{body:{title,body,url:new URL('./',location.href).href}});
    if(error){let t='';try{t=(await error.context.json()).error}catch(e){}
-    m.textContent=t||(/Failed to send|not found|404/i.test(error.message)?"The notify-update function isn't set up in Supabase yet. See GALLERY-SETUP.md.":friendly(error));return}
+    m.textContent=t||(/Failed to send|not found|404/i.test(error.message)?"The "+NOTIFY_FUNCTION+" function isn't set up in Supabase yet. See GALLERY-SETUP.md.":friendly(error));return}
    m.textContent=data.devices?`Sent to ${data.sent} of ${data.devices} device${data.devices===1?'':'s'}.`+(data.removed?` Cleaned up ${data.removed} that no longer exist.`:''):'Nobody has turned on notifications yet.';
   }catch(e){m.textContent=friendly(e)}finally{go.disabled=false}
  };
@@ -1779,6 +1779,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
 })();
 // 🔔 Update notifications (web push). Asks nicely once, remembers "Not now", and there's an on/off switch in the footer.
 // The device's push address is saved in Supabase (supabase/update-8-notifications.sql) so the admin can notify everyone.
+// The name of the sender function in Supabase (Edge Functions). Its code is supabase/functions/notify-update/index.ts.
+const NOTIFY_FUNCTION='smooth-responder';
 const PUSH_KEY='BAgbrTArMUk9N5tkmS3TDq3a9ZdAGLFsoP4FmtCcvAkveINBR3ZrBqSYIKGCb0e8xhi4Za_inAPEpe9jx4l0fSo';
 (function(){
  const ok='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&isSecureContext&&!!GALLERY.url;
