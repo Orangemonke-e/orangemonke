@@ -30,7 +30,7 @@ canvas{width:min(100%,520px);aspect-ratio:1;display:block;filter:drop-shadow(0 1
 .controls{padding:20px;align-self:start;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#505667 transparent}.section{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid var(--line)}.section:last-of-type{border:0;margin:0;padding-bottom:8px}
 h2{font-size:14px;margin:0 0 12px;letter-spacing:.2px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{min-width:0}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
 input[type=color]{width:100%;height:42px;padding:4px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer}
-select,input[type=text]{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;outline:none}
+select,input[type=text],input[type=password]{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;outline:none}
 input[type=range]{width:100%;accent-color:var(--accent)}
 .presets{display:flex;flex-wrap:wrap;gap:8px}.swatch{width:30px;height:30px;border-radius:50%;border:2px solid #ffffff35;cursor:pointer}.swatch:hover{outline:2px solid white;outline-offset:2px}
 .btn{border:1px solid var(--line);background:#252936;color:var(--text);padding:10px 14px;border-radius:11px;font-weight:650;font-size:13px;cursor:pointer;transition:.15s}.btn:hover{background:#323747;transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,#ffad4a,#f47a28);color:#21150b;border:0}.btn.primary:hover{filter:brightness(1.08)}.btn.small{padding:8px 11px}
@@ -110,6 +110,28 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 [data-theme=light] .preset .btn.danger:hover{color:#c62828}
 [data-theme=light] .install-backdrop{background:#0006}[data-theme=light] .install-card{background:#fff;box-shadow:0 18px 55px #0003}
 [data-theme=light] footer{color:#7d8394}
+.gallery{padding-top:0}.gallery[hidden],.gal-share[hidden],.gal-tabs[hidden]{display:none}.gal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}.gal-head h2{font-size:16px;margin:0 0 4px}.gal-head .hint{margin:0}
+.acct{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#fff;border:2px solid var(--line);flex:none}
+.acct .who{display:flex;flex-direction:column;line-height:1.25;min-width:0}.acct .who b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}.acct .who small{color:var(--muted);font-size:12px}
+.admin-tag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.acct input{width:150px;padding:7px 9px}
+.gal-share{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px;background:#12141c}
+.gal-share canvas{width:72px;height:72px;border-radius:12px;flex:none;filter:none;background:repeating-conic-gradient(#2a2d38 0 25%,#1b1d26 0 50%) 50%/10px 10px}.gal-share-main{flex:1;min-width:0}.gal-share-main .note{margin-top:4px}
+.gal-tabs{display:flex;gap:8px;margin-bottom:12px}.gal-tabs .btn.sel,.acct-tabs .btn.sel{border-color:var(--accent);color:var(--accent)}
+.gal-status{color:var(--muted);font-size:13px;margin:6px 0 12px}.gal-status:empty{display:none}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.post{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#12141c;display:flex;flex-direction:column}
+.post>img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:repeating-conic-gradient(#2a2d38 0 25%,#1b1d26 0 50%) 50%/16px 16px}
+.post .pbody{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px;flex:1}.post .ptitle{font-weight:650;font-size:13px;overflow-wrap:anywhere}
+.post .pby{display:flex;align-items:center;gap:7px;min-width:0}.post .pby .avatar{width:24px;height:24px;border-width:1px}.post .pby span{font-size:12px;line-height:1.2;min-width:0;overflow:hidden}.post .pby small{display:block;color:var(--muted)}
+.post .pmeta{font-size:11px;color:var(--muted)}.post .pact{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.post .pact .btn{padding:5px 8px;font-size:11px}
+.post .flag{font-size:11px;color:#ff8a85}.post.is-hidden{border-color:#e5393588}
+.acct-card h2{font-size:18px;margin:10px 0 12px}.acct-card .field{display:block;margin-bottom:10px}.acct-card .field span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.acct-card .field input{width:100%}.acct-tabs{display:flex;gap:8px}.acct-warn{margin:10px 0 0}.acct-err{color:#ff8a85;font-size:13px;min-height:18px;margin:10px 0}
+#userHint{margin:-4px 0 10px;min-height:14px}#userHint.ok{color:#6fe39a}#userHint.bad{color:#ff8a85}
+[data-theme=light] .gal-share,[data-theme=light] .post{background:#f7f8fa}
+[data-theme=light] .gal-share canvas,[data-theme=light] .post>img{background:repeating-conic-gradient(#e3e5ea 0 25%,#f4f5f8 0 50%) 50%/16px 16px}
+[data-theme=light] .post .flag,[data-theme=light] .acct-err,[data-theme=light] #userHint.bad{color:#c62828}[data-theme=light] #userHint.ok{color:#16803f}
 footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 @media(max-width:850px){.preview-panel{position:static}.controls{position:static;max-height:none;overflow:visible}main{grid-template-columns:1fr}.stage{min-height:340px}header{padding:18px}}
 @media(max-width:480px){.badge{display:none}}
@@ -184,8 +206,39 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <button type="button" class="btn small" id="autoDetect" style="margin-top:10px">✨ Auto-detect parts</button>
  </div>
  <button class="btn primary" id="download" style="width:100%;margin-top:16px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
+ <button type="button" class="btn" id="shareJump" hidden style="width:100%;margin-top:8px;padding:12px">🌍 Share to the community gallery</button>
 </section>
 </main>
+<section class="notes gallery" id="gallery" hidden><div class="notes-box">
+ <div class="gal-head"><div><h2>🌍 Community gallery</h2><p class="hint">Icons shared by other monke creators. Newest first.</p></div><div class="acct" id="acctBar"></div></div>
+ <div class="gal-share" id="galShare" hidden>
+  <canvas id="shareThumb" width="96" height="96"></canvas>
+  <div class="gal-share-main"><strong>Share your current icon</strong>
+   <div class="preset-save"><input id="shareTitle" type="text" maxlength="40" placeholder="Give it a title (optional)"><button type="button" class="btn small primary" id="shareGo">🌍 Share</button></div>
+   <div class="note" id="shareMsg">Everyone can see what you share. Don't include personal info like your real name or address.</div></div>
+ </div>
+ <div class="gal-tabs" id="galTabs" hidden><button type="button" class="btn small sel" data-tab="all">All posts</button><button type="button" class="btn small" data-tab="reported">🚩 Reported</button></div>
+ <div class="gal-status" id="galStatus">Loading the gallery…</div>
+ <div class="gal-grid" id="galGrid"></div>
+ <div style="text-align:center"><button type="button" class="btn small" id="galMore" hidden>Load more</button></div>
+ <p class="note">Be kind. Icons with 3 reports are hidden until they're checked.</p>
+</div></section>
+<div class="install-backdrop" id="acctPop" hidden role="dialog" aria-modal="true" aria-labelledby="acctTitle">
+ <div class="install-card acct-card">
+  <div class="acct-tabs"><button type="button" class="btn small sel" data-mode="in">Sign in</button><button type="button" class="btn small" data-mode="up">Create account</button></div>
+  <h2 id="acctTitle">Sign in</h2>
+  <form id="acctForm" autocomplete="on" novalidate>
+   <label class="field"><span>Username</span><input id="acctUser" type="text" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="e.g. orangemonke"></label>
+   <div class="note" id="userHint"></div>
+   <label class="field" id="dispWrap" hidden><span>Display name</span><input id="acctDisp" type="text" maxlength="30" autocomplete="nickname" placeholder="What people see, e.g. Orangemonke"></label>
+   <label class="field"><span>Password</span><input id="acctPass" type="password" maxlength="72" autocomplete="current-password"></label>
+   <label class="toggle"><input type="checkbox" id="acctShow"> Show password</label>
+   <div class="note acct-warn" id="acctWarn" hidden>There's no email, so <b>a forgotten password can't be reset</b>. Pick one you'll remember, and don't reuse a password from another site. Don't use your real name as your username.</div>
+   <div class="acct-err" id="acctErr" role="alert"></div>
+   <div class="install-btns"><button type="button" class="btn" id="acctCancel">Cancel</button><button type="submit" class="btn primary" id="acctGo">Sign in</button></div>
+  </form>
+ </div>
+</div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
  <details class="release" open><summary>v34 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
@@ -523,7 +576,7 @@ function hex(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),pars
 // something it depends on changes, and lots of input events in one frame cause just one redraw.
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h||w;return c};
 const figC=mk(1024),figX=figC.getContext('2d');
-let rafId=0,customId=0,bgImgId=0;
+let rafId=0,customId=0,bgImgId=0,afterRender=null;
 function draw(){if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;render()})}
 function drawNow(){if(rafId){cancelAnimationFrame(rafId);rafId=0}render()}
 function render(){
@@ -546,6 +599,7 @@ function render(){
  if(nm){ctx.save();const PF='"Press Start 2P",monospace';ctx.font='18px '+PF;const nw=ctx.measureText(nm).width,fs=nw>250?Math.max(9,Math.floor(18*250/nw)):18;
   ctx.font=fs+'px '+PF;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineJoin='miter';ctx.miterLimit=2;ctx.lineWidth=Math.max(4,Math.round(fs/3));ctx.strokeStyle='#151515';ctx.strokeText(nm,352,908);ctx.fillStyle='#fff';ctx.fillText(nm,352,908);ctx.restore()}
  updateNameHint();
+ if(afterRender)afterRender();
  scheduleAutosave();
 }
 // 🎨 Recolouring. Only the square part of the art that's shown is processed. For the built-in monke, every pixel is
@@ -920,6 +974,167 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
 $('upload').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{customImg=im;customId++;setupCustom();draw();URL.revokeObjectURL(u)};im.src=u});
 $('reset').onclick=()=>{clearCustom();$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('dog').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
 $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download='my-monke-youtube-icon.png';a.href=canvas.toDataURL('image/png');a.click()};
+// 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
+// The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
+// to be public, and the database rules in setup.sql decide what each person is allowed to do.
+const GALLERY={url:'',key:''};
+// Accounts use a username instead of an email. Supabase still needs an email-shaped login, so one is made from the
+// username with this made-up domain. No emails are ever sent to it.
+const ACCOUNT_DOMAIN='users.monke-icon-maker.app';
+const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+(function(){
+ if(!GALLERY.url||!GALLERY.key)return;
+ const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles(username,display_name,avatar_url,is_admin,banned)';
+ const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
+ let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
+ const gal=$('gallery'),grid=$('galGrid'),status=$('galStatus');
+ gal.hidden=false;$('shareJump').hidden=false;
+ const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
+ const avatarImg=(url,cls)=>{const i=el('img',cls||'avatar');i.alt='';i.loading='lazy';i.src=url&&/^https:\/\//.test(url)?url:DEFAULT_AVATAR;i.onerror=()=>{i.onerror=null;i.src=DEFAULT_AVATAR};return i};
+ const ago=t=>{const s=(Date.now()-new Date(t))/1000;return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':s<604800?Math.floor(s/86400)+' d ago':new Date(t).toLocaleDateString()};
+ const friendly=err=>{const m=String(err&&err.message||err||'');
+  if(/Invalid login credentials/i.test(m))return 'Wrong username or password.';
+  if(/already registered|already been registered|duplicate key|profiles_username_key/i.test(m))return 'That username is taken. Try another one.';
+  if(/Password should be/i.test(m))return 'That password is too short. Use at least 8 characters.';
+  if(/rate limit|too many/i.test(m))return 'Too many tries. Wait a minute and try again.';
+  if(/Failed to fetch|NetworkError|network/i.test(m))return "Couldn't reach the gallery. Check your internet connection.";
+  return m||'Something went wrong. Please try again.'};
+
+ // Load the Supabase library only when it's needed, so the rest of the page stays fast.
+ function client(){
+  if(sb)return Promise.resolve(sb);
+  if(!loading)loading=new Promise((ok,fail)=>{const s=document.createElement('script');s.src=SUPABASE_JS;s.async=true;
+   s.onload=()=>{try{if(!window.supabase||!window.supabase.createClient)throw new Error("Couldn't load the gallery. Check your internet connection.");sb=window.supabase.createClient(GALLERY.url,GALLERY.key);sb.auth.onAuthStateChange((_e,session)=>{const u=session&&session.user;setTimeout(()=>setUser(u),0)}); /* never call Supabase inside this callback: it can lock up */ok(sb)}catch(e){fail(e)}};
+   s.onerror=()=>{loading=null;fail(new Error("Couldn't load the gallery. Check your internet connection."))};document.head.appendChild(s)});
+  return loading;
+ }
+ function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);loadPosts(true)}).catch(e=>{status.textContent=friendly(e)})}
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();start()}},{rootMargin:'600px'});io.observe(gal)}else start();
+
+ // ── Accounts ──
+ async function setUser(user,quiet){
+  const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();
+  if(me){const {data}=await sb.from('profiles').select('username,display_name,avatar_url,is_admin,banned').eq('id',me.id).maybeSingle();profile=data||null;
+   const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
+  renderAcct();if(!quiet)loadPosts(true);
+ }
+ function renderAcct(){
+  const bar=$('acctBar');bar.innerHTML='';
+  if(!me){const b=el('button','btn small primary','Sign in / Create account');b.type='button';b.onclick=()=>openAcct('in');bar.appendChild(b);$('galShare').hidden=true;$('galTabs').hidden=true;return}
+  const p=profile||{username:'…',display_name:'…'};
+  bar.appendChild(avatarImg(p.avatar_url));
+  const who=el('div','who'),name=el('b',null,p.display_name);if(p.is_admin)name.appendChild(el('span','admin-tag','Admin'));
+  who.appendChild(name);who.appendChild(el('small',null,'@'+p.username));bar.appendChild(who);
+  const edit=el('button','btn small','Edit name');edit.type='button';edit.onclick=editName;bar.appendChild(edit);
+  const out=el('button','btn small','Sign out');out.type='button';out.onclick=()=>sb.auth.signOut();bar.appendChild(out);
+  $('galShare').hidden=false;$('galTabs').hidden=!p.is_admin;
+  if(p.banned){$('shareGo').disabled=true;$('shareMsg').textContent='Your account has been banned from sharing.'}else{$('shareGo').disabled=false}
+  updateShareThumb();
+ }
+ function editName(){
+  const bar=$('acctBar'),who=bar.querySelector('.who');if(!who)return;
+  const inp=el('input');inp.type='text';inp.maxLength=30;inp.value=profile?profile.display_name:'';
+  const save=el('button','btn small primary','Save');save.type='button';
+  who.replaceWith(inp);bar.querySelectorAll('.btn').forEach(b=>b.remove());bar.appendChild(save);inp.focus();
+  const go=async()=>{const v=inp.value.trim();if(!v){inp.focus();return}save.disabled=true;
+   const {error}=await sb.from('profiles').update({display_name:v}).eq('id',me.id);
+   if(!error&&profile)profile.display_name=v;renderAcct();if(error)$('shareMsg').textContent=friendly(error);else loadPosts(true)};
+  save.onclick=go;inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();if(e.key==='Escape')renderAcct()});
+ }
+ let mode='in',checkT=null;
+ function openAcct(m){setMode(m);$('acctErr').textContent='';$('acctPass').value='';$('acctPop').hidden=false;setTimeout(()=>$('acctUser').focus(),50)}
+ function setMode(m){mode=m;const up=m==='up';
+  document.querySelectorAll('.acct-tabs .btn').forEach(b=>b.classList.toggle('sel',b.dataset.mode===m));
+  $('acctTitle').textContent=up?'Create an account':'Sign in';$('acctGo').textContent=up?'Create account':'Sign in';
+  $('dispWrap').hidden=!up;$('acctWarn').hidden=!up;$('userHint').textContent=up?'3–20 letters, numbers or _. You can\'t change it later.':'';$('userHint').className='note';
+  $('acctPass').autocomplete=up?'new-password':'current-password';$('acctPass').placeholder=up?'At least 8 characters':'';$('acctErr').textContent=''}
+ document.querySelectorAll('.acct-tabs .btn').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+ $('acctCancel').onclick=()=>{$('acctPop').hidden=true};
+ $('acctPop').addEventListener('click',e=>{if(e.target===$('acctPop'))$('acctPop').hidden=true});
+ $('acctShow').onchange=()=>{$('acctPass').type=$('acctShow').checked?'text':'password'};
+ $('acctUser').addEventListener('input',()=>{
+  const u=$('acctUser').value.trim().toLowerCase(),h=$('userHint');clearTimeout(checkT);if(mode!=='up')return;
+  if(!u){h.textContent='3–20 letters, numbers or _. You can\'t change it later.';h.className='note';return}
+  if(!USER_RE.test(u)){h.textContent='Use 3–20 letters, numbers or _ (no spaces).';h.className='note bad';return}
+  h.textContent='Checking…';h.className='note';
+  checkT=setTimeout(async()=>{const {data,error}=await sb.rpc('username_available',{name:u});if($('acctUser').value.trim().toLowerCase()!==u)return;
+   if(error){h.textContent='';return}h.textContent=data?'✓ @'+u+' is available':'✗ @'+u+' is taken';h.className='note '+(data?'ok':'bad')},400);
+ });
+ $('acctForm').addEventListener('submit',async e=>{
+  e.preventDefault();const err=$('acctErr'),go=$('acctGo');err.textContent='';
+  const u=$('acctUser').value.trim().toLowerCase(),pw=$('acctPass').value,d=$('acctDisp').value.trim();
+  if(!USER_RE.test(u)){err.textContent='Usernames are 3–20 letters, numbers or _ (no spaces).';return}
+  if(mode==='up'&&!d){err.textContent='Pick a display name.';return}
+  if(mode==='up'&&pw.length<8){err.textContent='Use a password with at least 8 characters.';return}
+  if(!pw){err.textContent='Enter your password.';return}
+  go.disabled=true;
+  try{const c=await client(),email=u+'@'+ACCOUNT_DOMAIN;let res;
+   if(mode==='up'){const {data:free}=await c.rpc('username_available',{name:u});if(free===false)throw new Error('duplicate key');
+    res=await c.auth.signUp({email,password:pw,options:{data:{username:u,display_name:d}}});
+    if(!res.error&&!res.data.session)throw new Error('Account made, but it needs email confirmation. (Site owner: turn off "Confirm email" in Supabase.)')}
+   else res=await c.auth.signInWithPassword({email,password:pw});
+   if(res.error)throw res.error;
+   $('acctPop').hidden=true;$('acctPass').value='';
+  }catch(x){err.textContent=friendly(x)}finally{go.disabled=false}
+ });
+
+ // ── Sharing ──
+ afterRender=()=>{if(me)updateShareThumb()};
+ function updateShareThumb(){const t=$('shareThumb').getContext('2d');t.clearRect(0,0,96,96);t.drawImage(canvas,0,0,96,96)}
+ $('shareJump').onclick=()=>{gal.scrollIntoView({behavior:'smooth',block:'start'});if(!me)client().then(()=>{if(!me)openAcct('in')});else updateShareThumb()};
+ canvas.addEventListener('mouseenter',()=>{if(me)updateShareThumb()});
+ $('shareGo').onclick=async()=>{
+  if(!me)return openAcct('in');const msg=$('shareMsg'),btn=$('shareGo');btn.disabled=true;msg.textContent='Sharing…';
+  try{
+   drawNow();const c=mk(512);c.getContext('2d').drawImage(canvas,0,0,512,512);
+   const blob=await new Promise(r=>c.toBlob(r,'image/webp',.9));const type=blob.type==='image/webp'?'image/webp':'image/png';
+   const path=me.id+'/'+Date.now().toString(36)+(type==='image/webp'?'.webp':'.png');
+   const up=await sb.storage.from('icons').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
+   const title=$('shareTitle').value.trim().slice(0,40)||null;
+   const {data,error}=await sb.from('posts').insert({image_path:path,title}).select(POST_FIELDS).single();
+   if(error){await sb.storage.from('icons').remove([path]);throw error}
+   $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
+   if(tab==='all'){grid.prepend(postCard(data));status.textContent=''}
+  }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
+ };
+
+ // ── Posts ──
+ document.querySelectorAll('#galTabs .btn').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('#galTabs .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
+ $('galMore').onclick=()=>loadPosts(false);
+ let loadId=0;
+ async function loadPosts(reset){
+  if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';status.textContent='Loading the gallery…'}
+  let q=sb.from('posts').select(POST_FIELDS).order('created_at',{ascending:false});
+  if(tab==='reported')q=q.gt('report_count',0);
+  const {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
+  if(error){status.textContent=friendly(error);return}
+  data.forEach(p=>grid.appendChild(postCard(p)));page++;
+  status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!';
+  $('galMore').hidden=data.length<PAGE;
+ }
+ function postCard(p){
+  const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
+  const card=el('article','post'+(p.hidden?' is-hidden':''));
+  const img=el('img');img.loading='lazy';img.alt=(p.title||'Monke icon')+' by '+pr.display_name;img.src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;card.appendChild(img);
+  const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
+  const by=el('div','pby');by.appendChild(avatarImg(pr.avatar_url));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
+  body.appendChild(el('div','pmeta',ago(p.created_at)));
+  if((admin||mine)&&p.report_count>0)body.appendChild(el('div','flag',(p.hidden?'Hidden · ':'')+p.report_count+(p.report_count===1?' report':' reports')+(pr.banned?' · account banned':'')));
+  const act=el('div','pact');
+  const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
+  if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
+   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!'});
+  if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
+    if(!confirm('Report this icon as mean or inappropriate?'))return;rb.disabled=true;
+    const {error}=await sb.from('reports').insert({post_id:p.id});
+    if(error&&!/duplicate/i.test(error.message)){rb.disabled=false;return alert(friendly(error))}reported.add(p.id);rb.textContent='Reported'});rb.disabled=done}
+  if(admin&&p.report_count>0)btn('✓ Restore',async()=>{const {error}=await sb.rpc('admin_restore_post',{post:p.id});if(error)return alert(friendly(error));loadPosts(true)});
+  if(admin&&!mine)btn(pr.banned?'Unban @'+pr.username:'⛔ Ban @'+pr.username,async()=>{
+   if(!confirm((pr.banned?'Unban':'Ban')+' @'+pr.username+'?'+(pr.banned?'':' They won\'t be able to share or report, and their icons will be hidden.')))return;
+   const {error}=await sb.rpc('admin_set_banned',{target:p.user_id,ban:!pr.banned});if(error)return alert(friendly(error));loadPosts(true)});
+  body.appendChild(act);card.appendChild(body);return card;
+ }
+})();
 // ☀️ Light / dark mode. First visit: matches the device's own setting. Once you press the button, your choice is
 // remembered on this device instead. (Applied in the <head> so the page never flashes the wrong theme.)
 (function(){
