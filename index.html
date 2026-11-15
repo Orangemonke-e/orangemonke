@@ -1021,7 +1021,11 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
 (function(){
  if(!GALLERY.url||!GALLERY.key)return;
  // posts link to profiles twice (the poster, and via reports), so name the poster link explicitly.
- const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,avatar_path,is_admin,banned)';
+ // Profile pictures need supabase/update-2-profile-pictures.sql. Until that's been run, the gallery works without them.
+ let pics=true;
+ const noPicsYet=e=>e&&/avatar_path/.test(e.message||'')&&(pics=false,true);
+ const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)';
+ const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
  const gal=$('gallery'),grid=$('galGrid'),status=$('galStatus');
@@ -1054,7 +1058,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // ── Accounts ──
  async function setUser(user,quiet){
   const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();
-  if(me){const {data}=await sb.from('profiles').select('username,display_name,avatar_path,is_admin,banned').eq('id',me.id).maybeSingle();profile=data||null;
+  if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
   renderAcct();if(!quiet)loadPosts(true);
  }
@@ -1063,7 +1067,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(!me){const b=el('button','btn small primary','Sign in / Create account');b.type='button';b.onclick=()=>openAcct('in');bar.appendChild(b);$('galShare').hidden=true;$('galTabs').hidden=true;return}
   const p=profile||{username:'…',display_name:'…'};
   const pic=el('button','avatar-btn');pic.type='button';pic.title='Change your profile picture';pic.setAttribute('aria-label','Change your profile picture');
-  pic.appendChild(avatarImg(p.avatar_path));pic.appendChild(el('span','avatar-edit','✎'));pic.onclick=pictureMenu;bar.appendChild(pic);
+  pic.appendChild(avatarImg(p.avatar_path));if(pics){pic.appendChild(el('span','avatar-edit','✎'));pic.onclick=pictureMenu}else{pic.disabled=true;pic.title=''}bar.appendChild(pic);
   const who=el('div','who'),name=el('b',null,p.display_name);if(p.is_admin)name.appendChild(el('span','admin-tag','Admin'));
   who.appendChild(name);who.appendChild(el('small',null,'@'+p.username));bar.appendChild(who);
   const edit=el('button','btn small','Edit name');edit.type='button';edit.onclick=editName;bar.appendChild(edit);
@@ -1163,7 +1167,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const path=me.id+'/'+Date.now().toString(36)+(type==='image/webp'?'.webp':'.png');
    const up=await sb.storage.from('icons').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
    const title=$('shareTitle').value.trim().slice(0,40)||null;
-   const {data,error}=await sb.from('posts').insert({image_path:path,title}).select(POST_FIELDS).single();
+   const {data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single();
    if(error){await sb.storage.from('icons').remove([path]);throw error}
    $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
    if(tab==='all'){grid.prepend(postCard(data));status.textContent=''}
@@ -1176,9 +1180,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  let loadId=0;
  async function loadPosts(reset){
   if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';status.textContent='Loading the gallery…'}
-  let q=sb.from('posts').select(POST_FIELDS).order('created_at',{ascending:false});
+  let q=sb.from('posts').select(postFields()).order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
-  const {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
+  let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
+  if(noPicsYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
   status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!';
