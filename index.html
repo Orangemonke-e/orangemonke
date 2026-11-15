@@ -152,6 +152,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .cm.is-hidden{opacity:.7}.cm-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
 .cm-form{border-top:1px solid var(--line);padding-top:10px}.cm-form textarea{width:100%;resize:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;outline:none}
 .cm-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}.cm-signin{border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.gal-sort{display:flex;gap:6px;margin-top:8px}.gal-sort[hidden]{display:none}.gal-sort .btn{padding:5px 10px;font-size:12px}.gal-sort .btn.sel{border-color:var(--accent);color:var(--accent)}
+.like-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
+.like-btn .heart{font-size:16px;line-height:1;color:var(--muted)}.like-btn:hover{border-color:#ff4d6d}.like-btn.on{border-color:#ff4d6d;background:#ff4d6d22}.like-btn.on .heart{color:#ff4d6d}
 .premix{font-size:11px;color:var(--accent)}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);max-width:min(92vw,560px);background:#101116;color:#fff;border:2px solid var(--accent);border-radius:14px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:0 12px 34px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -297,7 +300,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </section>
 </main>
 <section class="notes gallery" id="gallery" hidden><div class="notes-box">
- <div class="gal-head"><div><h2>🌍 Community gallery</h2><p class="hint">Icons shared by other monke creators. Newest first.</p></div><div class="acct" id="acctBar"></div></div>
+ <div class="gal-head"><div><h2>🌍 Community gallery</h2><p class="hint">Icons shared by other monke creators.</p><div class="gal-sort" id="galSort"><button type="button" class="btn small sel" data-sort="top">🔥 Most liked</button><button type="button" class="btn small" data-sort="new">🆕 Newest</button></div></div><div class="acct" id="acctBar"></div></div>
  <div class="gal-share" id="galShare" hidden>
   <canvas id="shareThumb" width="96" height="96"></canvas>
   <div class="gal-share-main"><strong>Share your current icon</strong>
@@ -364,7 +367,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v55 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v56 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>♥ Like button: like your favourite icons in the community gallery. Tap again to unlike.</li>
+   <li>🔥 Most liked: the gallery now shows the most liked icons first. Tap 🆕 Newest to see the latest ones instead.</li>
+   <li>👥 Follower notifications: if you have notifications on, you'll get one when someone follows you. Tap it to see their profile.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Following and unfollowing someone over and over only notifies them once a day, so nobody gets spammed.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v55 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>👤 Profiles: tap anyone's name in the community gallery (on an icon or a comment) to see their profile, with their description, followers, following and all their icons.</li>
@@ -1620,10 +1639,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  let pics=true;
  const noPicsYet=e=>e&&/avatar_path/.test(e.message||'')&&(pics=false,true);
  // 🎨 Remix needs supabase/update-10-remix.sql. Until that's been run, the gallery works without it.
+ // ♥ Likes need supabase/update-12-likes-and-follow-notifications.sql. Until then, no like buttons and newest first.
+ let likesOn=true,sort='top';const myLikes=new Set();
+ const noLikesYet=e=>e&&/like/i.test(e.message||'')&&(likesOn=false,true);
  let remixOn=true,remixSource=null;
  const noRemixYet=e=>e&&/design|remix|relationship/i.test(e.message||'')&&(remixOn=false,true); // if anything about Remix isn't ready, carry on without it
  const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
-  +(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
+  +(likesOn?',like_count':'')+(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
  const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
@@ -1661,18 +1683,22 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    await sb.rpc('subscribe_push',{p_endpoint:sub.endpoint,p_p256dh:k.p256dh,p_auth:k.auth})}catch(e){}
  }
  window.linkPushToAccount=linkPush;
- const linkPost=new URLSearchParams(location.search).get('comments');
+ const linkPost=new URLSearchParams(location.search).get('comments'),linkProfile=new URLSearchParams(location.search).get('profile');
  function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);
   if(linkPost&&/^[0-9a-f-]{36}$/i.test(linkPost)){
    // Opened from a comment notification: show that icon's comments.
    history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});
    const {data:p}=await sb.from('posts').select(postFields()).eq('id',linkPost).maybeSingle();if(p)openComments(p);
+  }
+  if(linkProfile&&/^[0-9a-f-]{36}$/i.test(linkProfile)){
+   // Opened from a follower notification: show that person's profile.
+   history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});openProfile(linkProfile);
   }}).catch(e=>{status.textContent=friendly(e)})}
- if(linkPost)start();else if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();start()}},{rootMargin:'600px'});io.observe(gal)}else start();
+ if(linkPost||linkProfile)start();else if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();start()}},{rootMargin:'600px'});io.observe(gal)}else start();
 
  // ── Accounts ──
  async function setUser(user,quiet){
-  const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();
+  const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();myLikes.clear();
   if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
   renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();
@@ -1809,7 +1835,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  let loadId=0;
  async function loadPosts(reset){
   if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';status.textContent='Loading the gallery…'}
-  let q=sb.from('posts').select(postFields()).order('created_at',{ascending:false});
+  let q=sb.from('posts').select(postFields());
+  if(sort==='top'&&likesOn&&tab==='all')q=q.order('like_count',{ascending:false});
+  q=q.order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
   if(tab==='following'){
    const f=await sb.from('follows').select('followee_id').eq('follower_id',me.id);if(id!==loadId)return;
@@ -1818,9 +1846,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    q=q.in('user_id',ids);
   }
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
-  if(noPicsYet(error)||noRemixYet(error))return loadPosts(reset);
+  if(noPicsYet(error)||noRemixYet(error)||noLikesYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
-  await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));if(id!==loadId)return;
+  await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));if(id!==loadId)return;
+  $('galSort').hidden=!likesOn||tab!=='all';
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
   status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':'No icons shared yet. Be the first!';
   $('galMore').hidden=data.length<PAGE;
@@ -1968,7 +1997,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const label=()=>{fb.textContent=following?'✓ Following':'＋ Follow';fb.className='btn small'+(following?' following':' primary')};label();
    fb.onclick=async()=>{if(!me)return openAcct('in');fb.disabled=true;
     const {error}=following?await sb.from('follows').delete().eq('follower_id',me.id).eq('followee_id',userId):await sb.from('follows').insert({followee_id:userId});
-    fb.disabled=false;if(error&&!/duplicate/i.test(error.message))return alert(friendly(error));following=!following;label();renderPfStats(userId)};
+    fb.disabled=false;if(error&&!/duplicate/i.test(error.message))return alert(friendly(error));following=!following;label();renderPfStats(userId);
+    if(following)sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'follow',followee_id:userId,url:location.href}}).catch(()=>{}); // tell them
+   };
    acts.appendChild(fb);
   }
  }
@@ -1990,6 +2021,19 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const {error}=await sb.from('profiles').update({bio:v||null}).eq('id',me.id);if(error){m.textContent=friendly(error);return}
    $('pfEdit').hidden=true;openProfile(me.id)}finally{btn.disabled=false}
  };
+ // ── ♥ Like button ──
+ async function loadMyLikes(ids){if(!likesOn||!me||!ids.length)return;const {data}=await sb.from('likes').select('post_id').eq('user_id',me.id).in('post_id',ids);(data||[]).forEach(r=>myLikes.add(r.post_id))}
+ function likeButton(p){
+  const b=el('button','like-btn');b.type='button';let n=p.like_count||0;
+  const draw=()=>{const on=myLikes.has(p.id);b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);b.title=on?'Unlike':'Like';b.setAttribute('aria-label',(on?'Unlike':'Like')+', '+n+(n===1?' like':' likes'));
+   b.innerHTML='';b.appendChild(el('span','heart',on?'♥':'♡'));b.appendChild(el('span',null,n?String(n):'Like'))};
+  b.onclick=async()=>{if(!me)return openAcct('in');const on=myLikes.has(p.id);
+   if(on){myLikes.delete(p.id);n=Math.max(0,n-1)}else{myLikes.add(p.id);n++}p.like_count=n;draw();b.disabled=true;
+   const {error}=on?await sb.from('likes').delete().eq('post_id',p.id).eq('user_id',me.id):await sb.from('likes').insert({post_id:p.id});
+   b.disabled=false;if(error&&!/duplicate/i.test(error.message)){if(on){myLikes.add(p.id);n++}else{myLikes.delete(p.id);n=Math.max(0,n-1)}p.like_count=n;draw();alert(friendly(error))}};
+  draw();return b;
+ }
+ document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
  function postCard(p){
   const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
   const card=el('article','post'+(p.hidden?' is-hidden':''));
@@ -1998,6 +2042,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const by=el('div','pby linkish');by.title='See '+pr.display_name+'\'s profile';by.onclick=()=>openProfile(p.user_id);by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
   if(p.remix&&p.remix.title!==undefined){const r=el('div','premix','🎨 Remix of '+(p.remix.title?'“'+p.remix.title+'”':'an icon')+(p.remix.profiles?' by @'+p.remix.profiles.username:''));body.appendChild(r)}
+  if(likesOn)body.appendChild(likeButton(p));
   if(reactsOn)body.appendChild(reactRow(p.id));
   if((admin||mine)&&p.report_count>0)body.appendChild(el('div','flag',(p.hidden?'Hidden · ':'')+p.report_count+(p.report_count===1?' report':' reports')+(pr.banned?' · account banned':'')));
   const act=el('div','pact');

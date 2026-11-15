@@ -5,6 +5,9 @@
 //  2. Comment notifications ({ type: 'comment', comment_id }): right after someone posts a comment, their browser asks
 //     this function to tell the icon's owner and the other commenters. claim_comment_notification() checks the caller
 //     wrote that comment and that it hasn't been announced yet; the device list is then read with the service key.
+//  3. Follower notifications ({ type: 'follow', followee_id }): right after someone follows a person, their browser asks
+//     this function to tell that person. claim_follow_notification() checks the follow is real and new (at most one
+//     notice a day per pair); the device list is then read with the service key.
 //
 // Secrets it needs (Supabase dashboard > Edge Functions > Secrets):
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT   (see GALLERY-SETUP.md)
@@ -89,9 +92,10 @@ export async function handle(req: Request, env: (k: string) => string | undefine
   if (req.method !== 'POST') return json({ error: 'Use POST' }, 405);
   const vapid = { publicKey: env('VAPID_PUBLIC_KEY') || '', privateKey: env('VAPID_PRIVATE_KEY') || '', subject: env('VAPID_SUBJECT') || '' };
   if (!vapid.publicKey || !vapid.privateKey || !vapid.subject) return json({ error: 'The VAPID secrets are not set up yet.' }, 500);
-  let input: { title?: string; body?: string; url?: string; type?: string; comment_id?: string };
+  let input: { title?: string; body?: string; url?: string; type?: string; comment_id?: string; followee_id?: string };
   try { input = await req.json(); } catch { return json({ error: 'Bad request' }, 400); }
   if (input.type === 'comment') return handleComment(req, env, vapid, String(input.comment_id || ''), String(input.url || ''));
+  if (input.type === 'follow') return handleFollow(req, env, vapid, String(input.followee_id || ''), String(input.url || ''));
   const title = String(input.title || '').trim().slice(0, 60), text = String(input.body || '').trim().slice(0, 160);
   if (!title) return json({ error: 'Add a title.' }, 400);
   const url = String(input.url || './').slice(0, 300);
@@ -148,6 +152,35 @@ async function handleComment(req: Request, env: (k: string) => string | undefine
     const title = s.kind === 'owner' ? `💬 New comment on your icon${icon ? ' ' + icon : ''}` : `💬 New comment on ${icon || 'an icon you commented on'}`;
     const text = `${s.author_name}: ${s.body}`;
     const message = { title: title.slice(0, 80), body: text.slice(0, 160), url: `${site}?comments=${s.post_id}`, tag: `monke-comments-${s.post_id}` };
+    try { const status = await sendPush(s, message, vapid); if (status >= 200 && status < 300) sent++; else if ([400, 404, 410].includes(status)) gone.push(s.endpoint); } catch { /* skip */ }
+  }));
+  if (gone.length) await fetch(`${base}/rest/v1/rpc/service_remove_push`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_endpoints: gone }) });
+  return json({ sent, devices: targets.length, removed: gone.length });
+}
+
+const siteFrom = (pageUrl: string) => {
+  try { const u = new URL(pageUrl); if (u.protocol === 'https:') return u.origin + u.pathname.replace(/[^/]*$/, ''); } catch { /* use the default */ }
+  return 'https://kaigroves15-hash.github.io/orangemonke/';
+};
+
+async function handleFollow(req: Request, env: (k: string) => string | undefined, vapid: { publicKey: string; privateKey: string; subject: string }, followeeId: string, pageUrl: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(followeeId)) return json({ error: 'Bad account' }, 400);
+  const base = env('SUPABASE_URL');
+  // 1. As the person who called us: did they really just follow this account, and not been announced in the last day?
+  const userHeaders = { Authorization: req.headers.get('Authorization') || '', apikey: req.headers.get('apikey') || '', 'Content-Type': 'application/json' };
+  const claim = await fetch(`${base}/rest/v1/rpc/claim_follow_notification`, { method: 'POST', headers: userHeaders, body: JSON.stringify({ p_followee: followeeId }) });
+  const followerId = claim.ok ? await claim.json() : null;
+  if (!followerId) return json({ sent: 0, skipped: true });
+  // 2. With the service key: the devices of the person who was followed.
+  const key = serviceKey(env);
+  if (!key) return json({ error: 'No service key available to the function.' }, 500);
+  const t = await fetch(`${base}/rest/v1/rpc/follow_push_targets`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_follower: followerId, p_followee: followeeId }) });
+  if (!t.ok) return json({ error: 'Could not read the device list.' }, 500);
+  const targets: { endpoint: string; p256dh: string; auth_secret: string; follower_name: string; follower_username: string }[] = await t.json();
+  const site = siteFrom(pageUrl);
+  let sent = 0; const gone: string[] = [];
+  await Promise.all(targets.map(async (s) => {
+    const message = { title: '👥 New follower', body: `${s.follower_name} (@${s.follower_username}) started following you`.slice(0, 160), url: `${site}?profile=${followerId}`, tag: `monke-follow-${followerId}` };
     try { const status = await sendPush(s, message, vapid); if (status >= 200 && status < 300) sent++; else if ([400, 404, 410].includes(status)) gone.push(s.endpoint); } catch { /* skip */ }
   }));
   if (gone.length) await fetch(`${base}/rest/v1/rpc/service_remove_push`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_endpoints: gone }) });
