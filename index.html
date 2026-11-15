@@ -174,7 +174,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </main>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v30 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v31 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🐶 Frostdogg look: if your monke looks like Frostdogg's profile (blue-purple fur, the banana headband and the dog), the preset name box suggests “e.g. Frostdogg” instead of “e.g. Orangemonke”.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The example name in the preset box now updates as you change your design.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v30 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing new to add in this update.</li>
@@ -473,6 +487,7 @@ function render(){
  const nm=$('name').value.trim();
  if(nm){ctx.save();const PF='"Press Start 2P",monospace';ctx.font='18px '+PF;const nw=ctx.measureText(nm).width,fs=nw>250?Math.max(9,Math.floor(18*250/nw)):18;
   ctx.font=fs+'px '+PF;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineJoin='miter';ctx.miterLimit=2;ctx.lineWidth=Math.max(4,Math.round(fs/3));ctx.strokeStyle='#151515';ctx.strokeText(nm,352,908);ctx.fillStyle='#fff';ctx.fillText(nm,352,908);ctx.restore()}
+ updateNameHint();
  scheduleAutosave();
 }
 // 🎨 Recolouring. Only the square part of the art that's shown is processed. For the built-in monke, every pixel is
@@ -766,9 +781,20 @@ $('presetSave').onclick=()=>{
 $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave').click()});
 // 🏷️ Auto names for Random Monke, e.g. "Angel Teal Monke & Pup".
 let lastAutoName='';
-function colourName(h){
+function toHsl(h){
  const [r,g,b]=hex(h).map(v=>v/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn,s=d?d/(1-Math.abs(2*l-1)):0;
  let hu=0;if(d){hu=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hu=(hu*60+360)%360}
+ return [hu,s,l];
+}
+// 🐶 Frostdogg: when the design looks like Frostdogg's profile (a blue-purple monke with the banana headband and the dog),
+// the preset name box suggests "Frostdogg" instead of "Orangemonke".
+function looksLikeFrostdogg(){
+ const [hu,s,l]=toHsl($('fur').value),hat=$('hat').value;
+ return hu>=235&&hu<=280&&s>=.6&&l>=.3&&l<=.65&&$('banana').value==='show'&&hat!=='tophat'&&hat!=='catears'&&$('dog').value!=='none';
+}
+function updateNameHint(){const t='Name this design, e.g. '+(looksLikeFrostdogg()?'Frostdogg':'Orangemonke'),el=$('presetName');if(el.placeholder!==t)el.placeholder=t}
+function colourName(h){
+ const [hu,s,l]=toHsl(h);
  if(l<.12)return'Shadow';if(l>.9&&s<.3)return'Snow';if(s<.14)return l>.6?'Silver':'Grey';
  if(hu>=12&&hu<45&&l<.4)return'Brown';
  if((hu>=300||hu<12)&&l>.72)return'Pink';
