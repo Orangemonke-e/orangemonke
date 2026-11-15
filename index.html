@@ -185,7 +185,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 <section class="preview-panel">
  <div class="panel-head"><strong>YOUR ICON</strong><span class="hint">Live preview · 1024 × 1024</span></div>
  <div class="stage"><div class="art-wrap"><canvas id="art" width="1024" height="1024"></canvas><div class="yt-guide" id="ytGuide" hidden aria-hidden="true"></div><div class="item-box" id="itemBox" hidden><div class="item-handle" id="itemHandle" title="Drag to resize"></div></div></div></div>
- <div class="preview-actions"><span class="hint">Your changes update automatically</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" id="random">🎲 Random Monke</button><button class="btn small" id="reset">↺ Reset design</button></div></div>
+ <div class="preview-actions"><span class="hint">Your changes update automatically</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn small" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button><button class="btn small" id="random">🎲 Random Monke</button><button class="btn small" id="reset">↺ Reset design</button></div></div>
  <div class="yt-prev">
   <div class="yt-head"><strong>How it looks on YouTube</strong><label class="toggle"><input id="ytCircle" type="checkbox"> ⭕ Show YouTube circle</label></div>
   <p class="hint">YouTube shows profile pictures as circles, so anything in the corners gets cut off. Keep the important bits inside the circle.</p>
@@ -339,7 +339,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v49 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v50 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>↶ Undo and ↷ Redo: changed something you didn't mean to? Tap Undo (next to Random Monke) to go back a step, and Redo to go forward again.</li>
+   <li>Keyboard shortcuts: Ctrl+Z to undo, Ctrl+Shift+Z or Ctrl+Y to redo (Cmd on a Mac).</li>
+   <li>It covers everything: colours, accessories, backgrounds, your own items, outline and name tag, plus Random Monke, Reset design and loading a preset. So you can roll the dice without losing a design you liked.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Dragging a slider or colour picker counts as one step, so one Undo puts it back where it was.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v49 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🔔 Update notifications: turn them on and you'll get a notification when Monke Icon Maker gets new features, even when the site is closed.</li>
@@ -1048,6 +1064,7 @@ function render(){
  updateNameHint();
  drawYtMinis();
  if(afterRender)afterRender();
+ scheduleHistory();
  scheduleAutosave();
 }
 // 🎨 Recolouring. Only the square part of the art that's shown is processed. For the built-in monke, every pixel is
@@ -1313,6 +1330,24 @@ const LS_PRESETS='mim_presets_v1',LS_AUTO='mim_autosave_v1',MAX_PRESETS=30;
 const storageOK=(()=>{try{localStorage.setItem('mim_test','1');localStorage.removeItem('mim_test');return true}catch(e){return false}})();
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+// ↶ Undo / ↷ Redo. A snapshot is taken shortly after each change, so dragging a slider or colour picker
+// counts as one step. Covers every setting, the background style and your own items. Keeps the last 60 steps.
+const UNDO_MAX=60;let undoStack=[],redoStack=[],histCur=null,histT=null,histRestoring=false;
+function histSnap(){const st=captureState();return{st,bg:bgStyle,items:items.map(i=>({...i})),key:JSON.stringify(st)+'|'+bgStyle+'|'+itemsKey()}}
+function histCommit(){clearTimeout(histT);histT=null;const s=histSnap();if(!histCur){histCur=s;return}
+ if(s.key===histCur.key)return;undoStack.push(histCur);if(undoStack.length>UNDO_MAX)undoStack.shift();histCur=s;redoStack=[];histButtons()}
+function scheduleHistory(){if(histRestoring)return;clearTimeout(histT);histT=setTimeout(histCommit,histCur?350:0)}
+function histApply(s){histRestoring=true;histCur=s;applyState(s.st);
+ bgStyle=s.bg==='image'&&!bgImg?'solid':s.bg;renderThumbs();
+ items=s.items.map(i=>({...i}));selItem=null;renderItemList();drawNow();histRestoring=false;histButtons()}
+function undo(){if(histT)histCommit();if(!undoStack.length)return;redoStack.push(histCur);histApply(undoStack.pop())}
+function redo(){if(histT)histCommit();if(!redoStack.length)return;undoStack.push(histCur);histApply(redoStack.pop())}
+function histButtons(){const u=document.getElementById('undoBtn'),r=document.getElementById('redoBtn');if(u)u.disabled=!undoStack.length;if(r)r.disabled=!redoStack.length}
+document.addEventListener('keydown',e=>{
+ if(!(e.ctrlKey||e.metaKey)||e.altKey)return;const t=e.target,typing=t&&(t.tagName==='TEXTAREA'||(t.tagName==='INPUT'&&/^(text|search|password|email|url)$/i.test(t.type))||t.isContentEditable);
+ if(typing)return; // inside text boxes, Ctrl+Z undoes your typing as normal
+ const k=e.key.toLowerCase();if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}else if((k==='z'&&e.shiftKey)||k==='y'){e.preventDefault();redo()}
+});
 function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;return o}
 function applyState(o){
  if(!o||typeof o!=='object')return;
@@ -1435,6 +1470,7 @@ function fileName(){
  return (v||DEFAULT_FILE)+'.png';
 }
 $('fileName').addEventListener('keydown',e=>{if(e.key==='Enter')$('download').click()});
+document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn').onclick=redo;
 $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download=fileName();a.href=canvas.toDataURL('image/png');a.click()};
 // 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
