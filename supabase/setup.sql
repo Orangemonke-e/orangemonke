@@ -217,7 +217,8 @@ alter table public.banned_words enable row level security;   -- no policies: the
 revoke all on public.banned_words from anon, authenticated;
 
 insert into public.banned_words (word, anywhere) values
- ('fuck', true), ('fvck', true), ('fck', false), ('fuk', false), ('fucking', true), ('motherfucker', true), ('wtf', false), ('stfu', false),
+ ('fuck', true), ('fvck', true), ('phuck', true), ('phuk', false), ('fck', false),
+ ('biatch', false), ('btch', false), ('azz', false), ('fuk', false), ('fucking', true), ('motherfucker', true), ('wtf', false), ('stfu', false),
  ('shit', false), ('bullshit', false), ('shite', false),
  ('ass', false), ('arse', false), ('asshole', false), ('arsehole', false), ('jackass', false), ('dumbass', false),
  ('bitch', false), ('bastard', false), ('dick', false), ('cock', false), ('prick', false), ('pussy', false),
@@ -241,9 +242,9 @@ declare
   pass int;
 begin
   if t is null or btrim(t) = '' then return false; end if;
-  -- "1" and "|" can stand for i or l, so try both readings.
+  -- Numbers and symbols can stand for more than one letter ("1" = i or l, "2" = s or z, "6" = g or b), so try two readings.
   for pass in 1..2 loop
-    n := translate(lower(t), '013457@$!|', case pass when 1 then 'oieastasil' else 'oleastasll' end);
+    n := translate(lower(t), '013457@$!|2689+(<€', case pass when 1 then 'oieastasilsgbgtcce' else 'oleastasllzbbgtcce' end);
     sq := regexp_replace(regexp_replace(n, '[^a-z]', '', 'g'), '(.)\1+', '\1', 'g');
     if exists (
         -- whole words (plus endings like -s, -ing, -head), also with repeated letters squashed for longer words
