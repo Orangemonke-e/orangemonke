@@ -142,6 +142,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .cm.is-hidden{opacity:.7}.cm-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
 .cm-form{border-top:1px solid var(--line);padding-top:10px}.cm-form textarea{width:100%;resize:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;outline:none}
 .cm-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}.cm-signin{border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.premix{font-size:11px;color:var(--accent)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);max-width:min(92vw,560px);background:#101116;color:#fff;border:2px solid var(--accent);border-radius:14px;padding:12px 18px;font-size:14px;font-weight:600;box-shadow:0 12px 34px #000a;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:60;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 .post .flag{font-size:11px;color:#ff8a85}.post.is-hidden{border-color:#e5393588}
 .acct-card h2{font-size:18px;margin:10px 0 12px}.acct-card .field{display:block;margin-bottom:10px}.acct-card .field span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .acct-card .field input{width:100%}.acct-tabs{display:flex;gap:8px}.acct-warn{margin:10px 0 0}.acct-err{color:#ff8a85;font-size:13px;min-height:18px;margin:10px 0}
@@ -339,7 +342,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v51 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v52 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎨 Remix: see an icon you love in the community gallery? Tap Remix to load its whole design into the editor (colours, accessories, badges, background and outline), then make it your own.</li>
+   <li>If you share an icon you remixed, it shows “Remix of …” with the original creator's name, so they get the credit.</li>
+   <li>Changed your mind? Press Undo to get your own design back.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Icons you share now save their design, so they can be remixed. (Name tags aren't copied. Icons shared before this update can't be remixed.)</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v51 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>💬 Comment notifications: if you have notifications on, you'll get one when someone comments on one of your icons, and when someone comments after you on an icon you commented on.</li>
@@ -1345,6 +1364,9 @@ const LS_PRESETS='mim_presets_v1',LS_AUTO='mim_autosave_v1',MAX_PRESETS=30;
 const storageOK=(()=>{try{localStorage.setItem('mim_test','1');localStorage.removeItem('mim_test');return true}catch(e){return false}})();
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+// Small message that pops up at the bottom of the screen for a few seconds.
+function toast(text){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}
+ t.textContent=text;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),4500)}
 // ↶ Undo / ↷ Redo. A snapshot is taken shortly after each change, so dragging a slider or colour picker
 // counts as one step. Covers every setting, the background style and your own items. Keeps the last 60 steps.
 const UNDO_MAX=60;let undoStack=[],redoStack=[],histCur=null,histT=null,histRestoring=false;
@@ -1501,7 +1523,11 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // Profile pictures need supabase/update-2-profile-pictures.sql. Until that's been run, the gallery works without them.
  let pics=true;
  const noPicsYet=e=>e&&/avatar_path/.test(e.message||'')&&(pics=false,true);
- const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)';
+ // 🎨 Remix needs supabase/update-10-remix.sql. Until that's been run, the gallery works without it.
+ let remixOn=true,remixSource=null;
+ const noRemixYet=e=>e&&/design|remix/.test(e.message||'')&&(remixOn=false,true);
+ const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
+  +(remixOn?',design,remix_of,remix:posts!posts_remix_of_fkey(title,profiles!posts_user_id_fkey(username))':'');
  const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
@@ -1667,8 +1693,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const blob=await new Promise(r=>c.toBlob(r,'image/webp',.9));const type=blob.type==='image/webp'?'image/webp':'image/png';
    const path=me.id+'/'+Date.now().toString(36)+(type==='image/webp'?'.webp':'.png');
    const up=await sb.storage.from('icons').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
-   const {data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single();
+   // Save the design too (not the name tag), so others can remix it, and credit the icon it was remixed from.
+   const design=captureState();delete design.name;
+   const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
+   let {data,error}=await sb.from('posts').insert(row).select(postFields()).single();
+   if(noRemixYet(error))({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single());
    if(error){await sb.storage.from('icons').remove([path]);throw error}
+   remixSource=null;
    $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
    if(tab==='all'){grid.prepend(postCard(data));status.textContent=''}
   }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
@@ -1683,7 +1714,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   let q=sb.from('posts').select(postFields()).order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
-  if(noPicsYet(error))return loadPosts(reset);
+  if(noPicsYet(error)||noRemixYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
   await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));if(id!==loadId)return;
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
@@ -1794,6 +1825,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    m.textContent=data.devices?`Sent to ${data.sent} of ${data.devices} device${data.devices===1?'':'s'}.`+(data.removed?` Cleaned up ${data.removed} that no longer exist.`:''):'Nobody has turned on notifications yet.';
   }catch(e){m.textContent=friendly(e)}finally{go.disabled=false}
  };
+ // 🎨 Remix: load a gallery icon's design into the editor. Undo gets your own design back.
+ $('reset').addEventListener('click',()=>{remixSource=null}); // a fresh design isn't a remix any more
+ function remix(p,pr){
+  applyState(p.design);drawNow();remixSource={id:p.id};
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('🎨 Remixing '+(p.title?'“'+p.title+'”':'an icon')+' by '+pr.display_name+'. Make it your own! (Undo to go back)');
+ }
  function postCard(p){
   const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
   const card=el('article','post'+(p.hidden?' is-hidden':''));
@@ -1801,11 +1839,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
   const by=el('div','pby');by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
+  if(p.remix&&p.remix.title!==undefined){const r=el('div','premix','🎨 Remix of '+(p.remix.title?'“'+p.remix.title+'”':'an icon')+(p.remix.profiles?' by @'+p.remix.profiles.username:''));body.appendChild(r)}
   if(reactsOn)body.appendChild(reactRow(p.id));
   if((admin||mine)&&p.report_count>0)body.appendChild(el('div','flag',(p.hidden?'Hidden · ':'')+p.report_count+(p.report_count===1?' report':' reports')+(pr.banned?' · account banned':'')));
   const act=el('div','pact');
   const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
   if(commentsOn){const n=cCounts.get(p.id)||0,cb=btn('💬 '+(n||'Comment'),()=>openComments(p));cb.title='Comments';cBtns.set(p.id,cb)}
+  if(p.design&&typeof p.design==='object'){const rb=btn('🎨 Remix',()=>remix(p,pr));rb.title='Load this design into the editor so you can make it your own'}
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
    const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!'});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
