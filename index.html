@@ -113,6 +113,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .gallery{padding-top:0}.gallery[hidden],.gal-share[hidden],.gal-tabs[hidden]{display:none}.gal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}.gal-head h2{font-size:16px;margin:0 0 4px}.gal-head .hint{margin:0}
 .acct{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#fff;border:2px solid var(--line);flex:none}
 .acct .who{display:flex;flex-direction:column;line-height:1.25;min-width:0}.acct .who b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}.acct .who small{color:var(--muted);font-size:12px}
+.avatar-btn{position:relative;padding:0;border:0;background:none;cursor:pointer;border-radius:50%;flex:none}.avatar-btn .avatar{display:block}
+.avatar-edit{position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--panel)}
+.avatar-btn:hover .avatar{outline:2px solid var(--accent);outline-offset:1px}
 .admin-tag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:1px 6px;margin-left:6px;vertical-align:middle}
 .acct input{width:150px;padding:7px 9px}
 .gal-share{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:14px;background:#12141c}
@@ -241,7 +244,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v35 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v36 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🖼 Profile pictures: tap your picture in the gallery to change it. Use the icon you're making right now, upload your own picture, or go back to the grey monke.</li>
+   <li>Your picture shows next to your name and on every icon you've shared.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Uploaded pictures are cropped to a square from the middle.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v35 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🌍 Community gallery: see icons other monke creators have made, and share your own with one click.</li>
@@ -1003,18 +1021,21 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
 (function(){
  if(!GALLERY.url||!GALLERY.key)return;
  // posts link to profiles twice (the poster, and via reports), so name the poster link explicitly.
- const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,avatar_url,is_admin,banned)';
+ const POST_FIELDS='id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,avatar_path,is_admin,banned)';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
  const gal=$('gallery'),grid=$('galGrid'),status=$('galStatus');
  gal.hidden=false;$('shareJump').hidden=false;
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e};
- const avatarImg=(url,cls)=>{const i=el('img',cls||'avatar');i.alt='';i.loading='lazy';i.src=url&&/^https:\/\//.test(url)?url:DEFAULT_AVATAR;i.onerror=()=>{i.onerror=null;i.src=DEFAULT_AVATAR};return i};
+ const avatarUrl=path=>path&&sb?sb.storage.from('avatars').getPublicUrl(path).data.publicUrl:DEFAULT_AVATAR;
+ const avatarImg=(path,cls)=>{const i=el('img',cls||'avatar');i.alt='';i.loading='lazy';i.src=avatarUrl(path);i.onerror=()=>{i.onerror=null;i.src=DEFAULT_AVATAR};return i};
  const ago=t=>{const s=(Date.now()-new Date(t))/1000;return s<60?'just now':s<3600?Math.floor(s/60)+' min ago':s<86400?Math.floor(s/3600)+' h ago':s<604800?Math.floor(s/86400)+' d ago':new Date(t).toLocaleDateString()};
  const friendly=err=>{const m=String(err&&err.message||err||'');
   if(/Invalid login credentials/i.test(m))return 'Wrong username or password.';
   if(/already registered|already been registered|duplicate key|profiles_username_key/i.test(m))return 'That username is taken. Try another one.';
   if(/Password should be/i.test(m))return 'That password is too short. Use at least 8 characters.';
+  if(/maximum allowed size|too large/i.test(m))return 'That picture is too big.';
+  if(/mime type/i.test(m))return 'Use a PNG, JPEG or WebP picture.';
   if(/rate limit|too many/i.test(m))return 'Too many tries. Wait a minute and try again.';
   if(/Failed to fetch|NetworkError|network/i.test(m))return "Couldn't reach the gallery. Check your internet connection.";
   return m||'Something went wrong. Please try again.'};
@@ -1033,7 +1054,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // ── Accounts ──
  async function setUser(user,quiet){
   const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();
-  if(me){const {data}=await sb.from('profiles').select('username,display_name,avatar_url,is_admin,banned').eq('id',me.id).maybeSingle();profile=data||null;
+  if(me){const {data}=await sb.from('profiles').select('username,display_name,avatar_path,is_admin,banned').eq('id',me.id).maybeSingle();profile=data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
   renderAcct();if(!quiet)loadPosts(true);
  }
@@ -1041,7 +1062,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const bar=$('acctBar');bar.innerHTML='';
   if(!me){const b=el('button','btn small primary','Sign in / Create account');b.type='button';b.onclick=()=>openAcct('in');bar.appendChild(b);$('galShare').hidden=true;$('galTabs').hidden=true;return}
   const p=profile||{username:'…',display_name:'…'};
-  bar.appendChild(avatarImg(p.avatar_url));
+  const pic=el('button','avatar-btn');pic.type='button';pic.title='Change your profile picture';pic.setAttribute('aria-label','Change your profile picture');
+  pic.appendChild(avatarImg(p.avatar_path));pic.appendChild(el('span','avatar-edit','✎'));pic.onclick=pictureMenu;bar.appendChild(pic);
   const who=el('div','who'),name=el('b',null,p.display_name);if(p.is_admin)name.appendChild(el('span','admin-tag','Admin'));
   who.appendChild(name);who.appendChild(el('small',null,'@'+p.username));bar.appendChild(who);
   const edit=el('button','btn small','Edit name');edit.type='button';edit.onclick=editName;bar.appendChild(edit);
@@ -1049,6 +1071,37 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   $('galShare').hidden=false;$('galTabs').hidden=!p.is_admin;
   if(p.banned){$('shareGo').disabled=true;$('shareMsg').textContent='Your account has been banned from sharing.'}else{$('shareGo').disabled=false}
   updateShareThumb();
+ }
+ // ── Profile picture: use your current icon, upload a picture, or go back to the grey monke ──
+ function pictureMenu(){
+  const bar=$('acctBar');bar.innerHTML='';
+  bar.appendChild(avatarImg(profile&&profile.avatar_path));
+  const add=(t,f)=>{const b=el('button','btn small',t);b.type='button';b.onclick=f;bar.appendChild(b);return b};
+  add('🎨 Use my current icon',()=>{drawNow();setPicture(canvas)});
+  const file=el('input');file.type='file';file.accept='image/png,image/jpeg,image/webp';file.hidden=true;bar.appendChild(file);
+  add('📁 Upload a picture',()=>file.click());
+  file.onchange=()=>{const f=file.files[0];if(!f)return;const u=URL.createObjectURL(f),im=new Image();
+   im.onload=()=>{setPicture(im);URL.revokeObjectURL(u)};im.onerror=()=>{URL.revokeObjectURL(u);$('shareMsg').textContent="Couldn't read that picture. Try a PNG or JPEG."};im.src=u};
+  if(profile&&profile.avatar_path)add('↺ Grey monke',()=>savePicture(null));
+  add('Cancel',renderAcct);
+ }
+ async function setPicture(src){
+  // Square crop from the middle, 256×256.
+  const w=src.naturalWidth||src.width,h=src.naturalHeight||src.height,sq=Math.min(w,h),c=mk(256),x=c.getContext('2d');
+  x.imageSmoothingQuality='high';x.drawImage(src,(w-sq)/2,(h-sq)/2,sq,sq,0,0,256,256);
+  const blob=await new Promise(r=>c.toBlob(r,'image/webp',.88)),type=blob.type==='image/webp'?'image/webp':'image/png';
+  const path=me.id+'/avatar-'+Date.now().toString(36)+(type==='image/webp'?'.webp':'.png');
+  $('shareMsg').textContent='Saving your picture…';
+  const up=await sb.storage.from('avatars').upload(path,blob,{contentType:type,upsert:false});
+  if(up.error){$('shareMsg').textContent=friendly(up.error);return renderAcct()}
+  savePicture(path);
+ }
+ async function savePicture(path){
+  const old=profile&&profile.avatar_path;
+  const {error}=await sb.from('profiles').update({avatar_path:path}).eq('id',me.id);
+  if(error){if(path)await sb.storage.from('avatars').remove([path]);$('shareMsg').textContent=friendly(error);return renderAcct()}
+  if(old&&old!==path)sb.storage.from('avatars').remove([old]);
+  if(profile)profile.avatar_path=path;$('shareMsg').textContent=path?'New profile picture saved.':'Back to the grey monke.';renderAcct();loadPosts(true);
  }
  function editName(){
   const bar=$('acctBar'),who=bar.querySelector('.who');if(!who)return;
@@ -1136,7 +1189,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const card=el('article','post'+(p.hidden?' is-hidden':''));
   const img=el('img');img.loading='lazy';img.alt=(p.title||'Monke icon')+' by '+pr.display_name;img.src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;card.appendChild(img);
   const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
-  const by=el('div','pby');by.appendChild(avatarImg(pr.avatar_url));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
+  const by=el('div','pby');by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
   if((admin||mine)&&p.report_count>0)body.appendChild(el('div','flag',(p.hidden?'Hidden · ':'')+p.report_count+(p.report_count===1?' report':' reports')+(pr.banned?' · account banned':'')));
   const act=el('div','pact');
@@ -1151,6 +1204,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(admin&&!mine)btn(pr.banned?'Unban @'+pr.username:'⛔ Ban @'+pr.username,async()=>{
    if(!confirm((pr.banned?'Unban':'Ban')+' @'+pr.username+'?'+(pr.banned?'':' They won\'t be able to share or report, and their icons will be hidden.')))return;
    const {error}=await sb.rpc('admin_set_banned',{target:p.user_id,ban:!pr.banned});if(error)return alert(friendly(error));loadPosts(true)});
+  if(admin&&!mine&&pr.avatar_path)btn('🖼 Reset picture',async()=>{if(!confirm('Put @'+pr.username+'\'s profile picture back to the grey monke?'))return;
+   const {error}=await sb.rpc('admin_clear_avatar',{target:p.user_id});if(error)return alert(friendly(error));loadPosts(true)});
   body.appendChild(act);card.appendChild(body);return card;
  }
 })();
