@@ -153,6 +153,8 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .yt-cell{display:flex;flex-direction:column;align-items:center;gap:5px}.yt-cell span{font-size:9.5px;color:#606060;white-space:nowrap}.yt-screen.dark .yt-cell span{color:#aaa}
 .yt-screen.light{background:#fff}.yt-screen.dark{background:#0f0f0f}
 canvas.yt-mini{width:auto;aspect-ratio:1;filter:none;border-radius:50%}
+.file-name{display:flex;align-items:center;gap:0}.file-name input{flex:1;min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}
+.file-name span{padding:11px 12px;border:1px solid var(--line);border-left:0;border-radius:0 10px 10px 0;background:var(--panel);color:var(--muted);font-size:14px}
 footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 @media(max-width:850px){.preview-panel{position:static}.controls{position:static;max-height:none;overflow:visible}main{grid-template-columns:1fr}.stage{min-height:340px}header{padding:18px}}
 @media(max-width:480px){.badge{display:none}}
@@ -235,7 +237,8 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="field" style="margin-top:12px"><label for="match">Colour match strength <span id="matchVal">50</span></label><input id="match" type="range" min="0" max="100" value="50"></div>
   <button type="button" class="btn small" id="autoDetect" style="margin-top:10px">✨ Auto-detect parts</button>
  </div>
- <button class="btn primary" id="download" style="width:100%;margin-top:16px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
+ <div class="field" style="margin-top:16px"><label for="fileName">File name (optional)</label><div class="file-name"><input id="fileName" type="text" maxlength="60" placeholder="my-monke-youtube-icon" autocomplete="off" spellcheck="false"><span>.png</span></div></div>
+ <button class="btn primary" id="download" style="width:100%;margin-top:10px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
  <button type="button" class="btn" id="shareJump" hidden style="width:100%;margin-top:8px;padding:12px">🌍 Share to the community gallery</button>
 </section>
 </main>
@@ -271,7 +274,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v44 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v45 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📝 Name your download: type a file name above the download button. Leave it empty and it uses the usual name, my-monke-youtube-icon.png.</li>
+   <li>Press Enter in the file name box to download straight away.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Characters that can't be used in file names (like / \ : * ? " &lt; &gt; |) are removed automatically.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v44 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>⭕ YouTube circle guide: YouTube shows profile pictures as circles. Turn on “Show YouTube circle” to see exactly what gets cut off at the corners. (Your download is still the full square, which is what YouTube wants.)</li>
@@ -1180,7 +1198,14 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
 })();
 $('upload').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{customImg=im;customId++;setupCustom();draw();URL.revokeObjectURL(u)};im.src=u});
 $('reset').onclick=()=>{clearCustom();$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('fingerpainter').value='none';$('dog').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
-$('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download='my-monke-youtube-icon.png';a.href=canvas.toDataURL('image/png');a.click()};
+// The download uses the name you typed, or the default name if the box is empty.
+const DEFAULT_FILE='my-monke-youtube-icon';
+function fileName(){
+ const v=$('fileName').value.replace(/\.png$/i,'').replace(/[\\/:*?"<>|\u0000-\u001f]+/g,'').replace(/\s+/g,' ').trim().replace(/^\.+|\.+$/g,'').slice(0,60);
+ return (v||DEFAULT_FILE)+'.png';
+}
+$('fileName').addEventListener('keydown',e=>{if(e.key==='Enter')$('download').click()});
+$('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download=fileName();a.href=canvas.toDataURL('image/png');a.click()};
 // 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
 // to be public, and the database rules in setup.sql decide what each person is allowed to do.
