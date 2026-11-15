@@ -190,6 +190,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 canvas.yt-mini{width:auto;aspect-ratio:1;filter:none;border-radius:50%}
 .file-name{display:flex;align-items:center;gap:0}.file-name input{flex:1;min-width:0;border-top-right-radius:0;border-bottom-right-radius:0}
 .file-name span{padding:11px 12px;border:1px solid var(--line);border-left:0;border-radius:0 10px 10px 0;background:var(--panel);color:var(--muted);font-size:14px}
+.ai-row{display:flex;gap:8px;margin-top:10px}.ai-row input{flex:1;min-width:0}
+.ai-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ai-examples button{background:none;border:1px dashed var(--line);color:var(--muted);border-radius:99px;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}.ai-examples button:hover{color:var(--text);border-color:var(--accent)}
+.ai-result{font-size:12px;color:var(--accent);min-height:16px;margin-top:8px}
 footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 @media(max-width:850px){.preview-panel{position:static}.controls{position:static;max-height:none;overflow:visible}main{grid-template-columns:1fr}.stage{min-height:340px}header{padding:18px}}
 @media(max-width:480px){.badge{display:none}}
@@ -213,6 +216,12 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  </div>
 </section>
 <section class="controls">
+ <div class="section"><h2>✨ Describe your icon</h2>
+  <div class="note" style="margin-top:0">Type what you want and it's made for you from everything in the maker. Then change anything you like.</div>
+  <div class="ai-row"><input id="promptIn" type="text" maxlength="200" placeholder="e.g. blue monke with a crown and a dog in space" autocomplete="off"><button type="button" class="btn small primary" id="promptGo">✨ Make it</button></div>
+  <div class="ai-examples" id="promptEx"></div>
+  <div class="ai-result" id="promptOut" role="status"></div>
+ </div>
  <div class="section"><h2>💾 Presets</h2>
   <div class="note" style="margin-top:0">Save a design and load it again later. Your last design is also remembered automatically on this device.</div>
   <div class="preset-save"><input id="presetName" type="text" maxlength="30" placeholder="Name this design, e.g. Orangemonke"><button type="button" class="btn small" id="presetSave">💾 Save</button></div>
@@ -368,7 +377,24 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v58 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v59 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>✨ Describe your icon: type what you want, like “blue monke with a crown and a dog in space”, tap Make it, and your icon is made for you using everything in the maker.</li>
+   <li>It understands colours (for fur, face, eyes, background, outline and hats), every accessory and badge, every background, outlines, glowing halos and name tags (“named Frost”).</li>
+   <li>Themes too: try spooky, angel, royal, Christmas, beach or fancy. Say “no hat” or “without a dog” to leave things out.</li>
+   <li>Tap an example to try it. Undo goes back to what you had.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing else changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v58 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>⚡ Live updates: the community gallery now updates by itself. No more refreshing!</li>
@@ -1485,6 +1511,112 @@ const LS_PRESETS='mim_presets_v1',LS_AUTO='mim_autosave_v1',MAX_PRESETS=30;
 const storageOK=(()=>{try{localStorage.setItem('mim_test','1');localStorage.removeItem('mim_test');return true}catch(e){return false}})();
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+// ✨ Describe your icon: turns a sentence into a design using the maker's own options (no AI service needed).
+// parseIconPrompt(text, {subscriber}) returns {set:{controlId:value}, bg:styleId|null, said:[summary bits]}.
+const PROMPT_COLOURS={
+ 'hot pink':'#ff2d95','light pink':'#ffb6d5','pastel pink':'#ffc4dd','pink':'#f25ca8','magenta':'#e0007a','fuchsia':'#d91aa8',
+ 'dark red':'#8e1111','crimson':'#c8102e','red':'#e53935','maroon':'#7a1424','coral':'#ff6f61','salmon':'#fa8072',
+ 'dark orange':'#e0600a','orange':'#ff8a24','peach':'#ffb38a','gold':'#f5b301','golden':'#f5b301','yellow':'#f5cf28','lemon':'#fff04d',
+ 'lime':'#8bdc28','light green':'#7ee08a','dark green':'#1f6b2a','forest green':'#228b22','green':'#28b65c','mint':'#7fe3c4','olive':'#7a8a2a',
+ 'teal':'#13b7a6','turquoise':'#2ed3c6','cyan':'#25d7f0','aqua':'#2bd9e8','light blue':'#79c2ff','sky blue':'#5ec8ff','baby blue':'#9fd6ff',
+ 'dark blue':'#1736a8','navy':'#1b2a6b','navy blue':'#1b2a6b','royal blue':'#2a4bd7','blue':'#2787e8','indigo':'#4b2fd1',
+ 'purple':'#8b55db','dark purple':'#4c1f8f','violet':'#8f3fe0','lavender':'#b9a3f0','lilac':'#c8a2e8',
+ 'brown':'#7b4b2a','dark brown':'#4a2c17','tan':'#c9a074','beige':'#e3cfa8','cream':'#f3e9cf',
+ 'white':'#f2f2f2','black':'#20232b','grey':'#808080','gray':'#808080','dark grey':'#454850','dark gray':'#454850','light grey':'#c4c6cc','light gray':'#c4c6cc','silver':'#c0c4cc',
+};
+const PROMPT_BG={galaxy:'galaxy',space:'galaxy',stars:'galaxy',starry:'galaxy',cosmic:'galaxy',sunset:'sunset',sunrise:'sunset',ocean:'ocean',sea:'ocean',underwater:'ocean',water:'ocean',
+ jungle:'jungle',forest:'jungle',leaves:'jungle',neon:'neon',sky:'sky',clouds:'sky',cloudy:'sky',sunburst:'sunburst',rays:'sunburst',stripes:'stripes',striped:'stripes',stripey:'stripes',
+ checker:'checker',checkered:'checker',checkerboard:'checker',chequered:'checker',dots:'dots',dotted:'dots',polka:'dots',spotlight:'spotlight',plain:'solid',solid:'solid'};
+const BG_NAME={galaxy:'galaxy',sunset:'sunset',ocean:'ocean',jungle:'jungle',neon:'neon',sky:'sky',sunburst:'sunburst',stripes:'stripes',checker:'checker',dots:'dots',spotlight:'spotlight',solid:'plain',subscriber:'⭐ subscriber'};
+
+function parseIconPrompt(text,opts){
+ opts=opts||{};
+ let t=' '+String(text||'').toLowerCase().replace(/[’']/g,"'").replace(/[^a-z0-9'"#\s-]/g,' ').replace(/-/g,' ').replace(/\s+/g,' ')+' ';
+ const set={},said=[];let bg=null;
+ // Name tag first (keeps its own capitals), then remove it so its words aren't read as options.
+ const nm=String(text||'').match(/\b(?:named|called|name tag|nametag|with the name|name)\s*[:=]?\s*["“]?([A-Za-z0-9_ .]{1,16}?)["”]?(?=\s*(?:$|,|\.|!|\band\b|\bwith\b|\bwearing\b|\bin\b|\bon\b))/i);
+ if(nm&&nm[1].trim()){set.name=nm[1].trim();said.push('name tag “'+set.name+'”');t=t.replace(nm[0].toLowerCase().replace(/[^a-z0-9'"#\s]/g,' ').replace(/\s+/g,' '),' ')}
+ // "no X" / "without X" / "not wearing X": remember and remove.
+ const banned=new Set();
+ t=t.replace(/\b(?:no|without|not wearing|not|minus)\s+(?:a |an |the |any )?([a-z]+(?: (?:hat|ears|badge|outline))?)/g,(m,w)=>{banned.add(w);return ' '});
+ const has=re=>re.test(t);
+ const colourNames=Object.keys(PROMPT_COLOURS).sort((a,b)=>b.length-a.length);
+ const C='('+colourNames.join('|')+')';
+ const colourOf=noun=>{ // "<colour> <noun>" or "<noun> is/in/coloured <colour>"
+  let m=t.match(new RegExp('\\b'+C+'(?: and [a-z]+)?\\s+(?:coloured |colored )?(?:'+noun+')\\b'));if(m)return m[1];
+  m=t.match(new RegExp('\\b(?:'+noun+')\\s+(?:is |are |that is |in |coloured |colored |colour |color |of )'+C+'\\b'));return m?m[1]:null};
+ const used=new Set();const take=(name,id,label)=>{if(!name)return;set[id]=PROMPT_COLOURS[name];used.add(name);if(label)said.push(name+' '+label)};
+ // ── themes (set a starting look; specific words below can override them) ──
+ const theme=(re,o,label)=>{if(has(re)){Object.assign(set,o.set||{});if(o.bg)bg=o.bg;said.push(label)}};
+ theme(/\b(spooky|halloween|scary|creepy)\b/,{set:{fur:'#ff7a1a',hat:'horns',hatColor:'#7a0f0f',background:'#16091f'},bg:'spotlight'},'spooky theme');
+ theme(/\b(angel|angelic|heavenly|holy)\b/,{set:{hat:'halo',face:'#ffffff',haloColor:'#fff36b',glowColor:'#ffd52a',glow:'80'},bg:'sky'},'angel theme');
+ theme(/\b(royal|king|queen|prince|princess|royalty)\b/,{set:{hat:'crown',hatColor:'#f5b301',background:'#4c1f8f'},bg:'spotlight'},'royal theme');
+ theme(/\b(christmas|xmas|festive)\b/,{set:{fur:'#e53935',face:'#ffffff',background:'#1f6b2a',bandana:'asset'},bg:'dots'},'Christmas theme');
+ theme(/\b(devil|demon)\b/,{set:{hat:'horns',hatColor:'#c8102e',fur:'#8e1111'}},'devil theme');
+ theme(/\b(gentleman|fancy|classy)\b/,{set:{hat:'tophat'}},'fancy theme');
+ theme(/\b(beach|summer|tropical)\b/,{set:{banana:'show'},bg:'ocean'},'beach theme');
+ theme(/\b(robber|bandit|outlaw)\b/,{set:{bandana:'asset'}},'bandit theme');
+ // ── hats (only one at a time) ──
+ const hats=[['crown','crown',/\b(crown|tiara)\b/],['halo','halo',/\b(halo)\b/],['horns','horns',/\b(horns?)\b/],['tophat','top hat',/\b(top ?hat|tophat|tall hat)\b/],
+  ['catears','cat ears',/\b(cat ?ears?|kitty ears?|cat|kitty|kitten)\b/],['cap','cap',/\b(cap|baseball cap|hat)\b/]];
+ for(const [id,label,re] of hats){const k=label.split(' ')[0];if(has(re)&&!banned.has(k)&&!banned.has('hat')&&!banned.has(label)){set.hat=id;if(!said.includes(label))said.push(label);break}}
+ if(banned.has('hat')||banned.has('hats')||banned.has('accessory')){set.hat='none'}
+ if(set.hat&&!['halo','tophat','catears'].includes(set.hat)){const hl={crown:'crown',horns:'horns',cap:'cap'}[set.hat],hcol=colourOf('crown|tiara|horns?|cap|baseball cap|hat');if(hcol){const i=said.indexOf(hl);if(i>=0)said.splice(i,1);take(hcol,'hatColor',hl)}}
+ if(set.hat==='halo'){const hc=colourOf('halo');if(hc){set.haloColor=PROMPT_COLOURS[hc];set.glowColor=PROMPT_COLOURS[hc];used.add(hc);said.push(hc+' halo')}
+  if(has(/\b(glowing|glow|bright|shining|shiny)\b/)){set.glow='90'}}
+ // ── other accessories ──
+ if(has(/\b(banana|bananas)\b/)&&!banned.has('banana')){set.banana='show';said.push('banana')}
+ if(has(/\b(bandana|bandanna|scarf|neckerchief)\b/)&&!banned.has('bandana')&&!banned.has('scarf')){set.bandana='asset';said.push('bandana')}
+ if(has(/\b(dog|doggo|doggy|puppy|pup|pet)\b/)&&!banned.has('dog')&&!banned.has('puppy')&&!banned.has('pet')){
+  const left=has(/\b(dog|doggo|doggy|puppy|pup|pet)\b[a-z ]{0,14}\bleft\b/)||has(/\bleft\b[a-z ]{0,8}\b(dog|doggo|doggy|puppy|pup|pet)\b/);
+  set.dog=left?'left':'right';said.push('dog on the '+set.dog)}
+ if(has(/\b(finger ?painter|fingerpaint|finger paint|paint)\b/)&&!banned.has('fingerpainter')){set.fingerpainter='show';said.push('fingerpainter')}
+ else if(has(/\b(creator badge|creator|another axiom|axiom)\b/)&&!banned.has('creator')){set.fingerpainter='creator';said.push('creator badge')}
+ else if(has(/\b(camera|photographer|photo)\b/)&&!banned.has('camera')){set.fingerpainter='camera';said.push('camera badge')}
+ if(banned.has('badge')){set.fingerpainter='none'}
+ // ── background ──
+ if(has(/\b(transparent|see through|clear background|no background)\b/)){set.transparent=true;said.push('transparent background')}
+ else{
+  if(opts.subscriber&&has(/\b(subscriber|secret)\b/))bg='subscriber';
+  else for(const w of Object.keys(PROMPT_BG))if(has(new RegExp('\\b'+w+'\\b'))&&!banned.has(w)){bg=PROMPT_BG[w];break}
+  const bc=colourOf('background|bg|backdrop|back ground|wallpaper|sky|space|stripes|dots|checker|sunburst|spotlight');
+  if(bc){set.background=PROMPT_COLOURS[bc];used.add(bc);said.push(bc+' background');if(!bg||['galaxy','sunset','ocean','jungle','neon','sky'].includes(bg)&&!has(new RegExp('\\b'+bc+' (?:'+Object.keys(PROMPT_BG).join('|')+')\\b')))bg=bg&&['stripes','dots','checker','sunburst','spotlight'].includes(bg)?bg:(bg||'solid')}
+  if(bg&&bg!=='solid')said.push(BG_NAME[bg]+' background');
+ }
+ // ── outline ──
+ if(has(/\boutline[ds]?\b|\boutlined\b|\bborder\b/)&&!banned.has('outline')){
+  set.outline=has(/\b(thick|big|bold|chunky|fat|huge)\b/)?'14':has(/\b(thin|small|little|slight|subtle)\b/)?'4':'8';
+  const oc=colourOf('outline|outlined|border');set.outlineColor=oc?PROMPT_COLOURS[oc]:'#ffffff';if(oc)used.add(oc);
+  said.push((set.outline==='14'?'thick ':set.outline==='4'?'thin ':'')+(oc||'white')+' outline')}
+ if(banned.has('outline'))set.outline='0';
+ // ── face, eyes, fur ──
+ const fc=colourOf('face|belly|tummy|muzzle');if(fc){take(fc,'face','face')}
+ const ec=colourOf('eyes?|eye');if(ec){take(ec,'eyes','eyes')}
+ let fur=colourOf('fur|monke|monkey|monkes|gorilla|ape|body|skin|guy|one|character|icon');
+ if(!fur){ // otherwise: the first colour that wasn't used for something else
+  const all=[...t.matchAll(new RegExp('\\b'+C+'\\b','g'))].map(m=>m[1]);fur=all.find(c=>!used.has(c))||null}
+ if(fur&&!used.has(fur)){take(fur,'fur');said.unshift(fur+' fur')}
+ if(has(/\brainbow\b/)&&!set.fur){set.fur='#8b55db';set.background='#ff8a24';bg=bg||'sunburst';said.push('rainbow-ish colours')}
+ return{set,bg,said};
+}
+// Wire up the "Describe your icon" box. Starts from a fresh design (uploaded pictures are kept), then applies the words.
+(function(){
+ const EX=['blue monke with a crown and a dog in space','spooky monke','angel monke with a glowing gold halo','pink monke in a top hat on stripes','red monke with a bandana and a thick white outline','christmas monke named Santa'];
+ const box=document.getElementById('promptEx');
+ EX.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x;b.onclick=()=>{document.getElementById('promptIn').value=x;make()};box.appendChild(b)});
+ function make(){
+  const text=document.getElementById('promptIn').value.trim(),out=document.getElementById('promptOut');if(!text){out.textContent='Type what you want first, or tap an example.';return}
+  let sub=false;try{sub=localStorage.getItem('mim_sub_unlocked_v1')==='1'}catch(e){}
+  const r=parseIconPrompt(text,{subscriber:sub});
+  if(!r.said.length){out.textContent="Hmm, I didn't recognise anything in that. Try words like: blue, crown, halo, dog, banana, galaxy, outline.";return}
+  if(histT)histCommit();if(!histCur)histCur=histSnap();
+  const st={};for(const k in r.set)st[k]=r.set[k];st.bgStyle=r.bg||'solid';
+  applyState(st);drawNow();
+  out.textContent='✨ Made: '+r.said.join(' · ')+'. (Undo to go back)';
+ }
+ document.getElementById('promptGo').onclick=make;
+ document.getElementById('promptIn').addEventListener('keydown',e=>{if(e.key==='Enter')make()});
+})();
 // Small message that pops up at the bottom of the screen for a few seconds.
 function toast(text){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}
  t.textContent=text;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),4500)}
