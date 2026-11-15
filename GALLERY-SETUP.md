@@ -60,3 +60,19 @@ Once the gallery is live:
 - **Limits built in:** usernames are 3–20 letters, numbers or `_`, and unique ignoring capitals; display names are up to 30 characters; each account can share up to 20 icons a day; each icon is at most 1 MB.
 - **Reports:** after 3 different people report an icon, it's hidden until you **Restore** or **Delete** it from the **🚩 Reported** tab.
 - **Banning** hides all of that person's icons and stops them sharing or reporting. **Unban** undoes it.
+
+## Update notifications (one-time setup)
+
+This lets you send a notification to everyone who turned on 🔔 update notifications, even when they don't have the site open.
+
+1. **Database:** in **SQL Editor**, run [`supabase/update-8-notifications.sql`](supabase/update-8-notifications.sql) (new projects already have it from `setup.sql`).
+2. **The sender function:**
+   1. Open **Edge Functions** in the left sidebar and choose **Deploy a new function** → **Via Editor**.
+   2. Name it exactly `notify-update`.
+   3. Delete the example code, paste in everything from [`supabase/functions/notify-update/index.ts`](supabase/functions/notify-update/index.ts), and click **Deploy**.
+   4. Open the function's **Details**/**Settings** and turn **off** "Verify JWT" (sometimes called "Enforce JWT verification"). The function checks you're an admin itself, through the database.
+3. **The keys:** open **Edge Functions** → **Secrets** and add the three secrets from the private keys file Claude gave you (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Keep that file private; never post the private key anywhere.
+
+**Sending a notification:** sign in on the site as an admin, and in the community gallery click **📣 Notify everyone**. It's pre-filled from the newest update note, so you can just press **Send**.
+
+Good to know: on iPhone and iPad, people only get notifications after installing the app to their home screen (Apple's rule). Devices that have turned notifications off, or uninstalled, are removed from the list automatically the next time you send.
