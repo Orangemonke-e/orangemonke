@@ -132,7 +132,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </main>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v24 <span class="tag new">New</span><span class="tag fix">Fixes</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v25 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🏷️ Random Monke now suggests a name for your preset based on the design, like “Angel Teal Monke &amp; Pup” or “Bandit Orange Monke”. Press Save to keep it, or type your own.</li>
+   <li>The name comes from the fur colour, the head accessory, the bandana or banana, the background, and the dog.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>If you've typed your own name, Random Monke leaves it alone.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v24 <span class="tag new">New</span><span class="tag fix">Fixes</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🔗 Monke Icon Maker is now online with its own link, so you can open it and share it without downloading a file.</li>
@@ -586,6 +601,27 @@ $('presetSave').onclick=()=>{
  else presetMsg('Could not save. The browser storage may be full or blocked.');
 };
 $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave').click()});
+// 🏷️ Auto names for Random Monke, e.g. "Angel Teal Monke & Pup".
+let lastAutoName='';
+function colourName(h){
+ const [r,g,b]=hex(h).map(v=>v/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn,s=d?d/(1-Math.abs(2*l-1)):0;
+ let hu=0;if(d){hu=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;hu=(hu*60+360)%360}
+ if(l<.12)return'Shadow';if(l>.9&&s<.3)return'Snow';if(s<.14)return l>.6?'Silver':'Grey';
+ if(hu>=12&&hu<45&&l<.4)return'Brown';
+ if((hu>=300||hu<12)&&l>.72)return'Pink';
+ const n=hu<12?'Red':hu<38?'Orange':hu<52?'Gold':hu<68?'Yellow':hu<95?'Lime':hu<155?'Green':hu<185?'Teal':hu<205?'Aqua':hu<245?'Blue':hu<275?'Indigo':hu<295?'Purple':hu<335?'Pink':'Red';
+ return(l<.3?'Dark ':'')+n;
+}
+function autoName(){
+ const hat=$('hat').value,HAT={crown:'King',halo:'Angel',horns:'Devil',tophat:'Fancy',catears:'Kitty',cap:'Sporty'};
+ const BG={galaxy:'Cosmic',neon:'Neon',jungle:'Jungle',ocean:'Ocean',sunset:'Sunset',sky:'Sky'};
+ const showsBanana=$('banana').value==='show'&&hat!=='tophat'&&hat!=='catears';
+ const pre=HAT[hat]||($('bandana').value==='asset'?'Bandit':showsBanana?'Banana':BG[bgStyle]||'');
+ const dog=$('dog').value!=='none'?' & Pup':'';
+ const col=colourName($('fur').value);
+ for(const n of [[pre,col,'Monke'+dog],[pre,col.replace('Dark ',''),'Monke'+dog],[pre,col,'Monke'],[col,'Monke']]){const t=n.filter(Boolean).join(' ');if(t.length<=30)return t}
+ return col+' Monke';
+}
 renderPresets();
 if(storageOK){const a=lsGet(LS_AUTO);if(a)applyState(a)} // bring back the last design
 if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P"').then(()=>draw());
@@ -608,6 +644,8 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
   $('dog').value=rnd(['none','none','right','left']);
   $('haloColor').value=hsl(ri(0,359),ri(80,100),ri(50,62));$('glowColor').value=Math.random()<.75?$('haloColor').value:hsl(ri(0,359),ri(80,100),ri(50,62));$('glow').value=ri(25,100);$('glowVal').textContent=$('glow').value;
   $('outlineColor').value=rnd(['#ffffff','#ffffff','#000000',$('hatColor').value]);$('outline').value=Math.random()<.5?0:ri(3,12);$('outlineVal').textContent=$('outline').value;
+  // Suggest a preset name that describes the design. A name you typed yourself is never replaced.
+  const pn=$('presetName');if(!pn.value.trim()||pn.value===lastAutoName){lastAutoName=autoName();pn.value=lastAutoName}
   draw();
  };
 })();
