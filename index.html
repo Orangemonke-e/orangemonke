@@ -19,7 +19,7 @@ main{max-width:1180px;margin:0 auto;padding:28px 20px 48px;display:grid;grid-tem
 .stage{flex:1;min-height:430px;display:grid;place-items:center;border-radius:16px;background-color:#0e1016;background-image:linear-gradient(45deg,#ffffff0b 25%,transparent 25%),linear-gradient(-45deg,#ffffff0b 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ffffff0b 75%),linear-gradient(-45deg,transparent 75%,#ffffff0b 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;overflow:hidden}
 canvas{width:min(100%,520px);aspect-ratio:1;display:block;filter:drop-shadow(0 16px 28px #0008)}
 .preview-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:15px;flex-wrap:wrap}
-.controls{padding:20px}.section{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid var(--line)}.section:last-of-type{border:0;margin:0;padding-bottom:8px}
+.controls{padding:20px;align-self:start;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#505667 transparent}.section{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid var(--line)}.section:last-of-type{border:0;margin:0;padding-bottom:8px}
 h2{font-size:14px;margin:0 0 12px;letter-spacing:.2px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{min-width:0}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
 input[type=color]{width:100%;height:42px;padding:4px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;cursor:pointer}
 select,input[type=text]{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;outline:none}
@@ -63,7 +63,7 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .preset .pinfo{flex:1;min-width:0}.preset .pname{font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.preset .pdate{font-size:11px;color:var(--muted)}
 .preset .btn.danger:hover{border-color:#e53935;color:#ff8a85}
 footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
-@media(max-width:850px){.preview-panel{position:static}main{grid-template-columns:1fr}.stage{min-height:340px}header{padding:18px}}
+@media(max-width:850px){.preview-panel{position:static}.controls{position:static;max-height:none;overflow:visible}main{grid-template-columns:1fr}.stage{min-height:340px}header{padding:18px}}
 @media(max-width:440px){main{padding:14px 12px 30px}.controls{padding:16px}.row{gap:8px}.stage{min-height:290px}}
 </style>
 </head>
