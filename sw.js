@@ -1,7 +1,7 @@
 // Monke Icon Maker service worker: lets the installed app open offline.
 // Pages are fetched fresh when online (so updates show up), with the saved copy as a fallback.
-const CACHE = 'monke-v7';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png', './default-avatar.webp', './react-monke.webp'];
+const CACHE = 'monke-v8';
+const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png', './notify-icon.png', './default-avatar.webp', './react-monke.webp'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });
@@ -26,7 +26,7 @@ self.addEventListener('push', e => {
   try { m = e.data ? e.data.json() : {}; } catch { m = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.registration.showNotification(m.title || 'Monke Icon Maker', {
     body: m.body || 'Something new has been added. Take a look!',
-    icon: 'icon-192.png', badge: 'icon-192.png', tag: m.tag || 'monke-update', data: { url: m.url || './' },
+    icon: 'notify-icon.png', badge: 'icon-192.png', tag: m.tag || 'monke-update', data: { url: m.url || './' },
   }));
 });
 self.addEventListener('notificationclick', e => {
