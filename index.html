@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Monke Icon Maker</title>
-<script>try{if(localStorage.getItem('mim_theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<script>(function(){let t=null;try{t=localStorage.getItem('mim_theme')}catch(e){}if(t==='light'||(!t&&matchMedia('(prefers-color-scheme: light)').matches))document.documentElement.dataset.theme='light'})()</script>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#101116">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -174,7 +174,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </main>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v29 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v30 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing new to add in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>☀️ The first time you open the page, it uses light or dark mode to match your phone or computer's setting.</li>
+   <li>Until you press the ☀️ Light / 🌙 Dark button, the page keeps following your device, even if it switches by itself (for example, dark mode at night). Once you press it, your choice is remembered instead.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v29 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>☀️ Light mode: tap the ☀️ Light button at the top to switch the page to a bright theme, and 🌙 Dark to switch back.</li>
@@ -800,7 +815,8 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
 $('upload').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{customImg=im;customId++;setupCustom();draw();URL.revokeObjectURL(u)};im.src=u});
 $('reset').onclick=()=>{clearCustom();$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('dog').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
 $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download='my-monke-youtube-icon.png';a.href=canvas.toDataURL('image/png');a.click()};
-// ☀️ Light / dark mode. The choice is remembered on this device (applied in the <head> so the page never flashes).
+// ☀️ Light / dark mode. First visit: matches the device's own setting. Once you press the button, your choice is
+// remembered on this device instead. (Applied in the <head> so the page never flashes the wrong theme.)
 (function(){
  const root=document.documentElement,btn=$('themeToggle'),meta=document.querySelector('meta[name=theme-color]');
  function apply(light){if(light)root.dataset.theme='light';else delete root.dataset.theme;
@@ -808,6 +824,9 @@ $('download').onclick=()=>{drawNow();let a=document.createElement('a');a.downloa
   if(meta)meta.content=light?'#f4f2ee':'#101116'}
  apply(root.dataset.theme==='light');
  btn.onclick=()=>{const light=root.dataset.theme!=='light';apply(light);try{localStorage.setItem('mim_theme',light?'light':'dark')}catch(e){}};
+ // Until you've picked, follow the device if its setting changes (e.g. automatic dark mode at night).
+ const mq=matchMedia('(prefers-color-scheme: light)');
+ mq.addEventListener('change',e=>{let t=null;try{t=localStorage.getItem('mim_theme')}catch(_){}if(!t)apply(e.matches)});
 })();
 // 📲 Install as an app. The popup shows once, on phones and tablets only. "Not now" is remembered so it never nags.
 if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
