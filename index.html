@@ -475,7 +475,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v73 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v74 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🔒 Lock in: tap "Lock in" on one of your icons to keep it in its section (🐒 Monke icons or 🎲 Off topic) for good. After that you can't move it, and only an admin can unlock it.</li>
+   <li>Admins can force lock anyone's icon so the person who shared it can't move it, and only admins can force unlock.</li>
+   <li>Only the person who shared the icon and admins can see that it's locked.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The "Move" button is hidden on your icons while they're locked in.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v73<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎬 Video thumbnail maker: tap "Make a video thumbnail" under the download button. It makes a 1280 × 720 YouTube thumbnail with your monke, big outlined text and either your icon's background or a screenshot from your video.</li>
@@ -2455,6 +2471,14 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // 🎲 Off topic: icons that aren't Gorilla Tag monkes have their own section. Needs supabase/update-16-off-topic.sql;
  // until that's been run, the gallery shows everything together like before.
  let offTopicOn=true,topic='monke';
+ // 🔒 Locks: private (only the icon's owner and admins can read them), so only they see the badge
+ let lockOn=true;const locks=new Map();
+ async function loadLocks(ids){
+  if(!me||!lockOn||!offTopicOn||!ids.length)return;
+  const {data,error}=await sb.from('post_locks').select('post_id,by_admin').in('post_id',ids);
+  if(error){if(/post_locks/i.test(error.message||''))lockOn=false;return}
+  ids.forEach(i=>locks.delete(i));(data||[]).forEach(r=>locks.set(r.post_id,r));
+ }
  const noOffTopicYet=e=>e&&/off_topic|set_post_topic/i.test(e.message||'')&&(offTopicOn=false,true);
  let remixOn=true,remixSource=null;
  const noRemixYet=e=>e&&/design|remix|relationship/i.test(e.message||'')&&(remixOn=false,true); // if anything about Remix isn't ready, carry on without it
@@ -2744,7 +2768,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
   if(noPicsYet(error)||noOffTopicYet(error)||noRemixYet(error)||noLikesYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
-  await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));if(id!==loadId)return;
+  await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));await loadLocks(data.map(p=>p.id));if(id!==loadId)return;
   $('galSort').hidden=!likesOn||tab!=='all';$('galTopic').hidden=!offTopicOn||tab==='reported';$('shareTopicRow').hidden=!offTopicOn;
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
   status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+'';
@@ -3021,10 +3045,25 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
   if(commentsOn){const n=cCounts.get(p.id)||0,cb=btn('💬 '+(n||'Comment'),()=>openComments(p));cb.title='Comments';cBtns.set(p.id,cb)}
   if(p.design&&typeof p.design==='object'){const rb=btn('🎨 Remix',()=>remix(p,pr));rb.title='Load this design into the editor so you can make it your own'}
-  if((mine||admin)&&offTopicOn){const mb=btn(p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic',async()=>{mb.disabled=true;
-   const {data:ok,error}=await sb.rpc('set_post_topic',{p_post:p.id,p_off:!p.off_topic});mb.disabled=false;if(error||!ok)return alert(error?friendly(error):"Couldn't move that icon.");
-   p.off_topic=!p.off_topic;if(tab!=='reported'){card.remove();cardRefs.delete(p.id);emptyStatus();toast(p.off_topic?'🎲 Moved to Off topic.':'🐒 Moved to Monke icons.')}else{mb.textContent=p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic'}});
-   mb.title=p.off_topic?'Move this icon back to the main gallery':'Move this icon to the Off topic section (for things that aren\'t Gorilla Tag monkes)'}
+  if((mine||admin)&&offTopicOn){
+   const lk=locks.get(p.id),where=()=>p.off_topic?'🎲 Off topic':'🐒 Monke icons';let mb=null,badge=null;
+   if(lk){badge=el('div','premix lockbadge','🔒 Locked in '+where()+(lk.by_admin?(mine?' by an admin':' (force locked)'):''));
+    badge.title=admin?'Only you and the person who shared it can see this.':'Only you and admins can see this. Only an admin can unlock it.';body.appendChild(badge)}
+   if(!lk||admin){mb=btn(p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic',async()=>{mb.disabled=true;
+    const {data:ok,error}=await sb.rpc('set_post_topic',{p_post:p.id,p_off:!p.off_topic});mb.disabled=false;if(error||!ok)return alert(error?friendly(error):"Couldn't move that icon. It might be locked in.");
+    p.off_topic=!p.off_topic;if(tab!=='reported'){card.remove();cardRefs.delete(p.id);emptyStatus();toast(p.off_topic?'🎲 Moved to Off topic.':'🐒 Moved to Monke icons.')}else{mb.textContent=p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic';if(badge)badge.textContent=badge.textContent.replace(/🎲 Off topic|🐒 Monke icons/,where())}});
+    mb.title=p.off_topic?'Move this icon back to the main gallery':'Move this icon to the Off topic section (for things that aren\'t Gorilla Tag monkes)'}
+   if(lockOn&&me){
+    const setLock=async(on,b)=>{b.disabled=true;const {data:ok,error}=await sb.rpc('set_post_lock',{p_post:p.id,p_lock:on});b.disabled=false;
+     if(error||!ok)return alert(error?friendly(error):on?"Couldn't lock that icon.":'Only admins can unlock icons.');
+     if(on)locks.set(p.id,{post_id:p.id,by_admin:!mine});else locks.delete(p.id);
+     card.replaceWith(postCard(p));toast(on?'🔒 Locked in '+where()+'.':'🔓 Unlocked.')};
+    if(!lk){const lb=btn(mine?'🔒 Lock in':'🔒 Force lock',()=>{
+      if(!confirm(mine?'Lock this icon in '+where()+'?\n\nYou won\'t be able to move it after this. Only an admin can unlock it.':'Force lock this icon in '+where()+'?\n\nThe person who shared it won\'t be able to move it until an admin unlocks it.'))return;setLock(true,lb)});
+     lb.title=mine?'Keep this icon in '+where()+' for good':'Stop the person who shared it from moving it'}
+    else if(admin){const ub=btn('🔓 Force unlock',()=>{if(confirm('Unlock this icon so the person who shared it can move it again?'))setLock(false,ub)});ub.title='Admins only'}
+   }
+  }
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
    const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p)]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
