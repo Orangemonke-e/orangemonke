@@ -452,7 +452,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v71 <span class="tag new">New</span><span class="date">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v72 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>🔔 Fixed the update notification in the bell list staying new forever and always saying "just now". It now goes away once you've opened the list and shows when it really came out.</li>
+   <li>Fixed the date on the v71 update note.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v71<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🔔 Notifications list: tap the bell at the top of the page to see who liked or commented on your icons, replied to you or followed you, plus the newest update. It works on every device, including computers that don't get push notifications.</li>
@@ -2416,7 +2431,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    // the newest update note
    const rel=document.querySelector('#update-notes .release');
    if(rel){const v=rel.querySelector('summary').firstChild.textContent.trim(),d=Date.parse((rel.querySelector('.date')||{}).textContent||''),li=[...rel.querySelectorAll('li')].find(l=>!/^Nothing /.test(l.textContent.trim()));
-    if(v&&isFinite(d))out.push({id:'u'+v,t:new Date(d).toISOString(),kind:'update',v,text:li?li.textContent.replace(/\s+/g,' ').trim():''})}
+    if(v&&isFinite(d)){ // the note only has a day, so use the moment this browser first saw the update if that's earlier (never a time in the future)
+     let first=Date.now();try{const k='mim_update_first_'+v,f=+localStorage.getItem(k);if(f)first=f;else localStorage.setItem(k,String(first))}catch(e){}
+     out.push({id:'u'+v,t:new Date(Math.min(d,first)).toISOString(),kind:'update',v,text:li?li.textContent.replace(/\s+/g,' ').trim():''})}}
    const seen=new Set();inboxRows=out.filter(x=>x.kind==='update'||(x.who&&!x.who.banned)).sort((a,b)=>b.t<a.t?-1:b.t>a.t?1:(a.kind==='reply'?-1:1))
     .filter(x=>!seen.has(x.id)&&seen.add(x.id)).slice(0,INBOX_MAX); // a reply on your icon shows once, as a reply
    inboxBadge();if(!$('inboxPop').hidden)renderInbox();
