@@ -3,8 +3,9 @@
 //  1. Update notifications: an admin sends a message to every device that turned notifications on
 //     (the device list comes from admin_push_targets(), which checks the caller is an admin).
 //  2. Comment notifications ({ type: 'comment', comment_id }): right after someone posts a comment, their browser asks
-//     this function to tell the icon's owner and the other commenters. claim_comment_notification() checks the caller
-//     wrote that comment and that it hasn't been announced yet; the device list is then read with the service key.
+//     this function to tell the icon's owner, the other commenters, and (for a reply) the person replied to.
+//     claim_comment_notification() checks the caller wrote that comment and that it hasn't been announced yet; the
+//     device list is then read with the service key.
 //  3. Follower notifications ({ type: 'follow', followee_id }): right after someone follows a person, their browser asks
 //     this function to tell that person. claim_follow_notification() checks the follow is real and new (at most one
 //     notice a day per pair); the device list is then read with the service key.
@@ -152,7 +153,8 @@ async function handleComment(req: Request, env: (k: string) => string | undefine
   await Promise.all(targets.map(async (s) => {
     // Like a messaging app: the icon in the title, and "Name: comment" in the message, so it's always clear who said it.
     const icon = s.post_title ? `"${s.post_title}"` : '';
-    const title = s.kind === 'owner' ? `💬 New comment on your icon${icon ? ' ' + icon : ''}` : `💬 New comment on ${icon || 'an icon you commented on'}`;
+    const title = s.kind === 'reply' ? `↩️ ${s.author_name} replied to you${icon ? ' on ' + icon : ''}`
+      : s.kind === 'owner' ? `💬 New comment on your icon${icon ? ' ' + icon : ''}` : `💬 New comment on ${icon || 'an icon you commented on'}`;
     const text = `${s.author_name}: ${s.body}`;
     const message = { title: title.slice(0, 80), body: text.slice(0, 160), url: `${site}?comments=${s.post_id}`, tag: `monke-comments-${s.post_id}` };
     try { const status = await sendPush(s, message, vapid); if (status >= 200 && status < 300) sent++; else if ([400, 404, 410].includes(status)) gone.push(s.endpoint); } catch { /* skip */ }

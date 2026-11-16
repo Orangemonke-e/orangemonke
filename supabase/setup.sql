@@ -380,10 +380,12 @@ create policy "Delete your comments, comments on your icons, or any as admin" on
          or exists (select 1 from public.posts p where p.id = post_id and p.user_id = auth.uid()));
 revoke all on public.comments from anon, authenticated;
 grant select on public.comments to anon, authenticated;
-grant insert (post_id, body) on public.comments to authenticated;
+-- Replies: a comment can say which comment it answers. If that one is deleted, the reply stays.
+alter table public.comments add column if not exists reply_to uuid references public.comments(id) on delete set null;
+grant insert (post_id, body, reply_to) on public.comments to authenticated;
 grant delete on public.comments to authenticated;
 
--- Bad words, length and spam checks.
+-- Bad words, length and spam checks. A reply must be to a comment on the same icon.
 create or replace function public.check_comment() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -393,6 +395,9 @@ begin
   end if;
   if (select count(*) from public.comments where user_id = new.user_id and created_at > now() - interval '1 hour') >= 30 then
     raise exception 'You can post up to 30 comments an hour. Try again later.';
+  end if;
+  if new.reply_to is not null and not exists (select 1 from public.comments where id = new.reply_to and post_id = new.post_id) then
+    raise exception 'That comment isn''t there any more.';
   end if;
   return new;
 end $$;
@@ -529,17 +534,21 @@ begin
   return coalesce(ok, false);
 end $$;
 
--- Step 2 (sender function only): which devices to notify, and what to say.
+-- Step 2 (sender function only): which devices to notify, and what to say. Each person gets one notification: "replied to
+-- you" beats "comment on your icon", which beats "comment on an icon you commented on". Never about your own comment.
 create or replace function public.comment_push_targets(p_comment uuid)
 returns table (endpoint text, p256dh text, auth_secret text, kind text, author_name text, post_title text, body text, post_id uuid)
 language sql stable security definer set search_path = public as $$
   with c as (select * from public.comments where id = p_comment),
        p as (select posts.* from public.posts join c on posts.id = c.post_id),
        who as (
-         select p.user_id as uid, 'owner'::text as kind from p, c where p.user_id <> c.user_id
-         union
-         select distinct cm.user_id, 'thread' from public.comments cm, c, p
-          where cm.post_id = c.post_id and cm.id <> c.id and cm.user_id <> c.user_id and cm.user_id <> p.user_id
+         select distinct on (uid) uid, kind from (
+           select r.user_id as uid, 'reply'::text as kind, 1 as rank from public.comments r, c where r.id = c.reply_to and r.user_id <> c.user_id
+           union all
+           select p.user_id, 'owner', 2 from p, c where p.user_id <> c.user_id
+           union all
+           select cm.user_id, 'thread', 3 from public.comments cm, c where cm.post_id = c.post_id and cm.id <> c.id and cm.user_id <> c.user_id
+         ) x order by uid, rank
        )
   select s.endpoint, s.p256dh, s.auth_secret, who.kind,
          (select display_name from public.profiles where id = c.user_id), coalesce(p.title, ''), c.body, c.post_id

@@ -149,6 +149,9 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .cm-list{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 2px;min-height:90px}
 .cm{display:flex;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}.cm:last-child{border-bottom:0}.cm .avatar{width:32px;height:32px}
 .cm-main{flex:1;min-width:0}.cm-who{font-size:13px;font-weight:650}.cm-who small{font-weight:400;color:var(--muted);margin-left:6px}
+.cm-quote{font-size:12px;color:var(--muted);border-left:3px solid var(--accent);padding:2px 8px;margin:4px 0 2px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}.cm-quote:hover{color:var(--text)}.cm-quote b{font-weight:650}
+.cm.flash{background:color-mix(in srgb,var(--accent) 18%,transparent);transition:background .3s}.cm{transition:background 1s}
+.cm-replying{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);background:var(--panel2);border-left:3px solid var(--accent);border-radius:8px;padding:4px 4px 4px 10px;margin-bottom:6px}.cm-replying[hidden]{display:none}.cm-replying span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cm-replying .btn{padding:3px 8px;font-size:11px}
 .cm-body{font-size:14px;margin:3px 0 4px;white-space:pre-wrap;overflow-wrap:anywhere}.cm-act{display:flex;gap:6px;flex-wrap:wrap}.cm-act .btn{padding:3px 8px;font-size:11px}
 .cm.is-hidden{opacity:.7}.cm-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
 .cm-form{border-top:1px solid var(--line);padding-top:10px}.cm-form textarea{width:100%;resize:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;outline:none}
@@ -372,7 +375,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  <div class="install-card cm-card">
   <div class="cm-head"><img id="cmImg" alt=""><div class="cm-info"><h2 id="cmTitle"></h2><div class="cm-by" id="cmBy"></div></div><button type="button" class="btn small" id="cmClose" aria-label="Close comments">✕</button></div>
   <div class="cm-list" id="cmList"></div>
-  <form class="cm-form" id="cmForm" hidden><textarea id="cmText" maxlength="200" rows="2" placeholder="Write a comment… Be kind!"></textarea>
+  <form class="cm-form" id="cmForm" hidden><div class="cm-replying" id="cmReplying" hidden><span id="cmReplyTxt"></span><button type="button" class="btn small" id="cmReplyX" aria-label="Cancel reply">✕</button></div><textarea id="cmText" maxlength="200" rows="2" placeholder="Write a comment… Be kind!"></textarea>
    <div class="cm-row"><span class="hint" id="cmCount">0/200</span><button type="submit" class="btn small primary" id="cmSend">💬 Post</button></div><div class="note" id="cmMsg"></div></form>
   <div class="cm-signin" id="cmSignin" hidden><span>Sign in to join the conversation.</span><button type="button" class="btn small primary" id="cmSigninBtn">Sign in / Create account</button></div>
  </div>
@@ -395,7 +398,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v62 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v63 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>↩ Reply to comments: tap Reply under any comment. Your reply shows who and what you're answering. Tap that to jump to the original comment.</li>
+   <li>🔔 Reply notifications: when someone replies to your comment, you get “↩ Name replied to you”, with their reply in the message.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Each person now gets one notification per comment. A reply to you shows as a reply, not as a plain new comment.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v62<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>📺 Matching channel banner: tap “Make a matching channel banner” under the Download button to turn your icon into a 2560 × 1440 YouTube banner with the same monke, outfit and background.</li>
@@ -2199,7 +2217,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  // ── Comments: up to 200 characters, through the bad word filter. Needs supabase/update-7-comments.sql;
  // until that's been run, the comment buttons just don't show. ──
- let commentsOn=true,cmPost=null,cmReported=new Set();const cCounts=new Map(),cBtns=new Map();
+ let commentsOn=true,repliesOn=true,cmPost=null,cmReported=new Set(),cmReplyTo=null;const cmById=new Map();const cCounts=new Map(),cBtns=new Map();
  async function loadCommentCounts(ids){
   if(!commentsOn||!ids.length)return;
   const {data,error}=await sb.from('comment_counts').select('post_id,n').in('post_id',ids);
@@ -2207,9 +2225,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   ids.forEach(i=>cCounts.set(i,0));data.forEach(r=>cCounts.set(r.post_id,r.n));
  }
  const setCount=(postId,d)=>{const n=Math.max(0,(cCounts.get(postId)||0)+d);cCounts.set(postId,n);const b=cBtns.get(postId);if(b)b.textContent='💬 '+(n||'Comment')};
- const cmFields=()=>'id,body,created_at,user_id,hidden,report_count,profiles!comments_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'banned)';
+ const cmFields=()=>'id,body,created_at,user_id,hidden,report_count,'+(repliesOn?'reply_to,':'')+'profiles!comments_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'banned)';
  async function openComments(p){
-  cmPost=p;const pr=p.profiles||{display_name:'Unknown',username:'unknown'};
+  cmPost=p;cmById.clear();setReply(null);const pr=p.profiles||{display_name:'Unknown',username:'unknown'};
   $('cmImg').src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;$('cmTitle').textContent=p.title||'Monke icon';
   $('cmBy').textContent='by '+pr.display_name+' · @'+pr.username;
   $('cmForm').hidden=!me;$('cmSignin').hidden=!!me;$('cmMsg').textContent=profile&&profile.banned?'Your account has been banned from commenting.':'';$('cmSend').disabled=!!(profile&&profile.banned);
@@ -2217,7 +2235,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const [{data,error},mine]=await Promise.all([
    sb.from('comments').select(cmFields()).eq('post_id',p.id).order('created_at',{ascending:true}).limit(300),
    me?sb.from('comment_reports').select('comment_id').eq('reporter_id',me.id):Promise.resolve({data:[]})]);
-  if(cmPost!==p)return;cmReported=new Set((mine.data||[]).map(r=>r.comment_id));
+  if(cmPost!==p)return;
+  if(error&&repliesOn&&/reply_to/i.test(error.message||'')){repliesOn=false;return openComments(p)} // replies SQL (update-15) not run yet
+  cmReported=new Set((mine.data||[]).map(r=>r.comment_id));
   list.innerHTML='';if(error){list.appendChild(el('div','cm-empty',friendly(error)));return}
   data.forEach(c=>list.appendChild(commentRow(c)));emptyCheck();list.scrollTop=list.scrollHeight;
  }
@@ -2226,9 +2246,16 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const pr=c.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&c.user_id===me.id,admin=profile&&profile.is_admin,ownsPost=me&&cmPost&&cmPost.user_id===me.id;
   const row=el('div','cm'+(c.hidden?' is-hidden':''));row.dataset.id=c.id;row.appendChild(avatarImg(pr.avatar_path));
   const main=el('div','cm-main'),who=el('div','cm-who linkish',pr.display_name);who.title='See '+pr.display_name+'\'s profile';who.onclick=()=>openProfile(c.user_id);who.appendChild(el('small',null,'@'+pr.username+' · '+ago(c.created_at)));main.appendChild(who);
+  cmById.set(c.id,{name:pr.display_name,body:c.body});
+  // ↩ A reply shows who and what it's answering. Tap it to jump to that comment.
+  if(c.reply_to){const o=cmById.get(c.reply_to),q=el('div','cm-quote');
+   if(o){q.appendChild(document.createTextNode('↩ Replying to '));q.appendChild(el('b',null,o.name));q.appendChild(document.createTextNode(': '+o.body))}else q.textContent='↩ Replying to a comment';
+   q.title='Show the comment this replies to';q.onclick=()=>{const t=$('cmList').querySelector(`.cm[data-id="${c.reply_to}"]`);if(!t)return;t.scrollIntoView({behavior:'smooth',block:'center'});t.classList.add('flash');setTimeout(()=>t.classList.remove('flash'),1200)};
+   main.appendChild(q)}
   main.appendChild(el('div','cm-body',c.body));
   if((admin||mine)&&c.report_count>0)main.appendChild(el('div','flag',(c.hidden?'Hidden · ':'')+c.report_count+(c.report_count===1?' report':' reports')));
   const act=el('div','cm-act');const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
+  if(me&&repliesOn&&!(profile&&profile.banned))btn('↩ Reply',()=>setReply(c.id,pr.display_name));
   if(mine||admin||ownsPost)btn('🗑 Delete',async()=>{if(!confirm('Delete this comment?'))return;const {error}=await sb.from('comments').delete().eq('id',c.id);
    if(error)return alert(friendly(error));row.remove();setCount(cmPost.id,-1);emptyCheck()});
   if(me&&!mine){const done=cmReported.has(c.id),rb=btn(done?'Reported':'🚩 Report',async()=>{if(!confirm('Report this comment as mean or inappropriate?'))return;rb.disabled=true;
@@ -2236,7 +2263,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(admin&&c.report_count>0)btn('✓ Restore',async()=>{const {error}=await sb.rpc('admin_restore_comment',{target:c.id});if(error)return alert(friendly(error));openComments(cmPost)});
   if(act.children.length)main.appendChild(act);row.appendChild(main);return row;
  }
- const closeComments=()=>{$('cmPop').hidden=true;cmPost=null};
+ function setReply(id,name){cmReplyTo=id;$('cmReplying').hidden=!id;$('cmText').placeholder=id?'Reply to '+name+'…':'Write a comment… Be kind!';
+  if(id){$('cmReplyTxt').textContent='↩ Replying to '+name;$('cmText').focus()}}
+ $('cmReplyX').onclick=()=>setReply(null);
+ const closeComments=()=>{$('cmPop').hidden=true;cmPost=null;setReply(null)};
  $('cmClose').onclick=closeComments;$('cmPop').addEventListener('click',e=>{if(e.target===$('cmPop'))closeComments()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('cmPop').hidden&&$('acctPop').hidden)closeComments()});
  $('cmSigninBtn').onclick=()=>openAcct('in');
@@ -2247,10 +2277,11 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   send.disabled=true;msg.textContent='';
   try{
    if(await badWords(text)){msg.textContent="That comment has a word that isn't allowed. Try saying it differently.";return}
-   const {data,error}=await sb.from('comments').insert({post_id:cmPost.id,body:text}).select(cmFields()).single();
+   const row={post_id:cmPost.id,body:text};if(cmReplyTo)row.reply_to=cmReplyTo;
+   const {data,error}=await sb.from('comments').insert(row).select(cmFields()).single();
    if(error){msg.textContent=friendly(error);return}
-   sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'comment',comment_id:data.id,url:location.href}}).catch(()=>{}); // tell the owner and other commenters
-   $('cmText').value='';$('cmCount').textContent='0/200';const list=$('cmList');list.appendChild(commentRow(data));emptyCheck();list.scrollTop=list.scrollHeight;setCount(cmPost.id,1);
+   sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'comment',comment_id:data.id,url:location.href}}).catch(()=>{}); // tell the owner, other commenters and who you replied to
+   setReply(null);$('cmText').value='';$('cmCount').textContent='0/200';const list=$('cmList');list.appendChild(commentRow(data));emptyCheck();list.scrollTop=list.scrollHeight;setCount(cmPost.id,1);
   }finally{send.disabled=!!(profile&&profile.banned)}
  });
  // ── 📣 Admin: send an update notification to everyone who turned them on (through the notify-update function) ──
