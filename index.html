@@ -438,14 +438,28 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v69 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v70 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing new added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>🐛 Loading a preset without pictures now removes the items, background picture and monke base from the preset you had before. That includes presets saved before v69. Before, they stayed on your icon.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v69<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>💾 Presets now save your pictures too: your own items (with where they sit, their size, rotation, flip and layer order), an uploaded background, and an uploaded monke base with its colour setup.</li>
   </ul>
   <h3>Changed</h3>
   <ul>
-   <li>Loading a new preset swaps in its pictures, and removes pictures it didn't have. Presets saved before this update leave your current pictures alone.</li>
+   <li>Loading a preset swaps in its pictures, and removes any pictures it didn't have.</li>
    <li>Deleting a preset also deletes its saved pictures from this browser.</li>
   </ul>
   <h3>Removed</h3>
@@ -2058,7 +2072,7 @@ function renderPresets(){
  });
 }
 // 🖼️ Preset pictures (your items, uploaded background, uploaded monke base) are too big for localStorage, so they go
-// in IndexedDB, keyed by the preset's id. A preset with files:{} had no pictures; old presets have no "files" at all.
+// in IndexedDB, keyed by the preset's id. A preset with files:{} (or saved before this existed) has no pictures.
 const PDB={db:null,open(){return this.db||(this.db=new Promise((ok,bad)=>{try{const r=indexedDB.open('mim_preset_files',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error)}catch(e){bad(e)}}))},
  async run(mode,f){const db=await this.open();return new Promise((ok,bad)=>{const tx=db.transaction('files',mode),st=tx.objectStore('files');const r=f(st);tx.oncomplete=()=>ok(r&&r.result);tx.onerror=()=>bad(tx.error);tx.onabort=()=>bad(tx.error)})},
  put(k,v){return this.run('readwrite',st=>st.put(v,k))},get(k){return this.run('readonly',st=>st.get(k))},del(k){return this.run('readwrite',st=>st.delete(k)).catch(()=>{})}};
@@ -2075,8 +2089,8 @@ async function presetFiles(){
 }
 const blobImg=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const u=URL.createObjectURL(b),im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=u});
 async function loadPresetFiles(p){
- if(!p.files)return; // made before presets kept pictures: leave your current pictures alone
- let f=null;if(Object.keys(p.files).length)try{f=await PDB.get(p.id)}catch(e){}
+ // A preset brings back exactly its own pictures. One without any (or saved before presets kept pictures) clears them.
+ let f=null;if(p.files&&Object.keys(p.files).length)try{f=await PDB.get(p.id)}catch(e){}
  f=f||{};
  // monke base
  const base=await blobImg(f.base);
