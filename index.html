@@ -479,7 +479,8 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <h3>Added</h3>
   <ul>
    <li>🔒 Lock in: tap "Lock in" on one of your icons to keep it in its section (🐒 Monke icons or 🎲 Off topic) for good. After that you can't move it, and only an admin can unlock it.</li>
-   <li>Admins can force lock anyone's icon so the person who shared it can't move it, and only admins can force unlock.</li>
+   <li>When an admin moves someone's icon to 🎲 Off topic (or back to 🐒 Monke icons), it's locked there automatically, so it can't be moved back.</li>
+   <li>Admins can also force lock anyone's icon without moving it, and only admins can force unlock.</li>
    <li>Only the person who shared the icon and admins can see that it's locked.</li>
   </ul>
   <h3>Changed</h3>
@@ -3049,10 +3050,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const lk=locks.get(p.id),where=()=>p.off_topic?'🎲 Off topic':'🐒 Monke icons';let mb=null,badge=null;
    if(lk){badge=el('div','premix lockbadge','🔒 Locked in '+where()+(lk.by_admin?(mine?' by an admin':' (force locked)'):''));
     badge.title=admin?'Only you and the person who shared it can see this.':'Only you and admins can see this. Only an admin can unlock it.';body.appendChild(badge)}
-   if(!lk||admin){mb=btn(p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic',async()=>{mb.disabled=true;
+   const autoLock=admin&&!mine&&lockOn,mvLabel=()=>(p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic')+(autoLock?' & lock':'');
+   if(!lk||admin){mb=btn(mvLabel(),async()=>{
+    if(autoLock&&!confirm('Move this icon to '+(p.off_topic?'🐒 Monke icons':'🎲 Off topic')+' and lock it there?\n\nThe person who shared it won\'t be able to move it back. You can force unlock it later.'))return;mb.disabled=true;
     const {data:ok,error}=await sb.rpc('set_post_topic',{p_post:p.id,p_off:!p.off_topic});mb.disabled=false;if(error||!ok)return alert(error?friendly(error):"Couldn't move that icon. It might be locked in.");
-    p.off_topic=!p.off_topic;if(tab!=='reported'){card.remove();cardRefs.delete(p.id);emptyStatus();toast(p.off_topic?'🎲 Moved to Off topic.':'🐒 Moved to Monke icons.')}else{mb.textContent=p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic';if(badge)badge.textContent=badge.textContent.replace(/🎲 Off topic|🐒 Monke icons/,where())}});
-    mb.title=p.off_topic?'Move this icon back to the main gallery':'Move this icon to the Off topic section (for things that aren\'t Gorilla Tag monkes)'}
+    p.off_topic=!p.off_topic;if(autoLock)locks.set(p.id,{post_id:p.id,by_admin:true});
+    if(tab!=='reported'){card.remove();cardRefs.delete(p.id);emptyStatus();toast((p.off_topic?'🎲 Moved to Off topic':'🐒 Moved to Monke icons')+(autoLock?' and locked there.':'.'))}else card.replaceWith(postCard(p))});
+    mb.title=autoLock?'Move it and lock it there, so the person who shared it can\'t move it back':p.off_topic?'Move this icon back to the main gallery':'Move this icon to the Off topic section (for things that aren\'t Gorilla Tag monkes)'}
    if(lockOn&&me){
     const setLock=async(on,b)=>{b.disabled=true;const {data:ok,error}=await sb.rpc('set_post_lock',{p_post:p.id,p_lock:on});b.disabled=false;
      if(error||!ok)return alert(error?friendly(error):on?"Couldn't lock that icon.":'Only admins can unlock icons.');

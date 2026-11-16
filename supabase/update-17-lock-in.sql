@@ -4,6 +4,7 @@
 --
 -- The person who shared an icon can lock it in, so it stays where it is. An admin can force lock anyone's icon.
 -- Only an admin can unlock. While an icon is locked, only an admin can move it.
+-- When an admin moves someone else's icon, it's force locked in its new section automatically.
 -- Locks are private: only the icon's owner and admins can see them.
 
 create table if not exists public.post_locks (
@@ -40,16 +41,22 @@ revoke execute on function public.set_post_lock(uuid, boolean) from public, anon
 grant execute on function public.set_post_lock(uuid, boolean) to authenticated;
 
 -- Moving an icon: the owner (unless it's locked) or an admin.
+-- When an admin moves someone else's icon, it's force locked there, so they can't move it back.
 create or replace function public.set_post_topic(p_post uuid, p_off boolean) returns boolean
 language plpgsql security definer set search_path = public as $$
-declare ok boolean;
+declare owner uuid;
 begin
   if auth.uid() is null or public.is_banned() then return false; end if;
   update public.posts set off_topic = coalesce(p_off, false)
    where id = p_post
      and (public.is_admin() or (user_id = auth.uid() and not exists (select 1 from public.post_locks l where l.post_id = p_post)))
-  returning true into ok;
-  return coalesce(ok, false);
+  returning user_id into owner;
+  if owner is null then return false; end if;
+  if owner <> auth.uid() then
+    insert into public.post_locks (post_id, by_admin) values (p_post, true)
+      on conflict (post_id) do update set by_admin = true;
+  end if;
+  return true;
 end $$;
 revoke execute on function public.set_post_topic(uuid, boolean) from public, anon;
 grant execute on function public.set_post_topic(uuid, boolean) to authenticated;
