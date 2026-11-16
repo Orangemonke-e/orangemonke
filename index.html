@@ -56,6 +56,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .item-results button{aspect-ratio:1;padding:5px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .item-results button:hover{border-color:var(--accent);transform:translateY(-1px)}.item-results button:disabled{opacity:.5;cursor:wait}
 .item-results img{width:100%;height:100%;object-fit:contain;pointer-events:none}.item-results .photo img{object-fit:cover;border-radius:6px}
+.layer-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.layer-row{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 10px;border:1px solid var(--line);border-radius:11px;background:var(--panel2);font-size:13px;font-weight:600}
+.layer-row.sel{border-color:var(--accent)}.layer-row img{width:28px;height:28px;object-fit:contain;border-radius:6px;background:repeating-conic-gradient(#8883 0 25%,transparent 0 50%) 0 0/10px 10px}
+.layer-row .ln{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.layer-row .lpos{font-size:11px;color:var(--muted);font-weight:500}
+.layer-row .btn{padding:4px 10px;font-size:13px}.layer-row .btn:disabled{opacity:.35;cursor:default;transform:none}
 .toggle{display:flex;align-items:center;gap:9px;font-size:12px;color:#c7cad4;margin-top:12px}.toggle input{accent-color:var(--accent)}
 .notes{max-width:1180px;margin:0 auto;padding:0 20px 36px}
 .notes-box{background:#171922cc;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 55px #0004;padding:20px 22px}
@@ -319,6 +324,11 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   </div>
   <div class="note">Items stay in this browser session. They aren't saved in presets.</div>
  </div>
+ <div class="section"><h2>🗂️ Layers</h2>
+  <div class="note" style="margin-top:0">Choose what's in front of what. The top of the list is at the front. Use ▲ and ▼ to move a layer.</div>
+  <div id="layerList" class="layer-list"></div>
+  <button type="button" class="btn small" id="layerReset" style="margin-top:8px">↺ Normal order</button>
+ </div>
  <div class="section"><h2>✨ Finishing touches</h2>
   <div class="field"><label for="outline">Outline thickness <span id="outlineVal">0</span></label><input id="outline" type="range" min="0" max="18" value="0"></div>
   <div class="field" style="margin-top:12px"><label for="outlineColor">Outline colour</label><input id="outlineColor" type="color" value="#ffffff"></div>
@@ -425,7 +435,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v65 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v66 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🗂️ Layers: a new section that lists every part of your icon: the monke, banana, hat, bandana, badge, dog and your own items. The top of the list is at the front.</li>
+   <li>Use ▲ and ▼ to move any layer in front of or behind the others. For example, put the dog behind the monke, the banana over the crown, or a halo behind the head.</li>
+   <li>“↺ Normal order” puts everything back. Your layer order is saved in presets, design links, remixes and gallery posts, and Undo works on it too.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The item “Layer” option still works: “Behind the monke” sends the item to the very back, and “In front of the monke” brings it to the very front.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v65<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing new added in this update.</li>
@@ -1266,7 +1292,7 @@ function hex(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),pars
 let items=[],selItem=null,itemSeq=0;
 const itemH=it=>it.size*(it.img.naturalHeight||it.img.height)/(it.img.naturalWidth||it.img.width);
 const itemsKey=()=>items.map(i=>[i.id,i.x|0,i.y|0,i.size|0,i.rot|0,i.behind?1:0,i.flip?1:0].join(',')).join(';');
-function drawItems(c,behind){for(const it of items){if(it.behind!==behind)continue;const w=it.size,h=itemH(it);
+function drawItem(c,it){{const w=it.size,h=itemH(it);
  c.save();c.translate(it.x,it.y);c.rotate(it.rot*Math.PI/180);c.scale(it.flip?-1:1,1);c.drawImage(it.img,-w/2,-h/2,w,h);c.restore()}}
 function placeItemBox(){
  const box=document.getElementById('itemBox');if(!selItem){box.hidden=true;return}
@@ -1275,8 +1301,8 @@ function placeItemBox(){
 }
 function canvasPoint(e){const r=canvas.getBoundingClientRect();return[(e.clientX-r.left)*1024/r.width,(e.clientY-r.top)*1024/r.height]}
 function itemAt(x,y){
- const order=[...items.filter(i=>!i.behind),...items.filter(i=>i.behind)].reverse();
- order.sort((a,b)=>(a.behind?1:0)-(b.behind?1:0));
+ // front-most first, following the layer order
+ const order=fullOrder().filter(k=>k.startsWith('item:')).reverse().map(k=>items.find(i=>'item:'+i.id===k)).filter(Boolean);
  for(const it of order){const a=-it.rot*Math.PI/180,dx=x-it.x,dy=y-it.y,lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a);
   if(Math.abs(lx)<=it.size/2&&Math.abs(ly)<=itemH(it)/2)return it}
  return null;
@@ -1371,7 +1397,10 @@ document.getElementById('itemUpload').addEventListener('change',e=>{
 })();
 document.getElementById('itemSize').addEventListener('input',e=>{if(!selItem)return;selItem.size=+e.target.value;document.getElementById('itemSizeVal').textContent=Math.round(selItem.size/10.24)+'%';draw()});
 document.getElementById('itemRot').addEventListener('input',e=>{if(!selItem)return;selItem.rot=+e.target.value;document.getElementById('itemRotVal').textContent=selItem.rot+'°';draw()});
-document.getElementById('itemLayer').addEventListener('change',e=>{if(!selItem)return;selItem.behind=e.target.value==='behind';renderItemList();draw()});
+document.getElementById('itemLayer').addEventListener('change',e=>{if(!selItem)return;selItem.behind=e.target.value==='behind';
+ // with your own layer order, "behind" sends the item to the very back and "in front" brings it to the very front
+ if(layerOrder){const k='item:'+selItem.id,o=fullOrder().filter(x=>x!==k);if(selItem.behind)o.unshift(k);else o.push(k);layerOrder=o}
+ renderItemList();draw()});
 // ✨ Remove background: fills in from the picture's edges, making the background colour transparent until it reaches the item.
 // Parts inside the item that happen to match the background colour are kept, because the fill can't get to them.
 function removeBackground(src,strength){
@@ -1438,24 +1467,24 @@ function render(){
  const m=monkeLayer(img),hat=$('hat').value;
  // The monke and its accessories go on their own transparent layer, so the outline can follow the whole silhouette.
  figX.clearRect(0,0,1024,1024);
- drawItems(figX,true); // your own items set to "behind"
- if(hat==='catears'){figX.save();headFit(figX);drawLayer(catImg,CAT_BOX,false,figX);figX.restore()} // the ears sit behind the head
- figX.drawImage(m.canvas,m.dx,0,m.dw,1024);
- drawAccessories(figX);
- drawItems(figX,false);
+ const order=fullOrder();if(layerOrder)syncBehind(order);
+ for(const k of order)if(layerOn(k))drawPart(figX,k,m);
+ const haloFront=hat==='halo'&&order.indexOf('hat')>order.indexOf('monke');
  placeItemBox();
  ctx.clearRect(0,0,1024,1024);
  if(!$('transparent').checked)ctx.drawImage(bgLayer(),0,0);
  const thickness=+$('outline').value;
  if(thickness)ctx.drawImage(outlineLayer(thickness),0,0);
+ if(hat==='halo'&&!haloFront)drawHaloGlow(false); // a halo moved behind the monke glows from behind it
  ctx.drawImage(figC,0,0);
- if(hat==='halo')drawHaloGlow();
+ if(haloFront)drawHaloGlow(true);
  $('haloOpts').hidden=hat!=='halo';
  // Name tag: top-left of the torso, like the name on a gorilla's chest. Long names shrink to fit.
  const nm=$('name').value.trim();
  if(nm){ctx.save();const PF='"Press Start 2P",monospace';ctx.font='18px '+PF;const nw=ctx.measureText(nm).width,fs=nw>250?Math.max(9,Math.floor(18*250/nw)):18;
   ctx.font=fs+'px '+PF;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineJoin='miter';ctx.miterLimit=2;ctx.lineWidth=Math.max(4,Math.round(fs/3));ctx.strokeStyle='#151515';const nx=352+(isOrange()?ORANGE_BODY_DX:0);ctx.strokeText(nm,nx,908);ctx.fillStyle='#fff';ctx.fillText(nm,nx,908);ctx.restore()}
  updateNameHint();
+ renderLayers();
  drawYtMinis();
  if(bannerOn)scheduleBanner();
  if(afterRender)afterRender();
@@ -1523,36 +1552,88 @@ function drawLayer(im,box,flip,c){
  else c.drawImage(im,X,Y,W,H);
 }
 function headFit(c){if(isOrange()){const [k,x,y]=ORANGE_HEAD;c.translate(x,y);c.scale(k,k)}}
-function drawAccessories(c){
- const hat=$('hat').value,hc=$('hatColor').value;
- // Head centre is near x=512, y=470 in the square crop.
- // the top hat and cat ears replace the banana (Orangemonke wears its own banana peel)
- if($('banana').value==='show'&&hat!=='tophat'&&hat!=='catears'){if(isOrange())drawLayer(peelImg,PEEL_BOX,false,c);else drawLayer(bananaImg,BANANA_BOX,false,c)}
- c.save();headFit(c);c.lineCap='round';c.lineJoin='round';
- if(hat==='cap'){c.fillStyle=hc;c.beginPath();c.ellipse(512,358,128,34,0,Math.PI,Math.PI*2);c.lineTo(640,363);c.quadraticCurveTo(574,402,462,379);c.closePath();c.fill();c.fillStyle='#ffffff45';c.fillRect(508,324,7,34)}
- if(hat==='crown'){c.fillStyle=hc;c.strokeStyle='#5b4210';c.lineWidth=5;c.beginPath();c.moveTo(420,365);c.lineTo(434,292);c.lineTo(480,332);c.lineTo(512,270);c.lineTo(544,332);c.lineTo(590,292);c.lineTo(604,365);c.closePath();c.fill();c.stroke();c.fillStyle='#fff2a6';[444,512,580].forEach(x=>{c.beginPath();c.arc(x,350,8,0,7);c.fill()})}
- if(hat==='tophat')drawLayer(tophatImg,TOPHAT_BOX,false,c);
- if(hat==='horns'){c.fillStyle=hc;c.strokeStyle='#29202a';c.lineWidth=5;for(let x of [438,586]){c.beginPath();c.moveTo(x-25,365);c.quadraticCurveTo(x-42,290,x+3,278);c.quadraticCurveTo(x-4,333,x+27,365);c.closePath();c.fill();c.stroke()}}
- c.restore();c.save();
- if(hat==='halo'&&haloImg.naturalWidth)c.drawImage(haloTint($('haloColor').value),0,0); // already fitted to the head
- if(isOrange())c.translate(ORANGE_BODY_DX,0);
- if($('bandana').value==='asset')drawLayer(bandanaImg,BANDANA_BOX,false,c);
- const badge=$('fingerpainter').value;
- if(badge==='show')drawLayer(fpImg,FP_BOX,false,c);
- if(badge==='creator')drawLayer(creatorImg,CREATOR_BOX,false,c);
- if(badge==='camera')drawLayer(cameraImg,CAMERA_BOX,false,c);
- c.restore();c.save();
- // The dog stands next to the monke, in front of it.
- const dog=$('dog').value;
- if(dog==='right')drawLayer(dogImg,DOG_BOX_R,false,c);
- if(dog==='left')drawLayer(dogImg,DOG_BOX_L,true,c);
+// 🗂️ Layers: every part of the icon is a layer, drawn back to front. layerOrder is null for the normal order, or the
+// order you picked (built-in parts plus "item:<id>" for your own items).
+const BUILTIN_LAYERS=['monke','banana','hat','bandana','badge','dog'];
+let layerOrder=null;
+function layerOn(k){const hat=$('hat').value;
+ if(k==='monke')return true;
+ if(k==='banana')return $('banana').value==='show'&&hat!=='tophat'&&hat!=='catears'; // the top hat and cat ears replace the banana
+ if(k==='hat')return hat!=='none';
+ if(k==='bandana')return $('bandana').value==='asset';
+ if(k==='badge')return $('fingerpainter').value!=='none';
+ if(k==='dog')return $('dog').value!=='none';
+ return k.startsWith('item:')&&items.some(i=>'item:'+i.id===k);
+}
+// The normal order: items set to "behind", (cat ears sit behind the head), monke, banana, hat, bandana, badge, dog, items.
+function defaultOrder(){const hat=$('hat').value,its=b=>items.filter(i=>!!i.behind===b).map(i=>'item:'+i.id);
+ return [...its(true),...(hat==='catears'?['hat']:[]),'monke','banana',...(hat!=='catears'?['hat']:[]),'bandana','badge','dog',...its(false)]}
+function fullOrder(){
+ if(!layerOrder)return defaultOrder();
+ const have=new Set(items.map(i=>'item:'+i.id)),o=layerOrder.filter(k=>BUILTIN_LAYERS.includes(k)||have.has(k));
+ BUILTIN_LAYERS.forEach(k=>{if(!o.includes(k))o.push(k)});
+ items.forEach(i=>{const k='item:'+i.id;if(!o.includes(k)){if(i.behind)o.unshift(k);else o.push(k)}}); // new items go on top
+ return o;
+}
+function syncBehind(o){const mi=o.indexOf('monke');items.forEach(i=>{i.behind=o.indexOf('item:'+i.id)<mi})}
+function drawPart(c,k,m){
+ const hat=$('hat').value,hc=$('hatColor').value;c.save();
+ if(k==='monke')c.drawImage(m.canvas,m.dx,0,m.dw,1024);
+ // Orangemonke wears its own banana peel
+ else if(k==='banana'){if(isOrange())drawLayer(peelImg,PEEL_BOX,false,c);else drawLayer(bananaImg,BANANA_BOX,false,c)}
+ else if(k==='hat'){
+  if(hat==='halo'){if(haloImg.naturalWidth)c.drawImage(haloTint($('haloColor').value),0,0)} // already fitted to the head
+  else{headFit(c);c.lineCap='round';c.lineJoin='round';
+   if(hat==='catears')drawLayer(catImg,CAT_BOX,false,c);
+   if(hat==='cap'){c.fillStyle=hc;c.beginPath();c.ellipse(512,358,128,34,0,Math.PI,Math.PI*2);c.lineTo(640,363);c.quadraticCurveTo(574,402,462,379);c.closePath();c.fill();c.fillStyle='#ffffff45';c.fillRect(508,324,7,34)}
+   if(hat==='crown'){c.fillStyle=hc;c.strokeStyle='#5b4210';c.lineWidth=5;c.beginPath();c.moveTo(420,365);c.lineTo(434,292);c.lineTo(480,332);c.lineTo(512,270);c.lineTo(544,332);c.lineTo(590,292);c.lineTo(604,365);c.closePath();c.fill();c.stroke();c.fillStyle='#fff2a6';[444,512,580].forEach(x=>{c.beginPath();c.arc(x,350,8,0,7);c.fill()})}
+   if(hat==='tophat')drawLayer(tophatImg,TOPHAT_BOX,false,c);
+   if(hat==='horns'){c.fillStyle=hc;c.strokeStyle='#29202a';c.lineWidth=5;for(let x of [438,586]){c.beginPath();c.moveTo(x-25,365);c.quadraticCurveTo(x-42,290,x+3,278);c.quadraticCurveTo(x-4,333,x+27,365);c.closePath();c.fill();c.stroke()}}}}
+ else if(k==='bandana'||k==='badge'){if(isOrange())c.translate(ORANGE_BODY_DX,0);
+  if(k==='bandana')drawLayer(bandanaImg,BANDANA_BOX,false,c);
+  else{const badge=$('fingerpainter').value;
+   if(badge==='show')drawLayer(fpImg,FP_BOX,false,c);
+   if(badge==='creator')drawLayer(creatorImg,CREATOR_BOX,false,c);
+   if(badge==='camera')drawLayer(cameraImg,CAMERA_BOX,false,c)}}
+ else if(k==='dog'){const dog=$('dog').value;if(dog==='right')drawLayer(dogImg,DOG_BOX_R,false,c);if(dog==='left')drawLayer(dogImg,DOG_BOX_L,true,c)}
+ else{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(c,it)}
  c.restore();
 }
+const HAT_NAMES={cap:'🧢 Cap',crown:'👑 Crown',tophat:'🎩 Top hat',halo:'😇 Halo',horns:'😈 Horns',catears:'🐱 Cat ears'};
+const BADGE_NAMES={show:'🎨 Fingerpainter badge',creator:'⭐ Creator badge',camera:'📷 Camera badge'};
+function layerName(k){
+ if(k==='monke')return '🐒 Monke';if(k==='banana')return isOrange()?'🍌 Banana peel':'🍌 Banana headband';
+ if(k==='hat')return HAT_NAMES[$('hat').value]||'🎩 Hat';if(k==='bandana')return '🧣 Bandana';
+ if(k==='badge')return BADGE_NAMES[$('fingerpainter').value]||'🏅 Badge';if(k==='dog')return '🐶 Dog';
+ const n=items.findIndex(i=>'item:'+i.id===k);return '🧸 Item '+(n+1);
+}
+let layersKey='';
+function renderLayers(){
+ const vis=fullOrder().filter(layerOn).reverse(),key=vis.map(k=>k+'='+layerName(k)).join('|')+'|'+(selItem?selItem.id:'')+'|'+!!layerOrder;
+ if(key===layersKey)return;layersKey=key;
+ const list=$('layerList');list.innerHTML='';$('layerReset').hidden=!layerOrder;
+ vis.forEach((k,i)=>{const row=document.createElement('div'),it=items.find(x=>'item:'+x.id===k);
+  row.className='layer-row'+(it&&it===selItem?' sel':'');
+  if(it){const im=document.createElement('img');im.src=it.thumb;im.alt='';row.appendChild(im);row.style.cursor='pointer';row.onclick=e=>{if(e.target.tagName!=='BUTTON')selectItem(it)}}
+  const n=document.createElement('span');n.className='ln';n.textContent=layerName(k);
+  if(vis.length>1&&(i===0||i===vis.length-1)){const pos=document.createElement('span');pos.className='lpos';pos.textContent=i===0?' · front':' · back';n.appendChild(pos)}
+  row.appendChild(n);
+  const mv=(t,label,dir,dis)=>{const b=document.createElement('button');b.type='button';b.className='btn';b.textContent=t;b.title=label;b.setAttribute('aria-label',label+': '+layerName(k));b.disabled=dis;b.onclick=()=>moveLayer(k,dir);row.appendChild(b)};
+  mv('▲','Bring forward',1,i===0);mv('▼','Send backward',-1,i===vis.length-1);
+  list.appendChild(row)});
+}
+// Move a layer one step in front of (dir 1) or behind (dir -1) the next layer you can see.
+function moveLayer(k,dir){
+ const o=fullOrder(),vis=o.filter(layerOn),i=vis.indexOf(k),j=i+dir;if(i<0||j<0||j>=vis.length)return;
+ o.splice(o.indexOf(k),1);o.splice(dir>0?o.indexOf(vis[j])+1:o.indexOf(vis[j]),0,k);
+ layerOrder=o;syncBehind(o);renderItemList();draw();
+}
+$('layerReset').onclick=()=>{layerOrder=null;layersKey='';draw()};
 // Outline: the silhouette is stamped in rings around itself, then coloured. The stamping only depends on the shape and
 // thickness, so changing any colour (fur, face, background or the outline itself) reuses it.
 const maskC=mk(1024),maskX=maskC.getContext('2d'),outC=mk(1024),outX=outC.getContext('2d');let maskKey='',outKey='';
 function outlineLayer(thickness){
- const shape=[customImg?customId:0,$('base').value,$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
+ const shape=[customImg?customId:0,$('base').value,fullOrder().join(','),$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
  if(shape!==maskKey){maskKey=shape;outKey='';maskX.clearRect(0,0,1024,1024);const T=thickness*1.5;
   for(const rad of [T,T*.5]){const n=48;for(let i=0;i<n;i++){const an=i/n*Math.PI*2;maskX.drawImage(figC,Math.cos(an)*rad,Math.sin(an)*rad)}}}
  if(shape+col!==outKey){outKey=shape+col;outX.globalCompositeOperation='source-over';outX.clearRect(0,0,1024,1024);outX.drawImage(maskC,0,0);
@@ -1568,7 +1649,7 @@ function haloTint(col){
  return haloC;
 }
 // The glow is drawn after the background and outline, so it lights up everything behind the ring. The crisp ring goes back on top.
-function drawHaloGlow(){
+function drawHaloGlow(ring=true){
  if(!haloImg.naturalWidth)return;
  const tint=haloTint($('haloColor').value),g=+$('glow').value;
  if(g>0){const key=haloKey+'|'+$('glowColor').value+'|'+g;
@@ -1576,7 +1657,7 @@ function drawHaloGlow(){
    glowX.shadowColor=$('glowColor').value;glowX.shadowBlur=6+g*.55;glowX.shadowOffsetX=OFF;glowX.shadowOffsetY=0;
    for(let i=0,n=g>66?4:g>33?3:2;i<n;i++)glowX.drawImage(tint,-OFF,0);glowX.restore()}
   ctx.drawImage(glowC,0,0)}
- ctx.drawImage(tint,0,0);
+ if(ring)ctx.drawImage(tint,0,0);
 }
 // 🖼️ Backgrounds: built-in styles drawn in code + your own uploaded image.
 const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1854,13 +1935,13 @@ function toast(text){let t=document.getElementById('toast');if(!t){t=document.cr
 // ↶ Undo / ↷ Redo. A snapshot is taken shortly after each change, so dragging a slider or colour picker
 // counts as one step. Covers every setting, the background style and your own items. Keeps the last 60 steps.
 const UNDO_MAX=60;let undoStack=[],redoStack=[],histCur=null,histT=null,histRestoring=false;
-function histSnap(){const st=captureState();return{st,bg:bgStyle,items:items.map(i=>({...i})),key:JSON.stringify(st)+'|'+bgStyle+'|'+itemsKey()}}
+function histSnap(){const st=captureState(),lo=layerOrder&&fullOrder();return{st,bg:bgStyle,lo,items:items.map(i=>({...i})),key:JSON.stringify(st)+'|'+bgStyle+'|'+itemsKey()+'|'+(lo||'')}}
 function histCommit(){clearTimeout(histT);histT=null;const s=histSnap();if(!histCur){histCur=s;return}
  if(s.key===histCur.key)return;undoStack.push(histCur);if(undoStack.length>UNDO_MAX)undoStack.shift();histCur=s;redoStack=[];histButtons()}
 function scheduleHistory(){if(histRestoring)return;clearTimeout(histT);histT=setTimeout(histCommit,histCur?350:0)}
 function histApply(s){histRestoring=true;histCur=s;applyState(s.st);
  bgStyle=s.bg==='image'&&!bgImg?'solid':s.bg;renderThumbs();
- items=s.items.map(i=>({...i}));selItem=null;renderItemList();drawNow();histRestoring=false;histButtons()}
+ items=s.items.map(i=>({...i}));layerOrder=s.lo?s.lo.slice():null;selItem=null;renderItemList();drawNow();histRestoring=false;histButtons()}
 function undo(){if(histT)histCommit();if(!undoStack.length)return;redoStack.push(histCur);histApply(undoStack.pop())}
 function redo(){if(histT)histCommit();if(!redoStack.length)return;undoStack.push(histCur);histApply(redoStack.pop())}
 function histButtons(){const u=document.getElementById('undoBtn'),r=document.getElementById('redoBtn');if(u)u.disabled=!undoStack.length;if(r)r.disabled=!redoStack.length}
@@ -1869,7 +1950,9 @@ document.addEventListener('keydown',e=>{
  if(typing)return; // inside text boxes, Ctrl+Z undoes your typing as normal
  const k=e.key.toLowerCase();if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}else if((k==='z'&&e.shiftKey)||k==='y'){e.preventDefault();redo()}
 });
-function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;return o}
+function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;
+ if(layerOrder)o.layers=fullOrder().filter(k=>BUILTIN_LAYERS.includes(k)); // your own items aren't saved in designs
+ return o}
 function applyState(o){
  if(!o||typeof o!=='object')return;
  STATE_IDS.forEach(id=>{const e=$(id);
@@ -1882,6 +1965,7 @@ function applyState(o){
   else if(e.tagName==='SELECT'){if([...e.options].some(op=>op.value===v))e.value=v}
   else if(typeof v==='string')e.value=v.slice(0,+e.maxLength>0?+e.maxLength:40)});
  bgStyle=BGS.some(b=>b.id===o.bgStyle)?o.bgStyle:'solid';
+ const L=o.layers;layerOrder=Array.isArray(L)&&L.length===BUILTIN_LAYERS.length&&BUILTIN_LAYERS.every(k=>L.includes(k))?L.slice():null;
  $('outlineVal').textContent=$('outline').value;$('glowVal').textContent=$('glow').value;
  buildBgGrid();
 }
@@ -1984,7 +2068,7 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
  };
 })();
 $('upload').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{customImg=im;customId++;setupCustom();draw();URL.revokeObjectURL(u)};im.src=u});
-$('reset').onclick=()=>{clearCustom();clearItems();$('base').value='classic';$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('fingerpainter').value='none';$('dog').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
+$('reset').onclick=()=>{clearCustom();clearItems();layerOrder=null;$('base').value='classic';$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('fingerpainter').value='none';$('dog').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
 // The download uses the name you typed, or the default name if the box is empty.
 const DEFAULT_FILE='my-monke-youtube-icon';
 function fileName(){
