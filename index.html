@@ -435,7 +435,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v66 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v67 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎨 Remix now brings your own items too: when you share an icon, its items (up to 12) are saved with it, including where they sit, their size, rotation, flip and layer order. Remixing it brings them all back.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Remixing an icon replaces the items you had with the ones from that icon. Undo brings yours back.</li>
+   <li>Deleting a shared icon also deletes its saved items.</li>
+   <li>Icons shared before this update don't have their items saved. Share them again to make them fully remixable.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v66<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🗂️ Layers: a new section that lists every part of your icon: the monke, banana, hat, bandana, badge, dog and your own items. The top of the list is at the front.</li>
@@ -1336,6 +1352,21 @@ document.getElementById('itemUpload').addEventListener('change',e=>{
   im.onerror=()=>URL.revokeObjectURL(u);im.src=u});
  e.target.value='';
 });
+// 🎨 Items saved with a gallery post come back when someone remixes it. list: [{url,x,y,s,r,f,b}];
+// order: the post's full layer order, where "i<n>" means its item number n.
+function restoreItems(list,order){
+ clearItems();
+ const num=(v,lo,hi,d)=>{v=+v;return isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
+ return Promise.all(list.map(d=>new Promise(res=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=()=>res(null);im.src=d.url}))).then(ims=>{
+  const ids=ims.map((im,n)=>{if(!im||!im.naturalWidth)return null;const d=list[n],t=mk(80),tx=t.getContext('2d'),k=Math.min(80/im.naturalWidth,80/im.naturalHeight);
+   tx.drawImage(im,(80-im.naturalWidth*k)/2,(80-im.naturalHeight*k)/2,im.naturalWidth*k,im.naturalHeight*k);
+   const it={id:++itemSeq,img:im,orig:im,bgTol:null,thumb:t.toDataURL(),x:num(d.x,-512,1536,512),y:num(d.y,-512,1536,420),size:num(d.s,30,1024,300),rot:num(d.r,-180,180,0),behind:!!d.b,flip:!!d.f};
+   items.push(it);return it.id});
+  if(Array.isArray(order)){const o=order.map(k=>/^i\d{1,2}$/.test(k)?(ids[+k.slice(1)]?'item:'+ids[+k.slice(1)]:null):BUILTIN_LAYERS.includes(k)?k:null).filter(Boolean);
+   if(BUILTIN_LAYERS.every(k=>o.includes(k)))layerOrder=o}
+  selItem=null;renderItemList();drawNow();return ids.filter(Boolean).length;
+ });
+}
 // 🔍 Item search, so you don't have to leave the page:
 //  • Stickers: OpenMoji's 4,000+ free emoji-style pictures. They're see-through already, so they're ready to wear.
 //  • Clip art: free-to-use illustrations from Openverse (drawings only, so no photos of people; adult content is
@@ -1816,6 +1847,7 @@ $('glow').addEventListener('input',()=>{$('glowVal').textContent=$('glow').value
 $('haloColor').addEventListener('input',()=>{$('glowColor').value=$('haloColor').value;draw()});
 // 💾 Presets and auto-save, stored in this browser (localStorage).
 const STATE_IDS=['base','fur','face','eyes','background','transparent','hat','hatColor','banana','bandana','fingerpainter','dog','haloColor','glowColor','glow','outline','outlineColor','name'];
+const MAX_SHARED_ITEMS=12; // items saved with a gallery post
 const LS_PRESETS='mim_presets_v1',LS_AUTO='mim_autosave_v1',MAX_PRESETS=30;
 const storageOK=(()=>{try{localStorage.setItem('mim_test','1');localStorage.removeItem('mim_test');return true}catch(e){return false}})();
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}
@@ -2350,10 +2382,18 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const up=await sb.storage.from('icons').upload(path,blob,{contentType:type,upsert:false});if(up.error)throw up.error;
    // Save the design too (not the name tag), so others can remix it, and credit the icon it was remixed from.
    const design=captureState();delete design.name;
+   // Your own items are uploaded as pictures next to the icon, with where they sit, so remixes get them too.
+   const itemPaths=[];
+   if(remixOn&&items.length){msg.textContent='Sharing your items…';const stamp=Date.now().toString(36),saved=[],idx=new Map();
+    for(const it of items.slice(0,MAX_SHARED_ITEMS)){const c=mk(it.img.naturalWidth||it.img.width,it.img.naturalHeight||it.img.height);c.getContext('2d').drawImage(it.img,0,0);
+     const b=await new Promise(r=>c.toBlob(r,'image/webp',.9)),t=b&&b.type==='image/webp'?'image/webp':'image/png',ip=me.id+'/items/'+stamp+'-'+saved.length+(t==='image/webp'?'.webp':'.png');
+     const u=await sb.storage.from('icons').upload(ip,b,{contentType:t,upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
+     itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
+    design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
    const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
    let {data,error}=await sb.from('posts').insert(row).select(postFields()).single();
-   if(noRemixYet(error))({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single());
-   if(error){await sb.storage.from('icons').remove([path]);throw error}
+   if(noRemixYet(error)){if(itemPaths.length)await sb.storage.from('icons').remove(itemPaths);itemPaths.length=0;({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single())}
+   if(error){await sb.storage.from('icons').remove([path,...itemPaths]);throw error}
    remixSource=null;
    $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
    if(tab==='all'){grid.prepend(postCard(data));status.textContent=''}
@@ -2504,10 +2544,15 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  };
  // 🎨 Remix: load a gallery icon's design into the editor. Undo gets your own design back.
  $('reset').addEventListener('click',()=>{remixSource=null}); // a fresh design isn't a remix any more
+ // Item pictures saved with a post. Only files in the poster's own items folder count.
+ function postItems(p){const d=p.design,its=d&&Array.isArray(d.items)?d.items:[];
+  const ok=new RegExp('^'+String(p.user_id).replace(/[^0-9a-f-]/gi,'')+'/items/[a-z0-9]+-\\d{1,2}\\.(webp|png)$');
+  return its.slice(0,MAX_SHARED_ITEMS).filter(i=>i&&typeof i.p==='string'&&ok.test(i.p))}
  function remix(p,pr){
-  applyState(p.design);drawNow();remixSource={id:p.id};
+  applyState(p.design);remixSource={id:p.id};const its=postItems(p);
+  if(its.length)restoreItems(its.map(i=>({...i,url:sb.storage.from('icons').getPublicUrl(i.p).data.publicUrl})),p.design.order);else{clearItems();drawNow()}
   window.scrollTo({top:0,behavior:'smooth'});
-  toast('🎨 Remixing '+(p.title?'“'+p.title+'”':'an icon')+' by '+pr.display_name+'. Make it your own! (Undo to go back)');
+  toast('🎨 Remixing '+(p.title?'“'+p.title+'”':'an icon')+' by '+pr.display_name+(its.length?', with its '+its.length+' item'+(its.length===1?'':'s'):'')+'. Make it your own! (Undo to go back)');
  }
  // ── 👤 Profiles: description, followers / following / icons, Follow button, and their icons.
  // Descriptions and followers need supabase/update-11-profiles.sql; until then profiles show without them.
@@ -2649,7 +2694,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(commentsOn){const n=cCounts.get(p.id)||0,cb=btn('💬 '+(n||'Comment'),()=>openComments(p));cb.title='Comments';cBtns.set(p.id,cb)}
   if(p.design&&typeof p.design==='object'){const rb=btn('🎨 Remix',()=>remix(p,pr));rb.title='Load this design into the editor so you can make it your own'}
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
-   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!'});
+   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p)]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!'});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
     if(!confirm('Report this icon as mean or inappropriate?'))return;rb.disabled=true;
     const {error}=await sb.from('reports').insert({post_id:p.id});
