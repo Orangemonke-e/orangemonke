@@ -37,7 +37,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .btn{border:1px solid var(--line);background:#252936;color:var(--text);padding:10px 14px;border-radius:11px;font-weight:650;font-size:13px;cursor:pointer;transition:.15s}.btn:hover{background:#323747;transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,#ffad4a,#f47a28);color:#21150b;border:0}.btn.primary:hover{filter:brightness(1.08)}.btn.small{padding:8px 11px}
 .upload{display:block;width:100%;border:1px dashed #505667;border-radius:11px;padding:11px;text-align:center;color:#c6cad5;font-size:12px;cursor:pointer}.upload input{display:none}
 .note{font-size:11px;color:var(--muted);margin-top:9px}
-.banner-box{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}.banner-box canvas{width:100%;height:auto;border-radius:10px;display:block;margin-top:8px;background:#000}
+.thumb-row{display:grid;grid-template-columns:1fr 200px;gap:12px;align-items:end;margin-top:8px}.thumb-row canvas{width:100%;height:auto;aspect-ratio:16/9;border-radius:10px;display:block;background:#000}.thumb-mini{font-size:12px;color:var(--muted)}.thumb-mini canvas{border-radius:8px;margin-top:4px}@media(max-width:560px){.thumb-row{grid-template-columns:1fr}.thumb-mini{max-width:220px}}
+.banner-box{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}.banner-box canvas{width:100%;height:auto;aspect-ratio:16/9;border-radius:10px;display:block;margin-top:8px;background:#000}
 /* 🔍 Orangemonke search: a little search engine look, white like a search page in both themes */
 .om-search{background:#fff;color:#202124;border:1px solid var(--line);border-radius:18px;padding:22px 14px 14px;margin-top:12px;text-align:center}
 .om-logo{display:block;width:330px;max-width:85%;height:auto;margin:0 auto 16px}
@@ -381,6 +382,28 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <label class="toggle"><input id="bannerGuide" type="checkbox" checked> Show where it gets cut off on phones, TVs and computers (not in the download)</label>
   <button type="button" class="btn primary" id="bannerDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download channel banner (PNG)</button>
  </div>
+ <button type="button" class="btn" id="thumbOpen" style="width:100%;margin-top:8px;padding:12px">🎬 Make a video thumbnail</button>
+ <div class="banner-box" id="thumbBox" hidden>
+  <div class="setup-head"><strong>🎬 Video thumbnail</strong><button type="button" class="btn small" id="thumbClose">Close</button></div>
+  <p class="hint">A 1280 × 720 YouTube thumbnail with your monke, big text and a screenshot from your video. It updates as you change your design.</p>
+  <div class="thumb-row">
+   <canvas id="thumbCv" width="1280" height="720"></canvas>
+   <div class="thumb-mini">How it looks in YouTube search:<canvas id="thumbMini" width="400" height="225"></canvas></div>
+  </div>
+  <div class="field" style="margin-top:12px"><label for="thumbText">Thumbnail text</label><input id="thumbText" type="text" maxlength="40" placeholder="e.g. I FOUND A SECRET ROOM"></div>
+  <div class="row" style="margin-top:12px">
+   <div class="field"><label for="thumbBg">Background</label><select id="thumbBg"><option value="design" selected>My icon's background</option><option value="shot">A screenshot from my video</option></select></div>
+   <div class="field"><label for="thumbColor">Text colour</label><select id="thumbColor"><option value="#ffe14d" selected>Yellow</option><option value="#ffffff">White</option><option value="#ff9a2e">Orange</option><option value="#ff4b4b">Red</option><option value="#5dff7a">Green</option><option value="#6fd3ff">Blue</option></select></div>
+  </div>
+  <div id="thumbShotRow" hidden style="margin-top:12px"><button type="button" class="btn" id="thumbShotBtn" style="width:100%">🖼️ Choose a screenshot</button><input id="thumbShot" type="file" accept="image/*" hidden>
+   <p class="hint" id="thumbShotMsg" style="margin-top:6px">Pause your video on a good moment, take a screenshot and pick it here.</p></div>
+  <div class="row" style="margin-top:12px">
+   <div class="field"><label for="thumbSide">Monke position</label><select id="thumbSide"><option value="right" selected>Monke on the right</option><option value="left">Monke on the left</option></select></div>
+   <div class="field"><label for="thumbExtra">Extra</label><select id="thumbExtra"><option value="none">Nothing</option><option value="arrow" selected>Red arrow</option><option value="circle">Red circle</option><option value="both">Arrow and circle</option></select></div>
+  </div>
+  <label class="toggle"><input id="thumbOutline" type="checkbox" checked> Thick white outline around the monke</label>
+  <button type="button" class="btn primary" id="thumbDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download thumbnail (JPG)</button>
+ </div>
 </section>
 </main>
 <section class="notes gallery" id="gallery" hidden><div class="notes-box">
@@ -452,7 +475,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v72 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v73 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎬 Video thumbnail maker: tap "Make a video thumbnail" under the download button. It makes a 1280 × 720 YouTube thumbnail with your monke, big outlined text and either your icon's background or a screenshot from your video.</li>
+   <li>Add a red arrow or a red circle, pick the text colour and which side the monke goes on. A small preview shows how it'll look in YouTube search, so you can check the text is easy to read.</li>
+   <li>Thumbnails download as JPG so they stay under YouTube's 2 MB limit.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Fixed the channel banner preview looking squashed into a square. The download was always the right shape.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v72<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -1585,7 +1624,7 @@ function drawYtMinis(){for(const {x,s} of ytMinis){x.clearRect(0,0,s,s);x.save()
 // something it depends on changes, and lots of input events in one frame cause just one redraw.
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h||w;return c};
 const figC=mk(1024),figX=figC.getContext('2d');
-let rafId=0,customId=0,bgImgId=0,afterRender=null,bannerOn=false,scheduleBanner=()=>{};
+let rafId=0,customId=0,bgImgId=0,afterRender=null,bannerOn=false,scheduleBanner=()=>{},thumbOn=false,scheduleThumb=()=>{};
 function draw(){if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;render()})}
 function drawNow(){if(rafId){cancelAnimationFrame(rafId);rafId=0}render()}
 function render(){
@@ -1613,7 +1652,7 @@ function render(){
  updateNameHint();
  renderLayers();
  drawYtMinis();
- if(bannerOn)scheduleBanner();
+ if(bannerOn)scheduleBanner();if(thumbOn)scheduleThumb();
  if(afterRender)afterRender();
  scheduleHistory();
  scheduleAutosave();
@@ -2247,6 +2286,77 @@ function fileName(){
 }
 $('fileName').addEventListener('keydown',e=>{if(e.key==='Enter')$('download').click()});
 document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn').onclick=redo;
+// 🎬 Video thumbnail: the monke big on one side, chunky outlined text on the other, over the design's background or a video screenshot.
+(function(){
+ const W=1280,H=720,cv=$('thumbCv'),tx=cv.getContext('2d'),mini=$('thumbMini'),mx=mini.getContext('2d');let raf=0,shot=null;
+ const FS=700,fC=mk(FS),fX=fC.getContext('2d');
+ function figure(outline){ // the monke (items, halo) with an optional thick white outline
+  fX.globalCompositeOperation='source-over';fX.clearRect(0,0,FS,FS);
+  if(outline){const R=22;for(const rad of [R,R*.55]){for(let i=0;i<40;i++){const a=i/40*Math.PI*2;fX.drawImage(figC,Math.cos(a)*rad,Math.sin(a)*rad,FS,FS)}}
+   fX.globalCompositeOperation='source-in';fX.fillStyle='#fff';fX.fillRect(0,0,FS,FS);fX.globalCompositeOperation='source-over'}
+  if($('hat').value==='halo'&&haloImg.naturalWidth&&+$('glow').value>0)fX.drawImage(glowC,0,0,FS,FS);
+  fX.drawImage(figC,0,0,FS,FS);if($('hat').value==='halo'&&haloImg.naturalWidth)fX.drawImage(haloC,0,0,FS,FS);
+  return fC;
+ }
+ function cover(c,img){const k=Math.max(W/img.naturalWidth,H/img.naturalHeight),w=img.naturalWidth*k,h=img.naturalHeight*k;c.drawImage(img,(W-w)/2,(H-h)/2,w,h)}
+ function paintBg(c){
+  if($('thumbBg').value==='shot'&&shot){cover(c,shot);return}
+  const col=$('background').value;
+  if($('transparent').checked||bgStyle==='solid'){c.fillStyle=col;c.fillRect(0,0,W,H);return}
+  if(bgStyle==='image'&&bgImg){cover(c,bgImg);return}
+  const b=BGS.find(o=>o.id===bgStyle)||BGS[0];c.save();c.translate(0,-(W-H)/2);b.draw(c,W,col);c.restore();
+ }
+ // Splits the text into 1–3 lines, whichever lets it be biggest.
+ const FONT=s=>s+'px "Alfa Slab One",Impact,"Arial Black",sans-serif';
+ function layout(c,txt,maxW,maxH){
+  const words=txt.split(/\s+/).filter(Boolean).slice(0,12);let best={size:0,lines:[txt]};c.font=FONT(100);
+  // try every way of breaking it into 1, 2 or 3 lines
+  const tryLines=lines=>{const wid=Math.max(...lines.map(l=>c.measureText(l).width)),size=Math.min(190,100*maxW/wid,maxH/(lines.length*1.08));if(size>best.size*1.03)best={size,lines}};
+  const n=words.length,j=(a,b)=>words.slice(a,b).join(' ');tryLines([j(0,n)]);
+  for(let i=1;i<n;i++)tryLines([j(0,i),j(i,n)]);
+  for(let i=1;i<n;i++)for(let k=i+1;k<n;k++)tryLines([j(0,i),j(i,k),j(k,n)]);
+  return best;
+ }
+ function arrow(c,x1,y1,x2,y2){
+  const a=Math.atan2(y2-y1,x2-x1),len=Math.hypot(x2-x1,y2-y1),mxp=(x1+x2)/2-Math.sin(a)*len*.18,myp=(y1+y2)/2+Math.cos(a)*len*.18;
+  const ea=Math.atan2(y2-myp,x2-mxp),hx=x2-Math.cos(ea)*10,hy=y2-Math.sin(ea)*10;
+  const path=()=>{c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(mxp,myp,hx-Math.cos(ea)*40,hy-Math.sin(ea)*40)};
+  const head=()=>{c.beginPath();c.moveTo(x2,y2);c.lineTo(x2-Math.cos(ea-.5)*80,y2-Math.sin(ea-.5)*80);c.lineTo(x2-Math.cos(ea+.5)*80,y2-Math.sin(ea+.5)*80);c.closePath()};
+  c.save();c.lineCap='round';c.lineJoin='round';
+  path();c.strokeStyle='#fff';c.lineWidth=40;c.stroke();head();c.lineWidth=16;c.stroke();c.fillStyle='#fff';c.fill();
+  path();c.strokeStyle='#e8141c';c.lineWidth=24;c.stroke();head();c.fillStyle='#e8141c';c.fill();c.restore();
+ }
+ function compose(c){
+  c.save();c.clearRect(0,0,W,H);paintBg(c);
+  const right=$('thumbSide').value==='right',fx=right?W-FS+70:-70,fy=H-FS+110,extra=$('thumbExtra').value;
+  // a soft glow behind the monke so it stands out from busy screenshots
+  const gx=fx+FS/2,gy=fy+FS*.45,g=c.createRadialGradient(gx,gy,40,gx,gy,FS*.62);g.addColorStop(0,'#ffffff55');g.addColorStop(1,'#ffffff00');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.drawImage(figure($('thumbOutline').checked),fx,fy);
+  const hx=fx+FS*.5,hy=fy+FS*.6; // roughly the middle of the head
+  if(extra==='circle'||extra==='both'){c.save();c.lineWidth=30;c.strokeStyle='#fff';c.beginPath();c.ellipse(hx,hy,FS*.32,FS*.27,-.08,0,Math.PI*2);c.stroke();c.lineWidth=16;c.strokeStyle='#e8141c';c.stroke();c.restore()}
+  const txt=($('thumbText').value.trim()||$('name').value.trim()||'MY NEW VIDEO').toUpperCase(),tw=W-FS-20,tx0=right?30:W-30-tw;
+  const L=layout(c,txt,tw,extra==='none'||extra==='circle'?620:430),s=L.size,lh=s*1.08,top=(extra==='none'||extra==='circle'?H/2:H*.38)-lh*L.lines.length/2+lh/2;
+  c.font=FONT(s);c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  L.lines.forEach((l,i)=>{const y=top+i*lh,x=tx0+tw/2;c.save();c.translate(x,y);c.rotate(-.035);
+   c.fillStyle='#0009';c.fillText(l,6,10);c.lineWidth=s*.2;c.strokeStyle='#111';c.strokeText(l,0,0);c.fillStyle=$('thumbColor').value;c.fillText(l,0,0);c.restore()});
+  if(extra==='arrow'||extra==='both'){const ax=tx0+tw*(right?.55:.45),ay=top+lh*(L.lines.length-.5)+30;arrow(c,ax,Math.min(ay,H-150),hx+(right?-FS*.36:FS*.36),hy+FS*.02)}
+  c.restore();
+ }
+ function paint(){raf=0;compose(tx);mx.clearRect(0,0,400,225);mx.drawImage(cv,0,0,400,225);
+  mx.font='600 19px system-ui,sans-serif';const b='12:34',w=mx.measureText(b).width+14;mx.fillStyle='#000c';mx.beginPath();mx.roundRect(400-w-8,225-34,w,26,5);mx.fill();mx.fillStyle='#fff';mx.textBaseline='middle';mx.fillText(b,400-w-1,225-21)}
+ scheduleThumb=()=>{if(!raf)raf=requestAnimationFrame(paint)};
+ ['thumbText','thumbColor','thumbSide','thumbExtra','thumbOutline'].forEach(id=>$(id).addEventListener('input',scheduleThumb));
+ $('thumbBg').addEventListener('input',()=>{$('thumbShotRow').hidden=$('thumbBg').value!=='shot';if($('thumbBg').value==='shot'&&!shot)$('thumbShot').click();scheduleThumb()});
+ $('thumbShotBtn').onclick=()=>$('thumbShot').click();
+ $('thumbShot').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const im=new Image();
+  im.onload=()=>{shot=im;$('thumbShotMsg').textContent='Using '+f.name+'. Pick another to change it.';$('thumbShotBtn').textContent='🖼️ Change screenshot';scheduleThumb()};
+  im.onerror=()=>{$('thumbShotMsg').textContent="That file couldn't be opened. Try a PNG or JPG."};im.src=URL.createObjectURL(f)};
+ $('thumbOpen').onclick=()=>{thumbOn=true;$('thumbBox').hidden=false;$('thumbOpen').hidden=true;document.fonts.load(FONT(100)).then(scheduleThumb,scheduleThumb);drawNow()};
+ $('thumbClose').onclick=()=>{thumbOn=false;$('thumbBox').hidden=true;$('thumbOpen').hidden=false};
+ $('thumbDl').onclick=()=>{drawNow();const out=mk(W,H);compose(out.getContext('2d'));
+  // JPG keeps screenshots under YouTube's 2 MB limit
+  out.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fileName().replace(/\.png$/,'')+'-thumbnail.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},'image/jpeg',.92)};
+})();
 // 📺 Channel banner: the same monke (with outline, items and halo) on the same background, at YouTube's 2560×1440.
 // The monke is sized so its head stays inside the 1546×423 middle strip that every device shows.
 (function(){
