@@ -257,7 +257,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="preset-save"><input id="presetName" type="text" maxlength="30" placeholder="Name this design, e.g. Orangemonke"><button type="button" class="btn small" id="presetSave">💾 Save</button></div>
   <div id="presetMsg"></div>
   <div id="presetList"></div>
-  <div class="note">Presets live in this browser. Uploaded images (your own monke or background) aren't included.</div>
+  <div class="note">Presets live in this browser, including your own items, an uploaded background and an uploaded monke base.</div>
  </div>
  <div class="section"><h2>🎨 Colours</h2>
   <div class="field" style="margin-bottom:12px"><label for="base">Monke base</label><select id="base"><option value="classic" selected>Classic monke</option><option value="orange">Orangemonke (with its own banana peel and Cabin background)</option></select></div>
@@ -324,7 +324,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
     </div>
    </div>
   </div>
-  <div class="note">Items stay in this browser session. They aren't saved in presets.</div>
+  <div class="note">Items are saved in presets, and in icons you share to the gallery so remixes get them too.</div>
  </div>
  <div class="section"><h2>🗂️ Layers</h2>
   <div class="note" style="margin-top:0">Choose what's in front of what. The top of the list is at the front. Use ▲ and ▼ to move a layer.</div>
@@ -438,7 +438,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v68 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v69 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>💾 Presets now save your pictures too: your own items (with where they sit, their size, rotation, flip and layer order), an uploaded background, and an uploaded monke base with its colour setup.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Loading a new preset swaps in its pictures, and removes pictures it didn't have. Presets saved before this update leave your current pictures alone.</li>
+   <li>Deleting a preset also deletes its saved pictures from this browser.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v68<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎲 Off topic section: the gallery now has two sections, 🐒 Monke icons for Gorilla Tag monkes and 🎲 Off topic for everything else, like a noob.</li>
@@ -2036,22 +2051,64 @@ function renderPresets(){
   const dt=document.createElement('div');dt.className='pdate';dt.textContent=new Date(p.saved).toLocaleDateString();
   info.appendChild(nm);info.appendChild(dt);row.appendChild(info);
   const load=document.createElement('button');load.type='button';load.className='btn small';load.textContent='Load';
-  load.onclick=()=>{applyState(p.data);draw();presetMsg('Loaded “'+p.name+'”.')};row.appendChild(load);
+  load.onclick=async()=>{applyState(p.data);draw();presetMsg('Loading “'+p.name+'”…');await loadPresetFiles(p).catch(()=>{});presetMsg('Loaded “'+p.name+'”.')};row.appendChild(load);
   const del=document.createElement('button');del.type='button';del.className='btn small danger';del.textContent='Delete';
-  del.onclick=()=>{if(!confirm('Delete “'+p.name+'”?'))return;lsSet(LS_PRESETS,arr.filter(q=>q!==p&&q.id!==p.id));renderPresets();presetMsg('Deleted “'+p.name+'”.')};row.appendChild(del);
+  del.onclick=()=>{if(!confirm('Delete “'+p.name+'”?'))return;lsSet(LS_PRESETS,arr.filter(q=>q!==p&&q.id!==p.id));if(p.files)PDB.del(p.id);renderPresets();presetMsg('Deleted “'+p.name+'”.')};row.appendChild(del);
   list.appendChild(row);
  });
 }
-$('presetSave').onclick=()=>{
+// 🖼️ Preset pictures (your items, uploaded background, uploaded monke base) are too big for localStorage, so they go
+// in IndexedDB, keyed by the preset's id. A preset with files:{} had no pictures; old presets have no "files" at all.
+const PDB={db:null,open(){return this.db||(this.db=new Promise((ok,bad)=>{try{const r=indexedDB.open('mim_preset_files',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error)}catch(e){bad(e)}}))},
+ async run(mode,f){const db=await this.open();return new Promise((ok,bad)=>{const tx=db.transaction('files',mode),st=tx.objectStore('files');const r=f(st);tx.oncomplete=()=>ok(r&&r.result);tx.onerror=()=>bad(tx.error);tx.onabort=()=>bad(tx.error)})},
+ put(k,v){return this.run('readwrite',st=>st.put(v,k))},get(k){return this.run('readonly',st=>st.get(k))},del(k){return this.run('readwrite',st=>st.delete(k)).catch(()=>{})}};
+const toBlob=(src,w,h,type,q)=>{const c=mk(w,h);c.getContext('2d').drawImage(src,0,0,w,h);return new Promise(r=>c.toBlob(r,type,q))};
+async function presetFiles(){
+ const f={};
+ if(items.length){const idx=new Map();f.items=[];
+  for(const it of items){const w=it.img.naturalWidth||it.img.width,h=it.img.naturalHeight||it.img.height;idx.set('item:'+it.id,'i'+f.items.length);
+   f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,r:it.rot,f:it.flip?1:0,b:it.behind?1:0})}
+  f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
+ if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await toBlob(bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
+ if(customImg){f.base=await toBlob(customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
+ return f;
+}
+const blobImg=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const u=URL.createObjectURL(b),im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=u});
+async function loadPresetFiles(p){
+ if(!p.files)return; // made before presets kept pictures: leave your current pictures alone
+ let f=null;if(Object.keys(p.files).length)try{f=await PDB.get(p.id)}catch(e){}
+ f=f||{};
+ // monke base
+ const base=await blobImg(f.base);
+ if(base){customImg=base;customId++;setupCustom();if(f.roles){customRoles=f.roles;buildRoles();buildPalette()}
+  ['fur','face','eyes'].forEach(id=>{const v=p.data&&p.data[id];if(typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v))$(id).value=v}); /* setting up the base resets the colours */
+  if(f.match!=null){$('match').value=f.match;$('matchVal').textContent=f.match}}else if(customImg){clearCustom();$('upload').value=''}
+ // background
+ const bg=await blobImg(f.bg);
+ if(bg){bgImg=bg;bgImgId++;if(f.bgOn)bgStyle='image'}else if(bgImg){bgImg=null;if(bgStyle==='image')bgStyle='solid';$('bgUpload').value=''}
+ buildBgGrid();
+ // items
+ if(f.items&&f.items.length){const urls=[];const list=f.items.map(d=>{const u=URL.createObjectURL(d.blob);urls.push(u);return{...d,url:u}});await restoreItems(list,f.order);urls.forEach(u=>URL.revokeObjectURL(u))}
+ else clearItems();
+ drawNow();
+}
+$('presetSave').onclick=async()=>{
  const stored=lsGet(LS_PRESETS),ps=Array.isArray(stored)?stored:[];
  const name=$('presetName').value.trim().slice(0,30)||('My monke '+(ps.length+1));
  const i=ps.findIndex(p=>String(p.name).toLowerCase()===name.toLowerCase());
  if(i<0&&ps.length>=MAX_PRESETS){presetMsg('You can save up to '+MAX_PRESETS+' presets. Delete one first.');return}
  drawNow();const tc=mk(96);tc.getContext('2d').drawImage(canvas,0,0,96,96);
- const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,saved:Date.now(),data:captureState(),thumb:tc.toDataURL('image/webp',.85)};
+ const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,saved:Date.now(),data:captureState(),thumb:tc.toDataURL('image/webp',.85),files:{}};
+ // your pictures (items, uploaded background and base) go in IndexedDB
+ let extra='';
+ if(items.length||bgImg||customImg){presetMsg('Saving your pictures…');
+  try{const f=await presetFiles();await PDB.put(entry.id,f);entry.files={items:(f.items||[]).length,bg:!!f.bg,base:!!f.base};
+   const bits=[];if(f.items)bits.push(f.items.length+' item'+(f.items.length===1?'':'s'));if(f.bg)bits.push('your background picture');if(f.base)bits.push('your monke base');extra=' with '+bits.join(' and ')}
+  catch(e){delete entry.files;extra=", but your pictures couldn't be saved in this browser"}}
+ const old=i>=0?ps[i]:null;
  if(i>=0)ps[i]=entry;else ps.unshift(entry);
- if(lsSet(LS_PRESETS,ps)){presetMsg((i>=0?'Updated “':'Saved “')+name+'”.');$('presetName').value='';renderPresets()}
- else presetMsg('Could not save. The browser storage may be full or blocked.');
+ if(lsSet(LS_PRESETS,ps)){if(old&&old.files)PDB.del(old.id);presetMsg((i>=0?'Updated “':'Saved “')+name+'”'+extra+'.');$('presetName').value='';renderPresets()}
+ else{if(entry.files)PDB.del(entry.id);presetMsg('Could not save. The browser storage may be full or blocked.')}
 };
 $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave').click()});
 // 🏷️ Auto names for Random Monke, e.g. "Angel Teal Monke & Pup".
