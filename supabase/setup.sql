@@ -578,6 +578,25 @@ alter table public.posts add column if not exists design jsonb
 alter table public.posts add column if not exists remix_of uuid references public.posts(id) on delete set null;
 grant insert (image_path, title, design, remix_of) on public.posts to authenticated;
 
+-- Off topic: icons that aren't Gorilla Tag monkes get their own section of the gallery.
+alter table public.posts add column if not exists off_topic boolean not null default false;
+create index if not exists posts_topic_created_idx on public.posts (off_topic, created_at desc);
+grant insert (image_path, title, design, remix_of, off_topic) on public.posts to authenticated;
+
+-- Move an icon between the main gallery and Off topic. Only the person who shared it, or an admin, can move it.
+create or replace function public.set_post_topic(p_post uuid, p_off boolean) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare ok boolean;
+begin
+  if auth.uid() is null or public.is_banned() then return false; end if;
+  update public.posts set off_topic = coalesce(p_off, false)
+   where id = p_post and (user_id = auth.uid() or public.is_admin())
+  returning true into ok;
+  return coalesce(ok, false);
+end $$;
+revoke execute on function public.set_post_topic(uuid, boolean) from public, anon;
+grant execute on function public.set_post_topic(uuid, boolean) to authenticated;
+
 -- ───────────────────────── Profiles: descriptions and followers ─────────────────────────
 -- Everyone can write a short description (up to 160 characters, through the bad word filter) and follow other
 -- accounts. Follower counts are public. People can only follow and unfollow as themselves.

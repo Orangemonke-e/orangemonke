@@ -180,6 +180,8 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .cm.is-hidden{opacity:.7}.cm-empty{color:var(--muted);font-size:13px;text-align:center;padding:24px 0}
 .cm-form{border-top:1px solid var(--line);padding-top:10px}.cm-form textarea{width:100%;resize:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;outline:none}
 .cm-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}.cm-signin{border-top:1px solid var(--line);padding-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.gal-topic{display:flex;gap:6px;margin-top:10px}.gal-topic[hidden]{display:none}.gal-topic .btn.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.share-topic{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}.share-topic[hidden]{display:none}.share-topic select{width:auto;flex:1;min-width:180px;padding:7px 10px}
 .gal-sort{display:flex;gap:6px;margin-top:8px}.gal-sort[hidden]{display:none}.gal-sort .btn{padding:5px 10px;font-size:12px}.gal-sort .btn.sel{border-color:var(--accent);color:var(--accent)}
 .like-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:13px;font-weight:650;cursor:pointer}
 .like-btn .heart{font-size:16px;line-height:1;color:var(--muted)}.like-btn:hover{border-color:#ff4d6d}.like-btn.on{border-color:#ff4d6d;background:#ff4d6d22}.like-btn.on .heart{color:#ff4d6d}
@@ -368,11 +370,12 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </section>
 </main>
 <section class="notes gallery" id="gallery" hidden><div class="notes-box">
- <div class="gal-head"><div><h2>🌍 Community gallery</h2><p class="hint">Icons shared by other monke creators.</p><div class="gal-sort" id="galSort"><button type="button" class="btn small sel" data-sort="top">🔥 Most liked</button><button type="button" class="btn small" data-sort="new">🆕 Newest</button></div></div><div class="acct" id="acctBar"></div></div>
+ <div class="gal-head"><div><h2>🌍 Community gallery</h2><p class="hint">Icons shared by other monke creators.</p><div class="gal-topic" id="galTopic" role="tablist"><button type="button" class="btn small sel" data-topic="monke" role="tab" aria-selected="true">🐒 Monke icons</button><button type="button" class="btn small" data-topic="off" role="tab" aria-selected="false">🎲 Off topic</button></div><div class="gal-sort" id="galSort"><button type="button" class="btn small sel" data-sort="top">🔥 Most liked</button><button type="button" class="btn small" data-sort="new">🆕 Newest</button></div></div><div class="acct" id="acctBar"></div></div>
  <div class="gal-share" id="galShare" hidden>
   <canvas id="shareThumb" width="96" height="96"></canvas>
   <div class="gal-share-main"><strong>Share your current icon</strong>
    <div class="preset-save"><input id="shareTitle" type="text" maxlength="40" placeholder="Give it a title (optional)"><button type="button" class="btn small primary" id="shareGo">🌍 Share</button></div>
+   <label class="share-topic" id="shareTopicRow">Where should it go?<select id="shareTopic"><option value="monke">🐒 Monke icons (Gorilla Tag monkes)</option><option value="off">🎲 Off topic (anything else, like a noob)</option></select></label>
    <div class="note" id="shareMsg">Everyone can see what you share. Don't include personal info like your real name or address.</div></div>
  </div>
  <div class="gal-tabs" id="galTabs" hidden><button type="button" class="btn small sel" data-tab="all">All posts</button><button type="button" class="btn small" data-tab="following" id="tabFollowing">👥 Following</button><button type="button" class="btn small" data-tab="reported" id="tabReported">🚩 Reported</button><button type="button" class="btn small" id="notifyAll" style="margin-left:auto">📣 Notify everyone</button></div>
@@ -435,7 +438,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v67 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v68 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎲 Off topic section: the gallery now has two sections, 🐒 Monke icons for Gorilla Tag monkes and 🎲 Off topic for everything else, like a noob.</li>
+   <li>When you share, choose “Where should it go?”. It starts on whichever section you're looking at.</li>
+   <li>You can move your own icons between the two sections with the Move button. Admins can move anyone's.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The main gallery only shows Monke icons now. All icons shared before this update start in Monke icons.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v67<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎨 Remix now brings your own items too: when you share an icon, its items (up to 12) are saved with it, including where they sit, their size, rotation, flip and layer order. Remixing it brings them all back.</li>
@@ -2204,9 +2223,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // ♥ Likes need supabase/update-12-likes-and-follow-notifications.sql. Until then, no like buttons and newest first.
  let likesOn=true,sort='top';const myLikes=new Set();
  const noLikesYet=e=>e&&/like/i.test(e.message||'')&&(likesOn=false,true);
+ // 🎲 Off topic: icons that aren't Gorilla Tag monkes have their own section. Needs supabase/update-16-off-topic.sql;
+ // until that's been run, the gallery shows everything together like before.
+ let offTopicOn=true,topic='monke';
+ const noOffTopicYet=e=>e&&/off_topic|set_post_topic/i.test(e.message||'')&&(offTopicOn=false,true);
  let remixOn=true,remixSource=null;
  const noRemixYet=e=>e&&/design|remix|relationship/i.test(e.message||'')&&(remixOn=false,true); // if anything about Remix isn't ready, carry on without it
- const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
+ const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,'+(offTopicOn?'off_topic,':'')+'profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
   +(likesOn?',like_count':'')+(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
  const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
@@ -2391,12 +2414,14 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
      itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
     design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
    const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
+   const off=offTopicOn&&$('shareTopic').value==='off';if(off)row.off_topic=true;
    let {data,error}=await sb.from('posts').insert(row).select(postFields()).single();
+   if(noOffTopicYet(error)){delete row.off_topic;({data,error}=await sb.from('posts').insert(row).select(postFields()).single())}
    if(noRemixYet(error)){if(itemPaths.length)await sb.storage.from('icons').remove(itemPaths);itemPaths.length=0;({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single())}
    if(error){await sb.storage.from('icons').remove([path,...itemPaths]);throw error}
    remixSource=null;
-   $('shareTitle').value='';msg.textContent='Shared! Thanks for posting your monke.';
-   if(tab==='all'){grid.prepend(postCard(data));status.textContent=''}
+   $('shareTitle').value='';msg.textContent=off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
+   if(tab==='all'&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
   }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
  };
 
@@ -2410,6 +2435,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(sort==='top'&&likesOn&&tab==='all')q=q.order('like_count',{ascending:false});
   q=q.order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
+  else if(offTopicOn)q=q.eq('off_topic',topic==='off');
   if(tab==='following'){
    const f=await sb.from('follows').select('followee_id').eq('follower_id',me.id);if(id!==loadId)return;
    const ids=(f.data||[]).map(r=>r.followee_id);followingIds=new Set(ids);
@@ -2417,12 +2443,12 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    q=q.in('user_id',ids);
   }
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
-  if(noPicsYet(error)||noRemixYet(error)||noLikesYet(error))return loadPosts(reset);
+  if(noPicsYet(error)||noOffTopicYet(error)||noRemixYet(error)||noLikesYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
   await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));if(id!==loadId)return;
-  $('galSort').hidden=!likesOn||tab!=='all';
+  $('galSort').hidden=!likesOn||tab!=='all';$('galTopic').hidden=!offTopicOn||tab==='reported';$('shareTopicRow').hidden=!offTopicOn;
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
-  status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':'No icons shared yet. Be the first!';
+  status.textContent=grid.children.length?'':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+'';
   $('galMore').hidden=data.length<PAGE;
  }
  // ── Reactions: each person can add each emoji once per icon. Needs supabase/update-6-reactions.sql;
@@ -2624,6 +2650,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   };
   likeSetters.set(p.id,v=>{if(b.disabled)return;n=v;p.like_count=v;draw()});draw();return b;
  }
+ document.querySelectorAll('#galTopic .btn').forEach(b=>b.onclick=()=>{topic=b.dataset.topic;$('shareTopic').value=topic;
+  document.querySelectorAll('#galTopic .btn').forEach(o=>{o.classList.toggle('sel',o===b);o.setAttribute('aria-selected',o===b)});loadPosts(true)});
  document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
  // ── ⚡ Live updates (Supabase Realtime): new icons, likes, reactions, comments and follows show up without refreshing.
  // Needs supabase/update-14-live.sql. Until then nothing changes: people just refresh like before.
@@ -2637,11 +2665,11 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    .on('postgres_changes',{event:'*',schema:'public',table:'follows'},liveFollow)
    .subscribe();
  }
- const emptyStatus=()=>{if(!grid.querySelector('.post'))status.textContent=tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':'No icons shared yet. Be the first!'};
+ const emptyStatus=()=>{if(!grid.querySelector('.post'))status.textContent=tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''};
  async function livePost(e){
   const n=e.new||{},o=e.old||{};
   if(e.eventType==='INSERT'){
-   if(!n.id||cardRefs.has(n.id)||tab==='reported'||(tab==='following'&&!followingIds.has(n.user_id)))return;
+   if(!n.id||cardRefs.has(n.id)||tab==='reported'||(tab==='following'&&!followingIds.has(n.user_id))||(offTopicOn&&!!n.off_topic!==(topic==='off')))return;
    const {data:p}=await sb.from('posts').select(postFields()).eq('id',n.id).maybeSingle();if(!p||cardRefs.has(p.id))return;
    await loadReactions([p.id]);await loadCommentCounts([p.id]);if(cardRefs.has(p.id))return;
    const card=postCard(p);card.classList.add('fresh');grid.prepend(card);status.textContent='';setTimeout(()=>card.classList.remove('fresh'),4000);
@@ -2649,7 +2677,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const ref=cardRefs.get(n.id);if(!ref)return;
    if(typeof n.like_count==='number'&&likeSetters.has(n.id))likeSetters.get(n.id)(n.like_count);
    const admin=profile&&profile.is_admin,mine=me&&n.user_id===me.id;
-   if(n.hidden&&!admin&&!mine){ref.card.remove();cardRefs.delete(n.id);emptyStatus()}
+   if((n.hidden&&!admin&&!mine)||(offTopicOn&&tab!=='reported'&&'off_topic' in n&&!!n.off_topic!==(topic==='off'))){ref.card.remove();cardRefs.delete(n.id);emptyStatus()}
   }else if(e.eventType==='DELETE'){
    const ref=cardRefs.get(o.id);if(ref){ref.card.remove();cardRefs.delete(o.id);emptyStatus()}
    if(cmPost&&cmPost.id===o.id)closeComments();
@@ -2685,6 +2713,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
   const by=el('div','pby linkish');by.title='See '+pr.display_name+'\'s profile';by.onclick=()=>openProfile(p.user_id);by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
+  if(p.off_topic&&tab==='reported')body.appendChild(el('div','premix','🎲 Off topic'));
   if(p.remix&&p.remix.title!==undefined){const r=el('div','premix','🎨 Remix of '+(p.remix.title?'“'+p.remix.title+'”':'an icon')+(p.remix.profiles?' by @'+p.remix.profiles.username:''));body.appendChild(r)}
   if(likesOn)body.appendChild(likeButton(p));
   if(reactsOn)body.appendChild(reactRow(p.id));
@@ -2693,8 +2722,12 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
   if(commentsOn){const n=cCounts.get(p.id)||0,cb=btn('💬 '+(n||'Comment'),()=>openComments(p));cb.title='Comments';cBtns.set(p.id,cb)}
   if(p.design&&typeof p.design==='object'){const rb=btn('🎨 Remix',()=>remix(p,pr));rb.title='Load this design into the editor so you can make it your own'}
+  if((mine||admin)&&offTopicOn){const mb=btn(p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic',async()=>{mb.disabled=true;
+   const {data:ok,error}=await sb.rpc('set_post_topic',{p_post:p.id,p_off:!p.off_topic});mb.disabled=false;if(error||!ok)return alert(error?friendly(error):"Couldn't move that icon.");
+   p.off_topic=!p.off_topic;if(tab!=='reported'){card.remove();cardRefs.delete(p.id);emptyStatus();toast(p.off_topic?'🎲 Moved to Off topic.':'🐒 Moved to Monke icons.')}else{mb.textContent=p.off_topic?'🐒 Move to Monke icons':'🎲 Move to Off topic'}});
+   mb.title=p.off_topic?'Move this icon back to the main gallery':'Move this icon to the Off topic section (for things that aren\'t Gorilla Tag monkes)'}
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
-   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p)]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':'No icons shared yet. Be the first!'});
+   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p)]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
     if(!confirm('Report this icon as mean or inappropriate?'))return;rb.disabled=true;
     const {error}=await sb.from('reports').insert({post_id:p.id});
