@@ -37,6 +37,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .upload{display:block;width:100%;border:1px dashed #505667;border-radius:11px;padding:11px;text-align:center;color:#c6cad5;font-size:12px;cursor:pointer}.upload input{display:none}
 .note{font-size:11px;color:var(--muted);margin-top:9px}
 .banner-box{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}.banner-box canvas{width:100%;height:auto;border-radius:10px;display:block;margin-top:8px;background:#000}
+.item-src{display:flex;gap:6px;margin-top:8px}.item-src .btn.sel{border-color:var(--accent);color:var(--accent)}
+.item-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;margin-top:6px;max-height:320px;overflow:auto}
+.item-results button{aspect-ratio:1;padding:5px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.item-results button:hover{border-color:var(--accent);transform:translateY(-1px)}.item-results button:disabled{opacity:.5;cursor:wait}
+.item-results img{width:100%;height:100%;object-fit:contain;pointer-events:none}.item-results .photo img{object-fit:cover;border-radius:6px}
 .toggle{display:flex;align-items:center;gap:9px;font-size:12px;color:#c7cad4;margin-top:12px}.toggle input{accent-color:var(--accent)}
 .notes{max-width:1180px;margin:0 auto;padding:0 20px 36px}
 .notes-box{background:#171922cc;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 55px #0004;padding:20px 22px}
@@ -273,6 +278,14 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  <div class="section"><h2>🧸 Your own items</h2>
   <div class="note" style="margin-top:0">Add your own things for your monke to wear or hold. PNGs with a transparent background work best.</div>
   <label class="upload" style="margin-top:10px">＋ Add an item<input id="itemUpload" type="file" accept="image/png,image/webp,image/jpeg,image/gif" multiple></label>
+  <div class="item-search">
+   <div class="note" style="margin:10px 0 6px">…or search for one without leaving the page:</div>
+   <div class="ai-row"><input id="itemQ" type="text" enterkeyhint="search" maxlength="60" placeholder="e.g. sunglasses, cowboy hat, pizza" autocomplete="off"><button type="button" class="btn small primary" id="itemQGo">🔍 Search</button></div>
+   <div class="item-src" id="itemSrc" role="tablist"><button type="button" class="btn small sel" data-src="stickers" role="tab" aria-selected="true">😎 Stickers</button><button type="button" class="btn small" data-src="clipart" role="tab" aria-selected="false">🖼️ Clip art</button></div>
+   <div class="note" id="itemQMsg" role="status"></div>
+   <div class="item-results" id="itemResults"></div>
+   <button type="button" class="btn small" id="itemQMore" hidden style="width:100%;margin-top:8px">More clip art</button>
+  </div>
   <div id="itemList"></div>
   <div id="itemEdit" hidden>
    <div class="note" style="margin:10px 0 8px">Drag the item on the preview to move it. Drag its corner to resize.</div>
@@ -398,7 +411,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v63 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+ <details class="release" open><summary>v64 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🔍 Search for items without leaving the page: type something like “sunglasses” or “pizza” under “Your own items” and tap one to add it.</li>
+   <li>😎 Stickers: over 4,000 free emoji-style pictures (from OpenMoji) that are see-through already.</li>
+   <li>🖼️ Clip art: free-to-use drawings from the web (from Openverse). The background is removed for you when you add one, and “↺ Restore original” puts it back.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing else changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v63<span class="date">16 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>↩ Reply to comments: tap Reply under any comment. Your reply shows who and what you're answering. Tap that to jump to the original comment.</li>
@@ -1239,18 +1268,79 @@ function renderItemList(){
   const on=selItem.bgTol!==null;document.getElementById('itemBgBtn').textContent=on?'↺ Restore original':'✨ Remove background';document.getElementById('itemBgOpts').hidden=!on;
   if(on){document.getElementById('itemBgTol').value=selItem.bgTol;document.getElementById('itemBgTolVal').textContent=selItem.bgTol}}
 }
-document.getElementById('itemUpload').addEventListener('change',e=>{
- [...e.target.files].forEach(f=>{const u=URL.createObjectURL(f),im=new Image();
-  im.onload=()=>{
-   // Shrink big pictures so they stay quick to draw.
-   const sc=Math.min(1,1024/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*sc));c.height=Math.max(1,Math.round(im.naturalHeight*sc));
-   c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+// Adds a picture (an image or canvas, w×h) as a new item. Big pictures are shrunk so they stay quick to draw.
+function addItemFrom(src,w,h,done){
+   const sc=Math.min(1,1024/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*sc));c.height=Math.max(1,Math.round(h*sc));
+   c.getContext('2d').drawImage(src,0,0,c.width,c.height);
    const img=new Image();img.onload=()=>{const t=document.createElement('canvas');t.width=t.height=80;const tx=t.getContext('2d'),s=Math.min(80/img.width,80/img.height);tx.drawImage(img,(80-img.width*s)/2,(80-img.height*s)/2,img.width*s,img.height*s);
     const it={id:++itemSeq,img,orig:img,bgTol:null,thumb:t.toDataURL(),x:512,y:420,size:Math.min(360,img.naturalWidth>=img.naturalHeight?360:360*img.naturalWidth/img.naturalHeight),rot:0,behind:false,flip:false};
-    items.push(it);selectItem(it)};img.src=c.toDataURL('image/png')};
+    items.push(it);selectItem(it);if(done)done(it)};img.src=c.toDataURL('image/png');
+}
+document.getElementById('itemUpload').addEventListener('change',e=>{
+ [...e.target.files].forEach(f=>{const u=URL.createObjectURL(f),im=new Image();
+  im.onload=()=>{addItemFrom(im,im.naturalWidth,im.naturalHeight);URL.revokeObjectURL(u)};
   im.onerror=()=>URL.revokeObjectURL(u);im.src=u});
  e.target.value='';
 });
+// 🔍 Item search, so you don't have to leave the page:
+//  • Stickers: OpenMoji's 4,000+ free emoji-style pictures. They're see-through already, so they're ready to wear.
+//  • Clip art: free-to-use illustrations from Openverse (drawings only, so no photos of people; adult content is
+//    filtered out). They come on a plain background, which is removed automatically when you add one.
+(function(){
+ const OM='https://cdn.jsdelivr.net/npm/openmoji@15.1.0/',$q=id=>document.getElementById(id);
+ let src='stickers',moji=null,page=1,lastQ='',busy=false;
+ const msg=t=>{$q('itemQMsg').textContent=t};
+ const loadImg=u=>new Promise((ok,bad)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>ok(im);im.onerror=bad;im.src=u});
+ async function stickers(q){
+  if(!moji){msg('Loading stickers…');const r=await fetch(OM+'data/openmoji.json');if(!r.ok)throw 0;
+   moji=(await r.json()).filter(e=>!e.skintone&&e.group!=='component').map(e=>({hex:e.hexcode,name:e.annotation,text:(e.annotation+' '+e.tags+' '+e.openmoji_tags).toLowerCase(),order:e.order||9e9}))}
+  const words=q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean),re=w=>new RegExp('\\b'+w.replace(/s$/,'')+'s?\\b');
+  if(!words.length)return[];
+  const res=[];for(const e of moji){const n=e.name.toLowerCase();if(!words.every(w=>re(w).test(e.text)))continue;
+   res.push({e,score:(n===q.toLowerCase()?100:0)+words.filter(w=>re(w).test(n)).length*10-n.split(' ').length})}
+  return res.sort((a,b)=>b.score-a.score||a.e.order-b.e.order).slice(0,60).map(r=>r.e);
+ }
+ async function photos(q,pg){
+  const r=await fetch('https://api.openverse.org/v1/images/?category=illustration&page_size=20&page='+pg+'&q='+encodeURIComponent(q));
+  if(r.status===429)throw new Error('busy');if(!r.ok)throw 0;const j=await r.json();
+  return{list:j.results||[],more:pg<(j.page_count||1)};
+ }
+ function tile(img,cls,title,onPick){const b=document.createElement('button');b.type='button';b.className=cls||'';b.title=title;
+  const im=new Image();im.alt=title;im.loading='lazy';im.src=img;b.appendChild(im);
+  im.onerror=()=>b.remove();
+  b.onclick=async()=>{b.disabled=true;try{await onPick()}catch(e){msg("Sorry, that picture couldn't be added. Try another one.")}finally{b.disabled=false}};
+  $q('itemResults').appendChild(b)}
+ async function run(more){
+  const q=$q('itemQ').value.trim().slice(0,60);if(!q||busy)return;
+  if(window.monkeBadWords&&await window.monkeBadWords(q).catch(()=>false)){msg("That search has a word that isn't allowed.");return}
+  busy=true;$q('itemQMore').hidden=true;if(!more){page=1;$q('itemResults').innerHTML=''}lastQ=q;
+  try{
+   if(src==='stickers'){
+    const list=await stickers(q);
+    list.forEach(e=>tile(OM+'color/svg/'+e.hex+'.svg','',e.name,async()=>{
+     const im=await loadImg(OM+'color/svg/'+e.hex+'.svg'),c=document.createElement('canvas');c.width=c.height=512;c.getContext('2d').drawImage(im,0,0,512,512);
+     addItemFrom(c,512,512);msg('Added "'+e.name+'". Drag it on the icon to move it.')}));
+    msg(list.length?list.length+' sticker'+(list.length===1?'':'s')+' for "'+q+'". Tap one to add it.':'No stickers for "'+q+'". Try a simpler word, or search Clip art.');
+   }else{
+    msg(more?'Loading more…':'Searching…');const {list,more:has}=await photos(q,page);
+    list.forEach(r=>tile(r.thumbnail,'photo',(r.title||'Clip art')+(r.creator?' by '+r.creator:'')+' ('+String(r.license||'').toUpperCase()+')',async()=>{
+     let im;try{im=await loadImg(r.url)}catch(e){im=await loadImg(r.thumbnail)}
+     addItemFrom(im,im.naturalWidth,im.naturalHeight,()=>{const bb=$q('itemBgBtn');if(bb&&selItem&&selItem.bgTol===null)bb.click()});
+     msg('Added, and its background was removed. If too much was cut away, tap "↺ Restore original" or change the strength below.')}));
+    const n=$q('itemResults').children.length;
+    msg(n?n+' pictures for "'+q+'". Tap one to add it. These are free-to-use drawings from Openverse.':'No clip art for "'+q+'". Try another word.');
+    $q('itemQMore').hidden=!has||!list.length;
+   }
+  }catch(e){msg(e&&e.message==='busy'?'Lots of searches right now. Wait a minute and try again.':"Search isn't working right now. Check your internet and try again.")}
+  finally{busy=false}
+ }
+ $q('itemQGo').onclick=()=>run(false);
+ $q('itemQ').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();run(false)}});
+ $q('itemQMore').onclick=()=>{page++;run(true)};
+ $q('itemSrc').querySelectorAll('button').forEach(b=>b.onclick=()=>{src=b.dataset.src;
+  $q('itemSrc').querySelectorAll('button').forEach(o=>{o.classList.toggle('sel',o===b);o.setAttribute('aria-selected',o===b)});
+  if($q('itemQ').value.trim())run(false);else{$q('itemResults').innerHTML='';$q('itemQMore').hidden=true;msg('')}});
+})();
 document.getElementById('itemSize').addEventListener('input',e=>{if(!selItem)return;selItem.size=+e.target.value;document.getElementById('itemSizeVal').textContent=Math.round(selItem.size/10.24)+'%';draw()});
 document.getElementById('itemRot').addEventListener('input',e=>{if(!selItem)return;selItem.rot=+e.target.value;document.getElementById('itemRotVal').textContent=selItem.rot+'°';draw()});
 document.getElementById('itemLayer').addEventListener('change',e=>{if(!selItem)return;selItem.behind=e.target.value==='behind';renderItemList();draw()});
@@ -2092,6 +2182,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // Bad word check (the database refuses them anyway; this just warns before anything is uploaded).
  // If the filter hasn't been set up in Supabase yet, it lets everything through.
  const badWords=async t=>{if(!t||!sb)return false;const {data,error}=await sb.rpc('has_bad_words',{t});return !error&&data===true};
+ window.monkeBadWords=badWords; // also used by the item search
  const BAD_NAME="That name has a word that isn't allowed. Try a different one.";
  let mode='in',checkT=null;
  function openAcct(m){setMode(m);$('acctErr').textContent='';$('acctPass').value='';$('acctPop').hidden=false;setTimeout(()=>$('acctUser').focus(),50)}
