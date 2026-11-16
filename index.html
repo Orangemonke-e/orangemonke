@@ -36,6 +36,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .btn{border:1px solid var(--line);background:#252936;color:var(--text);padding:10px 14px;border-radius:11px;font-weight:650;font-size:13px;cursor:pointer;transition:.15s}.btn:hover{background:#323747;transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,#ffad4a,#f47a28);color:#21150b;border:0}.btn.primary:hover{filter:brightness(1.08)}.btn.small{padding:8px 11px}
 .upload{display:block;width:100%;border:1px dashed #505667;border-radius:11px;padding:11px;text-align:center;color:#c6cad5;font-size:12px;cursor:pointer}.upload input{display:none}
 .note{font-size:11px;color:var(--muted);margin-top:9px}
+.banner-box{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}.banner-box canvas{width:100%;height:auto;border-radius:10px;display:block;margin-top:8px;background:#000}
 .toggle{display:flex;align-items:center;gap:9px;font-size:12px;color:#c7cad4;margin-top:12px}.toggle input{accent-color:var(--accent)}
 .notes{max-width:1180px;margin:0 auto;padding:0 20px 36px}
 .notes-box{background:#171922cc;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 55px #0004;padding:20px 22px}
@@ -308,6 +309,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  <button class="btn primary" id="download" style="width:100%;margin-top:10px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
  <button type="button" class="btn" id="shareLink" style="width:100%;margin-top:8px;padding:12px">🔗 Share design link</button>
  <button type="button" class="btn" id="shareJump" hidden style="width:100%;margin-top:8px;padding:12px">🌍 Share to the community gallery</button>
+ <button type="button" class="btn" id="bannerOpen" style="width:100%;margin-top:8px;padding:12px">📺 Make a matching channel banner</button>
+ <div class="banner-box" id="bannerBox" hidden>
+  <div class="setup-head"><strong>📺 Channel banner</strong><button type="button" class="btn small" id="bannerClose">Close</button></div>
+  <p class="hint">A 2560 × 1440 YouTube banner that matches your icon: same monke, outfit and background. It updates as you change your design.</p>
+  <canvas id="bannerCv" width="2560" height="1440"></canvas>
+  <div class="row" style="margin-top:12px">
+   <div class="field"><label for="bannerName">Channel name</label><input id="bannerName" type="text" maxlength="24" placeholder="e.g. Orangemonke"></div>
+   <div class="field"><label for="bannerTag">Tagline (optional)</label><input id="bannerTag" type="text" maxlength="40" placeholder="e.g. Gorilla Tag videos every week!"></div>
+  </div>
+  <div class="row" style="margin-top:12px">
+   <div class="field"><label for="bannerSide">Monke position</label><select id="bannerSide"><option value="left" selected>Monke on the left</option><option value="right">Monke on the right</option><option value="both">Monke on both sides</option></select></div>
+   <div class="field"><label for="bannerFont">Text style</label><select id="bannerFont"><option value="pixel" selected>Pixel (like the name tag)</option><option value="bold">Big and bold</option></select></div>
+  </div>
+  <label class="toggle"><input id="bannerGuide" type="checkbox" checked> Show where it gets cut off on phones, TVs and computers (not in the download)</label>
+  <button type="button" class="btn primary" id="bannerDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download channel banner (PNG)</button>
+ </div>
 </section>
 </main>
 <section class="notes gallery" id="gallery" hidden><div class="notes-box">
@@ -378,7 +395,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v61 <span class="tag new">New</span><span class="date">15 Nov 2026</span></summary>
+ <details class="release" open><summary>v62 <span class="tag new">New</span><span class="date">16 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📺 Matching channel banner: tap “Make a matching channel banner” under the Download button to turn your icon into a 2560 × 1440 YouTube banner with the same monke, outfit and background.</li>
+   <li>Type your channel name and a tagline, put the monke on the left, the right or both sides, and pick pixel or big bold text.</li>
+   <li>A guide shows what phones, computers and TVs show. Everything important stays in the part every phone shows. The guide isn't in the download.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing else changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v61<span class="date">15 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🍌 New Orangemonke base: pick it from “Monke base” at the top of Colours. It starts grey like the classic monke, so the Monke colour works the same way.</li>
@@ -1260,7 +1293,7 @@ function drawYtMinis(){for(const {x,s} of ytMinis){x.clearRect(0,0,s,s);x.save()
 // something it depends on changes, and lots of input events in one frame cause just one redraw.
 const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h||w;return c};
 const figC=mk(1024),figX=figC.getContext('2d');
-let rafId=0,customId=0,bgImgId=0,afterRender=null;
+let rafId=0,customId=0,bgImgId=0,afterRender=null,bannerOn=false,scheduleBanner=()=>{};
 function draw(){if(!rafId)rafId=requestAnimationFrame(()=>{rafId=0;render()})}
 function drawNow(){if(rafId){cancelAnimationFrame(rafId);rafId=0}render()}
 function render(){
@@ -1288,6 +1321,7 @@ function render(){
   ctx.font=fs+'px '+PF;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineJoin='miter';ctx.miterLimit=2;ctx.lineWidth=Math.max(4,Math.round(fs/3));ctx.strokeStyle='#151515';const nx=352+(isOrange()?ORANGE_BODY_DX:0);ctx.strokeText(nm,nx,908);ctx.fillStyle='#fff';ctx.fillText(nm,nx,908);ctx.restore()}
  updateNameHint();
  drawYtMinis();
+ if(bannerOn)scheduleBanner();
  if(afterRender)afterRender();
  scheduleHistory();
  scheduleAutosave();
@@ -1823,6 +1857,57 @@ function fileName(){
 }
 $('fileName').addEventListener('keydown',e=>{if(e.key==='Enter')$('download').click()});
 document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn').onclick=redo;
+// 📺 Channel banner: the same monke (with outline, items and halo) on the same background, at YouTube's 2560×1440.
+// The monke is sized so its head stays inside the 1546×423 middle strip that every device shows.
+(function(){
+ const W=2560,H=1440,SAFE=[507,508,1546,423],cv=$('bannerCv'),bx=cv.getContext('2d');let raf=0;
+ function paintBg(c){
+  const col=$('background').value;
+  // banners can't be see-through, so a transparent design uses its Background colour
+  if($('transparent').checked||bgStyle==='solid'){c.fillStyle=col;c.fillRect(0,0,W,H);return}
+  if(bgStyle==='image'&&bgImg){const k=Math.max(W/bgImg.naturalWidth,H/bgImg.naturalHeight),w=bgImg.naturalWidth*k,h=bgImg.naturalHeight*k;c.drawImage(bgImg,(W-w)/2,(H-h)/2,w,h);return}
+  const b=BGS.find(o=>o.id===bgStyle)||BGS[0];c.save();c.translate(0,-(W-H)/2);b.draw(c,W,col);c.restore();
+ }
+ // The monke fills the middle strip (hat to shoulders) and fades out below it, so it never looks cut off on TVs.
+ const MS=600,MTOP=455,mC=mk(MS),mX=mC.getContext('2d');
+ function monke(c,cx,flip){
+  mX.globalCompositeOperation='source-over';mX.clearRect(0,0,MS,MS);
+  const t=+$('outline').value;if(t)mX.drawImage(outlineLayer(t),0,0,MS,MS);
+  mX.drawImage(figC,0,0,MS,MS);
+  if($('hat').value==='halo'&&haloImg.naturalWidth){if(+$('glow').value>0)mX.drawImage(glowC,0,0,MS,MS);mX.drawImage(haloC,0,0,MS,MS)}
+  const f0=(SAFE[1]+SAFE[3]-MTOP)/MS,g=mX.createLinearGradient(0,0,0,MS);g.addColorStop(0,'#000');g.addColorStop(f0,'#000');g.addColorStop(1,'#0000');
+  mX.globalCompositeOperation='destination-in';mX.fillStyle=g;mX.fillRect(0,0,MS,MS);mX.globalCompositeOperation='source-over';
+  c.save();if(flip){c.translate(cx,0);c.scale(-1,1);c.translate(-cx,0)}c.drawImage(mC,cx-MS/2,MTOP);c.restore();
+ }
+ // font = [weight, family]; the size goes between them
+ function fitText(c,txt,font,max,size){let s=size;const set=()=>c.font=font[0]+' '+s+'px '+font[1];set();while(s>20&&c.measureText(txt).width>max){s-=4;set()}return s}
+ function text(c,cx,maxW){
+  const name=$('bannerName').value.trim()||$('name').value.trim()||'My Channel',tag=$('bannerTag').value.trim(),pixel=$('bannerFont').value==='pixel';
+  const F=pixel?['400','"Press Start 2P",monospace']:['900','system-ui,-apple-system,"Segoe UI",sans-serif'],SANS=['700','system-ui,-apple-system,"Segoe UI",sans-serif'];
+  c.save();c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  const ns=fitText(c,name,F,maxW,pixel?84:140),ny=SAFE[1]+SAFE[3]/2-(tag?ns*.45:0);
+  c.lineWidth=ns*(pixel?.28:.16);c.strokeStyle='#151515';c.strokeText(name,cx,ny);c.fillStyle='#fff';c.fillText(name,cx,ny);
+  if(tag){const ts=fitText(c,tag,SANS,maxW,54),ty=ny+ns*.55+ts*.9;
+   c.lineWidth=ts*.22;c.strokeText(tag,cx,ty);c.fillStyle='#ffd9a8';c.fillText(tag,cx,ty)}
+  c.restore();
+ }
+ function compose(c,guide){
+  c.clearRect(0,0,W,H);paintBg(c);const side=$('bannerSide').value;
+  if(side==='left'){monke(c,SAFE[0]+260,false);text(c,SAFE[0]+SAFE[2]-470,860)}
+  else if(side==='right'){monke(c,SAFE[0]+SAFE[2]-260,true);text(c,SAFE[0]+470,860)}
+  else{monke(c,SAFE[0]+210,false);monke(c,SAFE[0]+SAFE[2]-210,true);text(c,W/2,720)}
+  if(guide){c.save();c.setLineDash([24,16]);c.lineWidth=6;
+   const box=(x,y,w,h,col,label)=>{c.strokeStyle=col;c.strokeRect(x,y,w,h);c.font='700 38px system-ui,sans-serif';c.textBaseline='top';const tw=c.measureText(label).width;c.fillStyle='#000a';c.fillRect(x+10,y+10,tw+24,52);c.fillStyle=col;c.fillText(label,x+22,y+18)};
+   box(3,3,W-6,H-6,'#ff6b6b','TV: the whole picture');box(0,SAFE[1],W,SAFE[3],'#ffd43b','Computer');box(...SAFE,'#69db7c','Phones (always visible)');c.restore()}
+ }
+ function paint(){raf=0;compose(bx,$('bannerGuide').checked)}
+ scheduleBanner=()=>{if(!raf)raf=requestAnimationFrame(paint)};
+ ['bannerName','bannerTag','bannerSide','bannerFont','bannerGuide'].forEach(id=>$(id).addEventListener('input',scheduleBanner));
+ $('bannerOpen').onclick=()=>{bannerOn=true;$('bannerBox').hidden=false;$('bannerOpen').hidden=true;if(!$('bannerName').value)$('bannerName').value=$('name').value.trim()||$('presetName').value.trim();drawNow()};
+ $('bannerClose').onclick=()=>{bannerOn=false;$('bannerBox').hidden=true;$('bannerOpen').hidden=false};
+ $('bannerDl').onclick=()=>{drawNow();const out=mk(W,H);compose(out.getContext('2d'),false);
+  out.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fileName().replace(/\.png$/,'')+'-banner.png';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)},'image/png')};
+})();
 // 🔗 Design links: the design (not uploaded pictures or the name tag) packed into the link after "#d=".
 // Settings left at their defaults are skipped to keep links short. Opening a link loads the design.
 function designDefaults(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.defaultChecked:e.tagName==='SELECT'?(e.querySelector('option[selected]')||e.options[0]).value:e.defaultValue});o.bgStyle='solid';return o}
