@@ -144,6 +144,18 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .om-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.om-mine{padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px}.om-mine .om-text{white-space:pre-wrap;word-break:break-word}
 .om-mine .om-st{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}.om-mine.picked{border-color:var(--accent)}.om-mine.picked .om-st b{color:var(--accent)}
 .om-count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+.chal{margin:14px 0;padding:16px;border-radius:18px;border:1px solid #ff9a2e66;background:linear-gradient(135deg,#ff9a2e22,#ffd23f14 60%,transparent)}
+.chal-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.chal-kicker{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.chal-kicker span{font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:6px}.chal-theme{font-size:22px;font-weight:900;margin-top:4px}.chal-hint{font-size:13px;color:var(--muted);margin-top:2px}
+.chal-btns{display:flex;gap:8px;flex-wrap:wrap}.chal-top{display:flex;gap:10px;margin-top:12px;overflow-x:auto;padding-bottom:2px}
+.chal-entry{flex:none;width:96px;text-align:center;font-size:11px;cursor:pointer;background:none;border:0;color:var(--text);padding:0}.chal-entry img{width:96px;height:96px;border-radius:12px;object-fit:cover;display:block;border:2px solid transparent}
+.chal-entry.first img{border-color:#ffc83d}.chal-entry b{display:block;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chal-entry small{color:var(--muted)}
+.chal-empty{font-size:13px;color:var(--muted);margin-top:10px}
+.chal-last{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;cursor:pointer}.chal-last img{width:44px;height:44px;border-radius:10px;object-fit:cover}
+.chal-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:10px 0;padding:10px 14px;border-radius:12px;background:#ff9a2e1f;border:1px solid #ff9a2e55;font-weight:700;font-size:14px}
+.share-chal{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;font-weight:700;cursor:pointer}.share-chal input{width:17px;height:17px;accent-color:var(--accent)}
+.chal[hidden],.chal-last[hidden],.chal-bar[hidden],.share-chal[hidden]{display:none}
+.pchal{font-size:12px;font-weight:700;color:#e0a100;margin-top:4px}
 .gal-search{margin-top:10px;position:relative;max-width:360px}.gal-search input{width:100%;box-sizing:border-box;padding:9px 34px 9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:14px}.gal-search input:focus{outline:none;border-color:var(--accent)}
 .gal-search button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 6px}
 .notes-older{display:block;margin:14px auto 0}
@@ -454,9 +466,17 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <canvas id="shareThumb" width="96" height="96"></canvas>
   <div class="gal-share-main"><strong>Share your current icon</strong>
    <div class="preset-save"><input id="shareTitle" type="text" maxlength="40" placeholder="Give it a title (optional)"><button type="button" class="btn small primary" id="shareGo">🌍 Share</button></div>
+   <label class="share-chal" id="shareChalRow" hidden><input type="checkbox" id="shareChal"> <span id="shareChalText">🏆 Enter this week's challenge</span></label>
    <label class="share-topic" id="shareTopicRow">Where should it go?<select id="shareTopic"><option value="monke">🐒 Monke icons (Gorilla Tag monkes)</option><option value="off">🎲 Off topic (anything else, like a noob)</option></select></label>
    <div class="note" id="shareMsg">Everyone can see what you share. Don't include personal info like your real name or address.</div></div>
  </div>
+ <div class="chal" id="chal" hidden>
+  <div class="chal-head"><div><div class="chal-kicker">🏆 Weekly challenge <span id="chalLeft"></span></div><div class="chal-theme" id="chalTheme"></div><div class="chal-hint" id="chalHint"></div></div>
+   <div class="chal-btns"><button type="button" class="btn small primary" id="chalEnter">✏️ Enter</button><button type="button" class="btn small" id="chalAll">👀 See entries</button></div></div>
+  <div class="chal-top" id="chalTop"></div>
+  <div class="chal-last" id="chalLast" hidden></div>
+ </div>
+ <div class="chal-bar" id="chalBar" hidden><span id="chalBarText"></span><button type="button" class="btn small" id="chalBack">✕ Back to the gallery</button></div>
  <div class="gal-tabs" id="galTabs" hidden><button type="button" class="btn small sel" data-tab="all">All posts</button><button type="button" class="btn small" data-tab="following" id="tabFollowing">👥 Following</button><button type="button" class="btn small" data-tab="reported" id="tabReported">🚩 Reported</button></div>
  <div class="gal-status" id="galStatus">Loading the gallery…</div>
  <div class="gal-grid" id="galGrid"></div>
@@ -540,7 +560,24 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v78 <span class="tag new">New</span><span class="date" data-time="2026-11-17T15:43:57Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v79 <span class="tag new">New</span><span class="date" data-time="2026-11-17T15:59:27Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🏆 Weekly challenge: every Monday there's a new theme in the gallery, starting with 🌌 Monke in space. Make an icon for it and tick "Enter this week's challenge" when you share it.</li>
+   <li>The challenge card shows the theme, how long is left and the top entries with 🥇🥈🥉. Tap "See all entries" to see every entry, most liked first.</li>
+   <li>The most-liked entry wins, and last week's winner is shown on the card. Entries get a 🏆 badge in the gallery.</li>
+   <li>Tap ✏️ Enter to get started: it ticks the challenge box and fills in a title for you.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v78<span class="date" data-time="2026-11-17T15:43:57Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -2752,7 +2789,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  window.linkPushToAccount=linkPush;
  const linkPost=new URLSearchParams(location.search).get('comments'),linkProfile=new URLSearchParams(location.search).get('profile');
- function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);startLive();
+ function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);renderChallenge();startLive();
   if(linkPost&&/^[0-9a-f-]{36}$/i.test(linkPost)){
    // Opened from a comment notification: show that icon's comments.
    history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});
@@ -3049,6 +3086,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
      const u=await sb.storage.from('icons').upload(ip,b,{contentType:t,upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
      itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
     design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
+   const inChal=remixOn&&$('shareChal').checked;if(inChal)design.challenge=chalWeek(0).key;
    const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
    const off=offTopicOn&&$('shareTopic').value==='off';if(off)row.off_topic=true;
    let {data,error}=await sb.from('posts').insert(row).select(postFields()).single();
@@ -3056,13 +3094,76 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    if(noRemixYet(error)){if(itemPaths.length)await sb.storage.from('icons').remove(itemPaths);itemPaths.length=0;({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single())}
    if(error){await sb.storage.from('icons').remove([path,...itemPaths]);throw error}
    remixSource=null;
-   $('shareTitle').value='';msg.textContent=off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
-   if(tab==='all'&&!searchText()&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
+   if(inChal){$('shareChal').checked=false;renderChallenge()}
+   $('shareTitle').value='';msg.textContent=inChal?'🏆 Entered into this week\'s challenge! Ask your friends to like it.':off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
+   if(tab==='all'&&!searchText()&&!chalView&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
   }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
  };
 
+ // ── 🏆 Weekly challenge: a new theme every Monday (UK time). Entries are tagged in the shared design (design.challenge),
+ // and the most-liked entry wins. No database changes needed.
+ const CHALLENGES=[
+  ['🌌','Monke in space','Stars, planets, a helmet… take your monke to the galaxy.'],
+  ['👻','Spooky monke','Make the creepiest (or cutest) ghostly monke you can.'],
+  ['👑','Royal monke','Crowns, capes, gold: make a monke fit for a king or queen.'],
+  ['🌊','Underwater monke','Fish, bubbles, a diving mask: life under the sea.'],
+  ['🦸','Superhero monke','Give your monke a superhero look and a hero name.'],
+  ['🎄','Christmas monke','Santa hats, snow and presents. Get festive!'],
+  ['🌈','Rainbow monke','Use as many colours as you can. The brighter the better.'],
+  ['🥷','Ninja monke','Stealthy, dark and cool. Bandanas welcome.'],
+  ['🤖','Robot monke','Metal, wires and glowing eyes: build a monke from the future.'],
+  ['🍔','Food monke','Make a monke that looks like (or loves) your favourite food.'],
+  ['🧊','Ice monke','Frosty colours, snowflakes and cold vibes.'],
+  ['🔥','Lava monke','Hot colours, fire and flames everywhere.'],
+  ['🎮','Gamer monke','Headphones, controllers and RGB lights.'],
+  ['🏝️','Holiday monke','Sunglasses, palm trees and beach vibes.'],
+  ['😇','Angel vs devil','Halos, horns or both: good monke or bad monke?'],
+  ['🌿','Jungle monke','Back to the trees! Leaves, vines and wild colours.'],
+  ['📺','Your channel mascot','Make the monke that would be the face of your YouTube channel.'],
+  ['🎨','Copy a famous painting','Turn a famous painting or artwork into a monke.']];
+ const CHAL_START=Date.UTC(2026,10,16); // Monday 16 Nov 2026 = week 0
+ function ukDay(t){return new Date(t).toLocaleDateString('en-CA',{timeZone:'Europe/London'})} // YYYY-MM-DD in the UK
+ function chalWeek(offset){
+  const today=Date.parse(ukDay(Date.now())+'T00:00:00Z'),dow=(new Date(today).getUTCDay()+6)%7,mon=today-dow*864e5+(offset||0)*7*864e5;
+  const n=Math.round((mon-CHAL_START)/(7*864e5)),c=CHALLENGES[((n%CHALLENGES.length)+CHALLENGES.length)%CHALLENGES.length];
+  return {key:new Date(mon).toISOString().slice(0,10),n,emoji:c[0],name:c[1],hint:c[2],ends:mon+7*864e5};
+ }
+ let chalView=false;
+ const exitChal=()=>{if(!chalView)return;chalView=false;$('chalBar').hidden=true;renderChallenge()};
+ const chalQ=key=>sb.from('posts').select(postFields()).eq('design->>challenge',key);
+ function chalLeft(ends){const ms=ends-Date.parse(ukDay(Date.now())+'T'+new Date().toLocaleTimeString('en-GB',{timeZone:'Europe/London',hour12:false})+'Z'),d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5);
+  return ms<=0?'ending now':d>=1?'· ⏳ '+d+' day'+(d===1?'':'s')+(h?' '+h+' h':'')+' left':'· ⏳ '+Math.max(1,h)+' h left'}
+ async function renderChallenge(){
+  if(!sb||!remixOn){$('chal').hidden=true;$('shareChalRow').hidden=true;return}
+  const w=chalWeek(0),last=chalWeek(-1);
+  $('chalTheme').textContent=w.emoji+' '+w.name;$('chalHint').textContent=w.hint;$('chalLeft').textContent=chalLeft(w.ends);
+  $('shareChalText').textContent='🏆 Enter this week\'s challenge: '+w.emoji+' '+w.name;$('shareChalRow').hidden=false;
+  const [top,prev]=await Promise.all([chalQ(w.key).order('like_count',{ascending:false}).order('created_at',{ascending:true}).limit(50),last.n<0?Promise.resolve({data:[]}):chalQ(last.key).order('like_count',{ascending:false}).order('created_at',{ascending:true}).limit(1)]); // no challenge before week 0
+  if(noRemixYet(top.error)||noLikesYet(top.error)){$('chal').hidden=true;return}
+  $('chal').hidden=false;const box=$('chalTop');box.innerHTML='';const list=(top.data||[]).filter(p=>!(p.profiles||{}).banned);
+  if(!list.length)box.appendChild(el('div','chal-empty','No entries yet. Be the first! Make your icon, then tick "Enter this week\'s challenge" when you share it.'));
+  list.slice(0,8).forEach((p,i)=>{const b=el('button','chal-entry'+(i===0&&p.like_count>0?' first':''));b.type='button';b.title=(p.title||'Untitled')+' by '+((p.profiles||{}).display_name||'');
+   const im=el('img');im.alt=b.title;im.loading='lazy';im.src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;b.appendChild(im);
+   b.appendChild(el('b',null,(i<3&&p.like_count>0?['🥇','🥈','🥉'][i]+' ':'')+((p.profiles||{}).display_name||'')));b.appendChild(el('small',null,'❤️ '+(p.like_count||0)));
+   b.onclick=()=>{if(commentsOn)openComments(p);else showChallenge()};box.appendChild(b)});
+  $('chalAll').textContent='👀 See all '+list.length+(list.length>=50?'+':'')+' entr'+(list.length===1?'y':'ies');$('chalAll').hidden=!list.length;
+  const lw=(prev.data||[]).find(p=>!(p.profiles||{}).banned),L=$('chalLast');L.hidden=!lw;L.innerHTML='';
+  if(lw){const im=el('img');im.alt='';im.src=sb.storage.from('icons').getPublicUrl(lw.image_path).data.publicUrl;L.appendChild(im);
+   const t=el('div');t.appendChild(el('b',null,'🥇 Last week\'s winner ('+last.emoji+' '+last.name+')'));t.appendChild(document.createElement('br'));
+   t.appendChild(document.createTextNode((lw.title?'“'+lw.title+'” by ':'')+((lw.profiles||{}).display_name||'')+' · ❤️ '+(lw.like_count||0)));L.appendChild(t);L.onclick=()=>{if(commentsOn)openComments(lw)}}
+ }
+ function showChallenge(){chalView=true;const w=chalWeek(0);$('chalBarText').textContent='🏆 '+w.emoji+' '+w.name+' entries, most liked first';$('chalBar').hidden=false;$('chal').hidden=true;loadPosts(true);gal.scrollIntoView({behavior:'smooth',block:'start'})}
+ $('chalAll').onclick=showChallenge;
+ $('chalBack').onclick=()=>{chalView=false;$('chalBar').hidden=true;renderChallenge();loadPosts(true)};
+ $('chalEnter').onclick=()=>{
+  if(!me){openAcct('in');return}
+  $('shareChal').checked=true;const w=chalWeek(0);if(!$('shareTitle').value)$('shareTitle').value=w.name;
+  if(offTopicOn)$('shareTopic').value='monke';
+  toast(w.emoji+' Make your '+w.name.toLowerCase()+' in the maker, then press Share!');document.querySelector('main').scrollIntoView({behavior:'smooth',block:'start'})};
+ setInterval(()=>{if(!$('chal').hidden&&!document.hidden)$('chalLeft').textContent=chalLeft(chalWeek(0).ends)},60000);
+
  // ── Posts ──
- document.querySelectorAll('#galTabs .btn[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('#galTabs .btn[data-tab]').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
+ document.querySelectorAll('#galTabs .btn[data-tab]').forEach(b=>b.onclick=()=>{exitChal();tab=b.dataset.tab;document.querySelectorAll('#galTabs .btn[data-tab]').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
  $('galMore').onclick=()=>loadPosts(false);
  let loadId=0,searchT=null;
  // letters, numbers, spaces and a few symbols only (commas and brackets would break the search filter)
@@ -3073,10 +3174,11 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  async function loadPosts(reset){
   if(!sb)return;const id=++loadId;if(reset){page=0;grid.innerHTML='';cardRefs.clear();likeSetters.clear();reactDraws.clear();status.textContent='Loading the gallery…'}
   let q=sb.from('posts').select(postFields());
-  if(sort==='top'&&likesOn&&tab==='all')q=q.order('like_count',{ascending:false});
+  if(chalView){q=q.eq('design->>challenge',chalWeek(0).key);if(likesOn)q=q.order('like_count',{ascending:false});q=q.order('created_at',{ascending:true})}
+  else{if(sort==='top'&&likesOn&&tab==='all')q=q.order('like_count',{ascending:false});
   q=q.order('created_at',{ascending:false});
   if(tab==='reported')q=q.gt('report_count',0);
-  else if(offTopicOn)q=q.eq('off_topic',topic==='off');
+  else if(offTopicOn)q=q.eq('off_topic',topic==='off');}
   // 🔍 search: icon titles, plus icons by creators whose name matches
   const sq=searchText();
   if(sq){const pr=await sb.from('profiles').select('id').or(`username.ilike.%${sq}%,display_name.ilike.%${sq}%`).limit(60);if(id!==loadId)return;
@@ -3093,7 +3195,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));await loadLocks(data.map(p=>p.id));if(id!==loadId)return;
   $('galSort').hidden=!likesOn||tab!=='all';$('galTopic').hidden=!offTopicOn||tab==='reported';$('shareTopicRow').hidden=!offTopicOn;
   data.forEach(p=>grid.appendChild(postCard(p)));page++;
-  status.textContent=grid.children.length?'':sq?'No icons match “'+sq+'”'+(offTopicOn&&tab!=='reported'?' in '+(topic==='off'?'🎲 Off topic':'🐒 Monke icons'):'')+'.':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+'';
+  status.textContent=grid.children.length?'':chalView?'No entries yet. Be the first!':sq?'No icons match “'+sq+'”'+(offTopicOn&&tab!=='reported'?' in '+(topic==='off'?'🎲 Off topic':'🐒 Monke icons'):'')+'.':tab==='reported'?'No reported icons. 🎉':tab==='following'?'The people you follow haven\'t shared any icons yet.':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+'';
   $('galMore').hidden=data.length<PAGE;
  }
  // ── Reactions: each person can add each emoji once per icon. Needs supabase/update-6-reactions.sql;
@@ -3295,9 +3397,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   };
   likeSetters.set(p.id,v=>{if(b.disabled)return;n=v;p.like_count=v;draw()});draw();return b;
  }
- document.querySelectorAll('#galTopic .btn').forEach(b=>b.onclick=()=>{topic=b.dataset.topic;$('shareTopic').value=topic;
+ document.querySelectorAll('#galTopic .btn').forEach(b=>b.onclick=()=>{exitChal();topic=b.dataset.topic;$('shareTopic').value=topic;
   document.querySelectorAll('#galTopic .btn').forEach(o=>{o.classList.toggle('sel',o===b);o.setAttribute('aria-selected',o===b)});loadPosts(true)});
- document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
+ document.querySelectorAll('#galSort .btn').forEach(b=>b.onclick=()=>{exitChal();sort=b.dataset.sort;document.querySelectorAll('#galSort .btn').forEach(o=>o.classList.toggle('sel',o===b));loadPosts(true)});
  // ── ⚡ Live updates (Supabase Realtime): new icons, likes, reactions, comments and follows show up without refreshing.
  // Needs supabase/update-14-live.sql. Until then nothing changes: people just refresh like before.
  const cardRefs=new Map(),likeSetters=new Map(),reactDraws=new Map();let followingIds=new Set(),liveCh=null;
@@ -3314,7 +3416,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  async function livePost(e){
   const n=e.new||{},o=e.old||{};
   if(e.eventType==='INSERT'){
-   if(!n.id||cardRefs.has(n.id)||tab==='reported'||searchText()||(tab==='following'&&!followingIds.has(n.user_id))||(offTopicOn&&!!n.off_topic!==(topic==='off')))return;
+   if(!n.id||cardRefs.has(n.id)||tab==='reported'||searchText()||chalView||(tab==='following'&&!followingIds.has(n.user_id))||(offTopicOn&&!!n.off_topic!==(topic==='off')))return;
    const {data:p}=await sb.from('posts').select(postFields()).eq('id',n.id).maybeSingle();if(!p||cardRefs.has(p.id))return;
    await loadReactions([p.id]);await loadCommentCounts([p.id]);if(cardRefs.has(p.id))return;
    const card=postCard(p);card.classList.add('fresh');grid.prepend(card);status.textContent='';setTimeout(()=>card.classList.remove('fresh'),4000);
@@ -3359,6 +3461,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const by=el('div','pby linkish');by.title='See '+pr.display_name+'\'s profile';by.onclick=()=>openProfile(p.user_id);by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
   if(p.off_topic&&tab==='reported')body.appendChild(el('div','premix','🎲 Off topic'));
+  if(p.design&&p.design.challenge){const cw=chalWeek(0),lw=chalWeek(-1),k=p.design.challenge;if(k===cw.key||(k===lw.key&&lw.n>=0)){const w=k===cw.key?cw:lw;body.appendChild(el('div','pchal','🏆 '+w.emoji+' '+w.name+' challenge'+(k===lw.key?' (last week)':'')))}}
   if(p.remix&&p.remix.title!==undefined){const r=el('div','premix','🎨 Remix of '+(p.remix.title?'“'+p.remix.title+'”':'an icon')+(p.remix.profiles?' by @'+p.remix.profiles.username:''));body.appendChild(r)}
   if(likesOn)body.appendChild(likeButton(p));
   if(reactsOn)body.appendChild(reactRow(p.id));
