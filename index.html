@@ -252,6 +252,7 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .trailer-close{position:absolute;right:0;top:-46px}
 .art-wrap{position:relative;width:min(100%,520px)}.art-wrap canvas{width:100%}
 .item-box{position:absolute;left:0;top:0;border:2px dashed var(--accent);box-shadow:0 0 0 1px #0008;pointer-events:none;transform-origin:center}
+.item-side{position:absolute;width:16px;height:16px;border-radius:4px;background:#fff;border:3px solid var(--accent);box-shadow:0 2px 6px #0008;pointer-events:auto;touch-action:none}.item-side-w{right:-10px;top:calc(50% - 8px);cursor:ew-resize}.item-side-h{bottom:-10px;left:calc(50% - 8px);cursor:ns-resize}
 .item-handle{position:absolute;right:-11px;bottom:-11px;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 6px #0008;pointer-events:auto;cursor:nwse-resize;touch-action:none}
 .item-row{display:flex;align-items:center;gap:10px;padding:6px 8px;margin-top:8px;border:1px solid var(--line);border-radius:12px;background:#12141c;cursor:pointer}
 .item-row.sel{border-color:var(--accent);box-shadow:0 0 0 2px #ff8b3040}.item-row img{width:40px;height:40px;object-fit:contain;border-radius:8px;background:repeating-conic-gradient(#2a2d38 0 25%,#1b1d26 0 50%) 50%/10px 10px;flex:none}
@@ -284,7 +285,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 <main>
 <section class="preview-panel">
  <div class="panel-head"><strong>YOUR ICON</strong><span class="hint">Live preview · 1024 × 1024</span></div>
- <div class="stage"><div class="art-wrap"><canvas id="art" width="1024" height="1024"></canvas><div class="yt-guide" id="ytGuide" hidden aria-hidden="true"></div><div class="item-box" id="itemBox" hidden><div class="item-handle" id="itemHandle" title="Drag to resize"></div></div></div></div>
+ <div class="stage"><div class="art-wrap"><canvas id="art" width="1024" height="1024"></canvas><div class="yt-guide" id="ytGuide" hidden aria-hidden="true"></div><div class="item-box" id="itemBox" hidden><div class="item-handle" id="itemHandle" title="Drag to resize"></div><div class="item-side item-side-w" id="itemHandleW" title="Drag to stretch wider or thinner"></div><div class="item-side item-side-h" id="itemHandleH" title="Drag to stretch taller or shorter"></div></div></div></div>
  <div class="preview-actions"><span class="hint">Your changes update automatically</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn small" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button><button class="btn small" id="random">🎲 Random Monke</button><button class="btn small" id="reset">↺ Reset design</button></div></div>
  <div class="yt-prev" id="ytPrevBox">
   <div class="yt-head"><strong>How it looks on YouTube</strong><label class="toggle"><input id="ytCircle" type="checkbox"> ⭕ Show YouTube circle</label></div>
@@ -359,8 +360,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   </div>
   <div id="itemList"></div>
   <div id="itemEdit" hidden>
-   <div class="note" style="margin:10px 0 8px">Drag the item on the preview to move it. Drag its corner to resize.</div>
-   <div class="field"><label for="itemSize">Size <span id="itemSizeVal"></span></label><input id="itemSize" type="range" min="30" max="1024" value="300"></div>
+   <div class="note" style="margin:10px 0 8px">Drag the item on the preview to move it. Drag the round corner to resize, or the square side handles to stretch it.</div>
+   <div class="field"><label for="itemSize">Size <span id="itemSizeVal"></span></label><input id="itemSize" type="range" min="30" max="2048" value="300"></div>
+   <div class="row" style="margin-top:12px">
+    <div class="field"><label for="itemW">↔ Width <span id="itemWVal"></span></label><input id="itemW" type="range" min="30" max="2048" value="300"></div>
+    <div class="field"><label for="itemHt">↕ Height <span id="itemHVal"></span></label><input id="itemHt" type="range" min="30" max="2048" value="300"></div>
+   </div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn small" id="itemFill" title="Stretch it to cover the whole icon, e.g. for a background picture">⬛ Fill the whole icon</button><button type="button" class="btn small" id="itemUnstretch">↺ Back to its own shape</button></div>
    <div class="field" style="margin-top:12px"><label for="itemRot">Rotation <span id="itemRotVal"></span></label><input id="itemRot" type="range" min="-180" max="180" value="0"></div>
    <div class="row" style="margin-top:12px">
     <div class="field"><label for="itemLayer">Layer</label><select id="itemLayer"><option value="front">In front of the monke</option><option value="behind">Behind the monke</option></select></div>
@@ -560,7 +566,24 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v79 <span class="tag new">New</span><span class="date" data-time="2026-11-17T15:59:27Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v80 <span class="tag new">New</span><span class="date" data-time="2026-11-17T16:15:16Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>↔↕ Stretch your items: new Width and Height sliders, plus square handles on the side and bottom of the selected item that you can drag to stretch it.</li>
+   <li>⬛ Fill the whole icon: one tap stretches a picture to cover the whole icon and puts it behind the monke, so one picture can be your whole background.</li>
+   <li>↺ Back to its own shape undoes the stretch.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Items can now be up to twice as big as the icon (they could only be as big as the icon before).</li>
+   <li>Stretched items stay stretched in presets, shared icons and remixes.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v79<span class="date" data-time="2026-11-17T15:59:27Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🏆 Weekly challenge: every Monday there's a new theme in the gallery, starting with 🌌 Monke in space. Make an icon for it and tick "Enter this week's challenge" when you share it.</li>
@@ -1633,8 +1656,10 @@ function hex(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),pars
 // 🧸 Your own items: upload pictures, then drag to move, drag the corner (or use the slider) to resize, rotate, flip,
 // and put them in front of or behind the monke. Positions are in the 1024×1024 icon space.
 let items=[],selItem=null,itemSeq=0;
-const itemH=it=>it.size*(it.img.naturalHeight||it.img.height)/(it.img.naturalWidth||it.img.width);
-const itemsKey=()=>items.map(i=>[i.id,i.x|0,i.y|0,i.size|0,i.rot|0,i.behind?1:0,i.flip?1:0].join(',')).join(';');
+// size = width; sy stretches the height (1 = the picture's own shape)
+const itemAspect=it=>(it.img.naturalHeight||it.img.height)/(it.img.naturalWidth||it.img.width);
+const itemH=it=>it.size*itemAspect(it)*(it.sy||1);
+const itemsKey=()=>items.map(i=>[i.id,i.x|0,i.y|0,i.size|0,Math.round((i.sy||1)*100),i.rot|0,i.behind?1:0,i.flip?1:0].join(',')).join(';');
 function drawItem(c,it){{const w=it.size,h=itemH(it);
  c.save();c.translate(it.x,it.y);c.rotate(it.rot*Math.PI/180);c.scale(it.flip?-1:1,1);c.drawImage(it.img,-w/2,-h/2,w,h);c.restore()}}
 function placeItemBox(){
@@ -1659,7 +1684,7 @@ function renderItemList(){
   row.onclick=()=>selectItem(it);list.appendChild(row)});
  const ed=document.getElementById('itemEdit');ed.hidden=!selItem;
  canvas.style.touchAction=items.length?'none':'';canvas.style.cursor=items.length?'grab':'';
- if(selItem){document.getElementById('itemSize').value=Math.round(selItem.size);document.getElementById('itemSizeVal').textContent=Math.round(selItem.size/10.24)+'%';
+ if(selItem){syncItemSize();
   document.getElementById('itemRot').value=Math.round(selItem.rot);document.getElementById('itemRotVal').textContent=Math.round(selItem.rot)+'°';
   document.getElementById('itemLayer').value=selItem.behind?'behind':'front';
   const on=selItem.bgTol!==null;document.getElementById('itemBgBtn').textContent=on?'↺ Restore original':'✨ Remove background';document.getElementById('itemBgOpts').hidden=!on;
@@ -1687,7 +1712,7 @@ function restoreItems(list,order){
  return Promise.all(list.map(d=>new Promise(res=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=()=>res(null);im.src=d.url}))).then(ims=>{
   const ids=ims.map((im,n)=>{if(!im||!im.naturalWidth)return null;const d=list[n],t=mk(80),tx=t.getContext('2d'),k=Math.min(80/im.naturalWidth,80/im.naturalHeight);
    tx.drawImage(im,(80-im.naturalWidth*k)/2,(80-im.naturalHeight*k)/2,im.naturalWidth*k,im.naturalHeight*k);
-   const it={id:++itemSeq,img:im,orig:im,bgTol:null,thumb:t.toDataURL(),x:num(d.x,-512,1536,512),y:num(d.y,-512,1536,420),size:num(d.s,30,1024,300),rot:num(d.r,-180,180,0),behind:!!d.b,flip:!!d.f};
+   const it={id:++itemSeq,img:im,orig:im,bgTol:null,thumb:t.toDataURL(),x:num(d.x,-512,1536,512),y:num(d.y,-512,1536,420),size:num(d.s,30,2048,300),sy:num(d.h,.05,20,1),rot:num(d.r,-180,180,0),behind:!!d.b,flip:!!d.f};
    items.push(it);return it.id});
   if(Array.isArray(order)){const o=order.map(k=>/^i\d{1,2}$/.test(k)?(ids[+k.slice(1)]?'item:'+ids[+k.slice(1)]:null):BUILTIN_LAYERS.includes(k)?k:null).filter(Boolean);
    if(BUILTIN_LAYERS.every(k=>o.includes(k)))layerOrder=o}
@@ -1753,7 +1778,23 @@ function restoreItems(list,order){
   $q('itemSrc').querySelectorAll('button').forEach(o=>{o.classList.toggle('sel',o===b);o.setAttribute('aria-selected',o===b)});
   if($q('itemQ').value.trim())run(false);else{$q('itemResults').innerHTML='';$q('itemQMore').hidden=true;msg('')}});
 })();
-document.getElementById('itemSize').addEventListener('input',e=>{if(!selItem)return;selItem.size=+e.target.value;document.getElementById('itemSizeVal').textContent=Math.round(selItem.size/10.24)+'%';draw()});
+// Size keeps the item's shape; Width and Height stretch it. Each side can be up to twice the icon's size.
+const ITEM_MAX=2048,clampSz=v=>Math.max(30,Math.min(ITEM_MAX,v));
+function syncItemSize(){if(!selItem)return;const it=selItem,h=itemH(it),pc=v=>Math.round(v/10.24)+'%';
+ $('itemSize').value=Math.round(it.size);$('itemSizeVal').textContent=pc(it.size)+(Math.abs((it.sy||1)-1)>=.005?' wide, '+pc(h)+' tall':'');
+ $('itemW').value=Math.round(it.size);$('itemWVal').textContent=pc(it.size);$('itemHt').value=Math.round(h);$('itemHVal').textContent=pc(h);
+ $('itemUnstretch').disabled=Math.abs((it.sy||1)-1)<.005}
+function setItemW(it,w){const h=itemH(it);it.size=clampSz(w);it.sy=h/(it.size*itemAspect(it))}
+function setItemH(it,h){it.sy=clampSz(h)/(it.size*itemAspect(it))}
+$('itemSize').addEventListener('input',e=>{if(!selItem)return;const it=selItem,r=itemAspect(it)*(it.sy||1); // height = size × r
+ it.size=Math.max(30,Math.min(+e.target.value,ITEM_MAX/Math.max(r,1e-3)));syncItemSize();draw()});
+$('itemW').addEventListener('input',e=>{if(!selItem)return;setItemW(selItem,+e.target.value);syncItemSize();draw()});
+$('itemHt').addEventListener('input',e=>{if(!selItem)return;setItemH(selItem,+e.target.value);syncItemSize();draw()});
+$('itemFill').onclick=()=>{if(!selItem)return;const it=selItem;it.x=512;it.y=512;it.rot=0;it.size=1024;it.sy=1/itemAspect(it);
+ // a picture filling the icon is almost always a background, so put it behind everything
+ const k='item:'+it.id;it.behind=true;if(layerOrder)layerOrder=[k,...fullOrder().filter(x=>x!==k)];
+ renderItemList();draw();toast('⬛ Stretched to fill the icon and moved behind the monke.')};
+$('itemUnstretch').onclick=()=>{if(!selItem)return;selItem.sy=1;syncItemSize();draw()};
 document.getElementById('itemRot').addEventListener('input',e=>{if(!selItem)return;selItem.rot=+e.target.value;document.getElementById('itemRotVal').textContent=selItem.rot+'°';draw()});
 document.getElementById('itemLayer').addEventListener('change',e=>{if(!selItem)return;selItem.behind=e.target.value==='behind';
  // with your own layer order, "behind" sends the item to the very back and "in front" brings it to the very front
@@ -1796,15 +1837,18 @@ canvas.addEventListener('pointerdown',e=>{
  if(!it){if(selItem)selectItem(null);return}
  if(it!==selItem)selectItem(it);drag={mode:'move',it,dx:x-it.x,dy:y-it.y};canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing';e.preventDefault();
 });
-document.getElementById('itemHandle').addEventListener('pointerdown',e=>{if(!selItem)return;drag={mode:'size',it:selItem};e.target.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});
 const onDragMove=e=>{if(!drag)return;const [x,y]=canvasPoint(e),it=drag.it;
  if(drag.mode==='move'){it.x=Math.max(0,Math.min(1024,x-drag.dx));it.y=Math.max(0,Math.min(1024,y-drag.dy))}
- else{const r=itemH(it)/it.size,d=Math.hypot(x-it.x,y-it.y);it.size=Math.max(30,Math.min(1024,2*d/Math.sqrt(1+r*r)));
-  document.getElementById('itemSize').value=Math.round(it.size);document.getElementById('itemSizeVal').textContent=Math.round(it.size/10.24)+'%'}
+ else{const a=-it.rot*Math.PI/180,dx=x-it.x,dy=y-it.y,lx=Math.abs(dx*Math.cos(a)-dy*Math.sin(a)),ly=Math.abs(dx*Math.sin(a)+dy*Math.cos(a));
+  if(drag.mode==='w')setItemW(it,2*lx);else if(drag.mode==='h')setItemH(it,2*ly);
+  else{const r=itemH(it)/it.size,d=Math.hypot(dx,dy);it.size=Math.max(30,Math.min(ITEM_MAX,ITEM_MAX/Math.max(r,1e-3),2*d/Math.sqrt(1+r*r)))}
+  syncItemSize()}
  draw()};
 const onDragEnd=()=>{if(!drag)return;drag=null;canvas.style.cursor=items.length?'grab':''};
 canvas.addEventListener('pointermove',onDragMove);canvas.addEventListener('pointerup',onDragEnd);canvas.addEventListener('pointercancel',onDragEnd);
-document.getElementById('itemHandle').addEventListener('pointermove',onDragMove);document.getElementById('itemHandle').addEventListener('pointerup',onDragEnd);document.getElementById('itemHandle').addEventListener('pointercancel',onDragEnd);
+[['itemHandle','size'],['itemHandleW','w'],['itemHandleH','h']].forEach(([id,mode])=>{const h=$(id);
+ h.addEventListener('pointerdown',e=>{if(!selItem)return;drag={mode,it:selItem};e.target.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()});
+ h.addEventListener('pointermove',onDragMove);h.addEventListener('pointerup',onDragEnd);h.addEventListener('pointercancel',onDragEnd)});
 window.addEventListener('resize',placeItemBox);
 // ⭕ YouTube preview: the icon as a circle at the sizes YouTube shows it, on light and dark backgrounds.
 const ytMinis=[...document.querySelectorAll('.yt-mini')].map(c=>{const d=+c.dataset.size,s=d*2;c.width=c.height=s;c.style.width=c.style.height=d+'px';return{x:c.getContext('2d'),s}});
@@ -2360,7 +2404,7 @@ async function presetFiles(){
  const f={};
  if(items.length){const idx=new Map();f.items=[];
   for(const it of items){const w=it.img.naturalWidth||it.img.width,h=it.img.naturalHeight||it.img.height;idx.set('item:'+it.id,'i'+f.items.length);
-   f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,r:it.rot,f:it.flip?1:0,b:it.behind?1:0})}
+   f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0})}
   f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
  if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await toBlob(bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
  if(customImg){f.base=await toBlob(customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
@@ -3084,7 +3128,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
     for(const it of items.slice(0,MAX_SHARED_ITEMS)){const c=mk(it.img.naturalWidth||it.img.width,it.img.naturalHeight||it.img.height);c.getContext('2d').drawImage(it.img,0,0);
      const b=await new Promise(r=>c.toBlob(r,'image/webp',.9)),t=b&&b.type==='image/webp'?'image/webp':'image/png',ip=me.id+'/items/'+stamp+'-'+saved.length+(t==='image/webp'?'.webp':'.png');
      const u=await sb.storage.from('icons').upload(ip,b,{contentType:t,upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
-     itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
+     itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),...((it.sy||1)!==1?{h:Math.round(it.sy*1000)/1000}:{}),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
     design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
    const inChal=remixOn&&$('shareChal').checked;if(inChal)design.challenge=chalWeek(0).key;
    const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
