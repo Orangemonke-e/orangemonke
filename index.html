@@ -218,6 +218,12 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .pf-grid button{padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:none;cursor:pointer;text-align:left;color:var(--text)}
 .pf-grid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}.pf-grid span{display:block;font-size:11px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-grid .cm-empty{grid-column:1/-1}.cm-signin[hidden],.cm-form[hidden]{display:none}.cm .flag{font-size:11px;color:#ff8a85;margin-bottom:4px}[data-theme=light] .cm .flag{color:#c62828}.cm-card{max-width:560px;max-height:min(88vh,760px);display:flex;flex-direction:column;padding:16px}
+.pf-badges{margin:12px 0 4px}.pf-badges h3{font-size:14px;margin:0 0 8px}.pf-badges h3 small{color:var(--muted);font-weight:600}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.bdg{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:12px;border:1px solid #ff9a2e55;background:linear-gradient(135deg,#ff9a2e26,#ffd23f12);font-size:12px;line-height:1.25}
+.bdg .be{font-size:22px;flex:none}.bdg b{display:block;font-size:12.5px}.bdg small{color:var(--muted)}
+.bdg.locked{border-color:var(--line);background:var(--panel2);opacity:.75}.bdg.locked .be{filter:grayscale(1);opacity:.5}
+.bdg .bar{height:4px;border-radius:9px;background:#ffffff1a;margin-top:4px;overflow:hidden}.bdg .bar i{display:block;height:100%;background:var(--accent)}
 .cm-acts{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}.cm-acts .btn{padding:6px 10px}
 .cm-head{display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}.cm-head img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none}
 .cm-info{flex:1;min-width:0}.cm-info h2{font-size:16px;margin:0 0 2px;overflow-wrap:anywhere}.cm-by{font-size:12px;color:var(--muted)}
@@ -514,6 +520,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="pf-edit" id="pfEdit" hidden><textarea id="pfBioIn" maxlength="160" rows="3" placeholder="Say something about yourself, e.g. I make Gorilla Tag videos!"></textarea>
    <div class="cm-row"><span class="hint" id="pfCount">0/160</span><span style="display:flex;gap:8px"><button type="button" class="btn small" id="pfCancel">Cancel</button><button type="button" class="btn small primary" id="pfSave">Save</button></span></div><div class="note" id="pfMsg"></div></div>
   <div class="pf-actions" id="pfActions"></div>
+  <div class="pf-badges" id="pfBadges"></div>
   <div class="pf-grid" id="pfGrid"></div>
  </div>
 </div>
@@ -567,7 +574,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v81 <span class="tag new">New</span><span class="date" data-time="2026-11-17T16:19:56Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v82 <span class="tag new">New</span><span class="date" data-time="2026-11-17T17:35:38Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🏅 Badges: 13 badges to collect on your profile, like 🐣 First icon, 💖 Fan favourite (100 likes), 👥 Popular (10 followers), 🏆 Challenger, 🥇 Champion (win a weekly challenge), ✨ Inspiring (someone remixed your icon) and 💬 Chatty.</li>
+   <li>On your own profile you can see every badge and how close you are to the ones you haven't got yet. Other people's profiles show the badges they've earned.</li>
+   <li>You get a "🏅 New badge!" message when you earn one.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v81<span class="date" data-time="2026-11-17T16:19:56Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🔗 Share links: every icon in the gallery has a Share button that copies a link to it (on phones it opens the share menu). Anyone who opens the link goes straight to that icon.</li>
@@ -2851,7 +2874,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  window.linkPushToAccount=linkPush;
  const linkPost=new URLSearchParams(location.search).get('comments'),linkProfile=new URLSearchParams(location.search).get('profile');
- function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);renderChallenge();startLive();
+ function start(){client().then(async c=>{const {data}=await c.auth.getSession();await setUser(data.session&&data.session.user,true);await loadPosts(true);renderChallenge();startLive();setTimeout(checkMyBadges,4000);
   if(linkPost&&/^[0-9a-f-]{36}$/i.test(linkPost)){
    // Opened from a comment notification: show that icon's comments.
    history.replaceState(null,'',location.pathname+location.hash);gal.scrollIntoView({block:'start'});
@@ -2950,7 +2973,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();myLikes.clear();
   if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
-  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();inboxUser();
+  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();inboxUser();if(!quiet&&me)setTimeout(checkMyBadges,3000);
  }
  function renderAcct(){
   const bar=$('acctBar');bar.innerHTML='';
@@ -3157,6 +3180,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    if(error){await sb.storage.from('icons').remove([path,...itemPaths]);throw error}
    remixSource=null;
    if(inChal){$('shareChal').checked=false;renderChallenge()}
+   setTimeout(checkMyBadges,1500);
    $('shareTitle').value='';msg.textContent=inChal?'🏆 Entered into this week\'s challenge! Ask your friends to like it.':off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
    {const lk=el('button','btn small','🔗 Copy link to send to friends');lk.type='button';lk.style.marginLeft='8px';lk.onclick=()=>shareIcon(data);msg.append(' ',lk)}
    if(tab==='all'&&!searchText()&&!chalView&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
@@ -3408,9 +3432,61 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  // Descriptions and followers need supabase/update-11-profiles.sql; until then profiles show without them.
  let followsOn=true,pfUser=null;
  const noFollowsYet=e=>e&&/follow|bio|profile_stats/i.test(e.message||'')&&(followsOn=false,true);
+ // 🏅 Badges: worked out from things the site already knows (icons, likes, followers, remixes, comments, challenges).
+ const BADGES=[
+  ['first','🐣','First icon','Share your first icon',s=>s.icons,1],
+  ['artist','🎨','Artist','Share 10 icons',s=>s.icons,10],
+  ['factory','🏭','Monke factory','Share 50 icons',s=>s.icons,50],
+  ['liked','❤️','Liked','Get 10 likes',s=>s.likes,10],
+  ['fan','💖','Fan favourite','Get 100 likes',s=>s.likes,100],
+  ['superstar','🌟','Superstar','Get 500 likes',s=>s.likes,500],
+  ['popular','👥','Popular','Get 10 followers',s=>s.followers,10],
+  ['famous','📣','Famous','Get 100 followers',s=>s.followers,100],
+  ['challenger','🏆','Challenger','Enter a weekly challenge',s=>s.entries,1],
+  ['champion','🥇','Champion','Win a weekly challenge',s=>s.wins,1],
+  ['remixer','🔁','Remixer','Share a remix of someone\'s icon',s=>s.remixes,1],
+  ['inspiring','✨','Inspiring','Get your icon remixed by someone',s=>s.remixed,1],
+  ['chatty','💬','Chatty','Write 25 comments',s=>s.comments,25]];
+ async function badgeStats(uid){
+  const f='id'+(likesOn?',like_count':'')+(remixOn?',design,remix_of':'');
+  const [ps,st,cm]=await Promise.all([sb.from('posts').select(f).eq('user_id',uid).limit(1000),
+   followsOn?sb.rpc('profile_stats',{p_user:uid}):Promise.resolve({data:null}),
+   commentsOn?sb.from('comments').select('id').eq('user_id',uid).limit(25):Promise.resolve({data:[]})]);
+  const posts=ps.data||[],s={icons:posts.length,likes:posts.reduce((a,p)=>a+(p.like_count||0),0),followers:((st.data||[])[0]||{}).followers||0,
+   comments:(cm.data||[]).length,remixes:posts.filter(p=>p.remix_of).length,entries:0,wins:0,remixed:0};
+  if(remixOn&&posts.length){const r=await sb.from('posts').select('id').in('remix_of',posts.slice(0,300).map(p=>p.id)).neq('user_id',uid).limit(1);s.remixed=(r.data||[]).length}
+  const now=chalWeek(0).key,weeks=[...new Set(posts.map(p=>p.design&&p.design.challenge).filter(k=>typeof k==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(k)))];
+  s.entries=weeks.length;
+  // a win = the most-liked entry of a finished week (earliest wins a tie, like on the challenge card)
+  const done=weeks.filter(k=>k<now).sort().reverse().slice(0,12);
+  const tops=await Promise.all(done.map(k=>chalQ(k).order('like_count',{ascending:false}).order('created_at',{ascending:true}).limit(1)));
+  s.wins=tops.filter(t=>t.data&&t.data[0]&&t.data[0].user_id===uid&&(t.data[0].like_count||0)>0).length;
+  return s;
+ }
+ function renderBadges(box,s,mine){
+  box.innerHTML='';const got=BADGES.filter(b=>b[4](s)>=b[5]);
+  const h=el('h3',null,'🏅 Badges ');h.appendChild(el('small',null,got.length+'/'+BADGES.length));box.appendChild(h);
+  const g=el('div','badges');box.appendChild(g);
+  const show=mine?BADGES:got;
+  if(!show.length){box.appendChild(el('div','hint','No badges yet.'));return got}
+  for(const b of show){const v=b[4](s),on=v>=b[5],c=el('div','bdg'+(on?'':' locked'));c.title=b[3]+(on?' ✓':' ('+Math.min(v,b[5])+'/'+b[5]+')');
+   c.appendChild(el('span','be',b[1]));const t=el('div');t.appendChild(el('b',null,b[2]));t.appendChild(el('small',null,on?b[3]:b[3]+' · '+Math.min(v,b[5])+'/'+b[5]));
+   if(!on&&b[5]>1){const bar=el('div','bar'),i=el('i');i.style.width=Math.round(Math.min(1,v/b[5])*100)+'%';bar.appendChild(i);t.appendChild(bar)}
+   c.appendChild(t);g.appendChild(c)}
+  return got;
+ }
+ // tell people when they earn a new badge (remembered per account on this device, so each one is only announced once)
+ async function checkMyBadges(){
+  if(!me||!sb)return;const uid=me.id;let s;try{s=await badgeStats(uid)}catch(e){return}if(!me||me.id!==uid)return;
+  const got=BADGES.filter(b=>b[4](s)>=b[5]).map(b=>b[0]),k='mim_badges_'+uid;let old=null;try{old=JSON.parse(localStorage.getItem(k)||'null')}catch(e){}
+  try{localStorage.setItem(k,JSON.stringify(got))}catch(e){}
+  if(!old)return; // first time on this device: just remember them quietly
+  const fresh=got.filter(x=>!old.includes(x)).map(x=>BADGES.find(b=>b[0]===x));
+  fresh.forEach((b,i)=>setTimeout(()=>toast('🏅 New badge: '+b[1]+' '+b[2]+'! Open your profile to see it.'),i*3500));
+ }
  async function openProfile(userId){
   if(!userId)return;pfUser=userId;if(!$('cmPop').hidden)closeComments();$('pfPop').hidden=false;$('pfEdit').hidden=true;
-  ['pfName','pfUser','pfStats','pfBio','pfActions','pfGrid'].forEach(i=>$(i).textContent='');$('pfAvatar').src=DEFAULT_AVATAR;$('pfName').textContent='Loading…';
+  ['pfName','pfUser','pfStats','pfBio','pfActions','pfBadges','pfGrid'].forEach(i=>$(i).textContent='');$('pfAvatar').src=DEFAULT_AVATAR;$('pfName').textContent='Loading…';
   const fields='id,username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
   let r=await sb.from('profiles').select(fields+(followsOn?',bio':'')).eq('id',userId).maybeSingle();
   if(noFollowsYet(r.error))r=await sb.from('profiles').select(fields).eq('id',userId).maybeSingle();
@@ -3426,6 +3502,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    t.appendChild(im);t.appendChild(el('span',null,p.title||'Untitled'));t.onclick=()=>{$('pfPop').hidden=true;if(commentsOn)openComments(p)};$('pfGrid').appendChild(t)});
   if(!list.length)$('pfGrid').appendChild(el('div','cm-empty',mineP?'You haven\'t shared any icons yet.':'No icons shared yet.'));
   await renderPfStats(userId,list.length);
+  badgeStats(userId).then(st=>{if(pfUser!==userId)return;const got=renderBadges($('pfBadges'),st,mineP);
+   if(mineP)try{localStorage.setItem('mim_badges_'+userId,JSON.stringify(got.map(b=>b[0])))}catch(e){}}).catch(()=>{});
   // buttons
   const acts=$('pfActions');acts.innerHTML='';
   {const sh=el('button','btn small','🔗 Share profile');sh.type='button';sh.onclick=()=>shareLink(profileLink(userId),pr.display_name+' on Monke Icon Maker','Check out '+(mineP?'my':pr.display_name+'\'s')+' monke icons on Monke Icon Maker!');acts.appendChild(sh)}
