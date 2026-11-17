@@ -218,6 +218,7 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .pf-grid button{padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:none;cursor:pointer;text-align:left;color:var(--text)}
 .pf-grid img{width:100%;aspect-ratio:1;object-fit:cover;display:block}.pf-grid span{display:block;font-size:11px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-grid .cm-empty{grid-column:1/-1}.cm-signin[hidden],.cm-form[hidden]{display:none}.cm .flag{font-size:11px;color:#ff8a85;margin-bottom:4px}[data-theme=light] .cm .flag{color:#c62828}.cm-card{max-width:560px;max-height:min(88vh,760px);display:flex;flex-direction:column;padding:16px}
+.cm-acts{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}.cm-acts .btn{padding:6px 10px}
 .cm-head{display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}.cm-head img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none}
 .cm-info{flex:1;min-width:0}.cm-info h2{font-size:16px;margin:0 0 2px;overflow-wrap:anywhere}.cm-by{font-size:12px;color:var(--muted)}
 .cm-list{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 2px;min-height:90px}
@@ -518,7 +519,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <div class="install-backdrop cm-pop" id="cmPop" hidden role="dialog" aria-modal="true" aria-labelledby="cmTitle">
  <div class="install-card cm-card">
-  <div class="cm-head"><img id="cmImg" alt=""><div class="cm-info"><h2 id="cmTitle"></h2><div class="cm-by" id="cmBy"></div></div><button type="button" class="btn small" id="cmClose" aria-label="Close comments">✕</button></div>
+  <div class="cm-head"><img id="cmImg" alt=""><div class="cm-info"><h2 id="cmTitle"></h2><div class="cm-by" id="cmBy"></div><div class="cm-acts" id="cmActs"></div></div><button type="button" class="btn small" id="cmClose" aria-label="Close comments">✕</button></div>
   <div class="cm-list" id="cmList"></div>
   <form class="cm-form" id="cmForm" hidden><div class="cm-replying" id="cmReplying" hidden><span id="cmReplyTxt"></span><button type="button" class="btn small" id="cmReplyX" aria-label="Cancel reply">✕</button></div><textarea id="cmText" maxlength="200" rows="2" placeholder="Write a comment… Be kind!"></textarea>
    <div class="cm-row"><span class="hint" id="cmCount">0/200</span><button type="submit" class="btn small primary" id="cmSend">💬 Post</button></div><div class="note" id="cmMsg"></div></form>
@@ -566,7 +567,24 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v80 <span class="tag new">New</span><span class="date" data-time="2026-11-17T16:15:16Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v81 <span class="tag new">New</span><span class="date" data-time="2026-11-17T16:19:56Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🔗 Share links: every icon in the gallery has a Share button that copies a link to it (on phones it opens the share menu). Anyone who opens the link goes straight to that icon.</li>
+   <li>Profiles have a 🔗 Share profile button too, so you can put a link to all your icons in your YouTube description or Discord.</li>
+   <li>After you share an icon, there's a "Copy link to send to friends" button. Great for getting likes on your 🏆 weekly challenge entry!</li>
+   <li>❤️ You can now like an icon from its comments window, so friends who open your link can like it straight away.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v80<span class="date" data-time="2026-11-17T16:15:16Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>↔↕ Stretch your items: new Width and Height sliders, plus square handles on the side and bottom of the selected item that you can drag to stretch it.</li>
@@ -3140,6 +3158,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    remixSource=null;
    if(inChal){$('shareChal').checked=false;renderChallenge()}
    $('shareTitle').value='';msg.textContent=inChal?'🏆 Entered into this week\'s challenge! Ask your friends to like it.':off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
+   {const lk=el('button','btn small','🔗 Copy link to send to friends');lk.type='button';lk.style.marginLeft='8px';lk.onclick=()=>shareIcon(data);msg.append(' ',lk)}
    if(tab==='all'&&!searchText()&&!chalView&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
   }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
  };
@@ -3286,10 +3305,24 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  const setCount=(postId,d)=>{const n=Math.max(0,(cCounts.get(postId)||0)+d);cCounts.set(postId,n);const b=cBtns.get(postId);if(b)b.textContent='💬 '+(n||'Comment')};
  const cmFields=()=>'id,body,created_at,user_id,hidden,report_count,'+(repliesOn?'reply_to,':'')+'profiles!comments_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'banned)';
+ // 🔗 Share links: open the site straight onto an icon (?comments=) or a profile (?profile=). Phones get the share sheet.
+ const siteUrl=()=>new URL('./',location.href).href;
+ const iconLink=id=>siteUrl()+'?comments='+id,profileLink=id=>siteUrl()+'?profile='+id;
+ async function shareLink(url,title,text){
+  if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title,text,url});return}catch(e){if(e&&e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(url);toast('🔗 Link copied! Paste it anywhere to share.')}catch(e){prompt('Copy this link:',url)}
+ }
+ const shareIcon=p=>{const pr=p.profiles||{};shareLink(iconLink(p.id),(p.title||'Monke icon')+' by '+(pr.display_name||'someone'),'Check out '+(me&&p.user_id===me.id?'my':'this')+' monke icon'+(p.title?' “'+p.title+'”':'')+' on Monke Icon Maker!'+(p.design&&p.design.challenge===chalWeek(0).key?' It\'s in this week\'s challenge, so give it a like ❤️':''))};
+ let cmLikeRestore=null;
  async function openComments(p){
   cmPost=p;cmById.clear();setReply(null);const pr=p.profiles||{display_name:'Unknown',username:'unknown'};
   $('cmImg').src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;$('cmTitle').textContent=p.title||'Monke icon';
   $('cmBy').textContent='by '+pr.display_name+' · @'+pr.username;
+  {const box=$('cmActs');box.innerHTML='';if(cmLikeRestore){cmLikeRestore();cmLikeRestore=null}
+   if(likesOn){const prev=likeSetters.get(p.id);await loadMyLikes([p.id]);const lb=likeButton(p),mine=likeSetters.get(p.id);
+    likeSetters.set(p.id,v=>{mine(v);if(prev)prev(v)});lb.addEventListener('click',()=>setTimeout(()=>{if(prev)prev(p.like_count)},0));
+    cmLikeRestore=()=>{if(prev)likeSetters.set(p.id,prev);else likeSetters.delete(p.id)};box.appendChild(lb)}
+   const sh=el('button','btn small','🔗 Share');sh.type='button';sh.title='Copy a link to this icon';sh.onclick=()=>shareIcon(p);box.appendChild(sh)}
   $('cmForm').hidden=!me;$('cmSignin').hidden=!!me;$('cmMsg').textContent=profile&&profile.banned?'Your account has been banned from commenting.':'';$('cmSend').disabled=!!(profile&&profile.banned);
   $('cmPop').hidden=false;const list=$('cmList');list.innerHTML='';list.appendChild(el('div','cm-empty','Loading comments…'));
   const [{data,error},mine]=await Promise.all([
@@ -3326,7 +3359,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function setReply(id,name){cmReplyTo=id;$('cmReplying').hidden=!id;$('cmText').placeholder=id?'Reply to '+name+'…':'Write a comment… Be kind!';
   if(id){$('cmReplyTxt').textContent='↩ Replying to '+name;$('cmText').focus()}}
  $('cmReplyX').onclick=()=>setReply(null);
- const closeComments=()=>{$('cmPop').hidden=true;cmPost=null;setReply(null)};
+ const closeComments=()=>{$('cmPop').hidden=true;cmPost=null;setReply(null);if(cmLikeRestore){cmLikeRestore();cmLikeRestore=null}};
  $('cmClose').onclick=closeComments;$('cmPop').addEventListener('click',e=>{if(e.target===$('cmPop'))closeComments()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('cmPop').hidden&&$('acctPop').hidden)closeComments()});
  $('cmSigninBtn').onclick=()=>openAcct('in');
@@ -3395,6 +3428,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   await renderPfStats(userId,list.length);
   // buttons
   const acts=$('pfActions');acts.innerHTML='';
+  {const sh=el('button','btn small','🔗 Share profile');sh.type='button';sh.onclick=()=>shareLink(profileLink(userId),pr.display_name+' on Monke Icon Maker','Check out '+(mineP?'my':pr.display_name+'\'s')+' monke icons on Monke Icon Maker!');acts.appendChild(sh)}
   if(mineP&&followsOn){const e=el('button','btn small','✏️ Edit description');e.type='button';e.onclick=()=>{$('pfBioIn').value=pr.bio||'';$('pfCount').textContent=$('pfBioIn').value.length+'/160';$('pfMsg').textContent='';$('pfEdit').hidden=false;$('pfBioIn').focus()};acts.appendChild(e)}
   if(!mineP&&followsOn){
    let following=false;if(me){const f=await sb.from('follows').select('followee_id').eq('follower_id',me.id).eq('followee_id',userId).maybeSingle();following=!!f.data}
@@ -3514,6 +3548,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const btn=(t,f)=>{const b=el('button','btn',t);b.type='button';b.onclick=f;act.appendChild(b);return b};
   if(commentsOn){const n=cCounts.get(p.id)||0,cb=btn('💬 '+(n||'Comment'),()=>openComments(p));cb.title='Comments';cBtns.set(p.id,cb)}
   if(p.design&&typeof p.design==='object'){const rb=btn('🎨 Remix',()=>remix(p,pr));rb.title='Load this design into the editor so you can make it your own'}
+  {const sb2=btn('🔗 Share',()=>shareIcon(p));sb2.title='Copy a link to this icon to send to friends'}
   if((mine||admin)&&offTopicOn){
    const lk=locks.get(p.id),where=()=>p.off_topic?'🎲 Off topic':'🐒 Monke icons';let mb=null,badge=null;
    if(lk){badge=el('div','premix lockbadge','🔒 Locked in '+where()+(lk.by_admin?(mine?' by an admin':' (force locked)'):''));
