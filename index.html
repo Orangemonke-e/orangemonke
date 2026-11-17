@@ -207,7 +207,8 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .preact{display:flex;flex-wrap:wrap;gap:5px}.rchip{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 7px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:12px;cursor:pointer;transition:.12s}
 .rchip:hover{border-color:var(--accent)}.rchip.on{border-color:var(--accent);background:#ff9b3526}.rchip .rimg{width:18px;height:18px;border-radius:5px;display:block}.rchip .remoji{font-size:14px;line-height:1}.rchip .rn{font-weight:650;font-variant-numeric:tabular-nums}
 .radd{color:var(--muted);font-size:12px}
-.cm-pop{align-items:center}.pf-card{max-width:620px}
+.cm-pop{align-items:center}.pf-card{max-width:620px;overflow-y:auto;overscroll-behavior:contain}
+.pf-card .pf-grid{flex:none;overflow:visible} /* the whole profile scrolls, so the icons are never squashed */
 .linkish{cursor:pointer}.linkish:hover b,.linkish:hover>span,.cm-who.linkish:hover{text-decoration:underline}
 .pf-head{display:flex;gap:14px;align-items:center}.pf-avatar{width:72px!important;height:72px!important}
 .pf-stats{display:flex;gap:16px;margin:12px 0 6px;font-size:13px;color:var(--muted)}.pf-stats b{color:var(--text);font-size:15px}
@@ -574,7 +575,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v82 <span class="tag new">New</span><span class="date" data-time="2026-11-17T17:35:38Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v83 <span class="tag new">New</span><span class="date" data-time="2026-11-17T18:01:34Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Fixed icons on profiles looking squashed flat after badges were added. The whole profile now scrolls, so icons are always square with their titles showing.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v82<span class="date" data-time="2026-11-17T17:35:38Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🏅 Badges: 13 badges to collect on your profile, like 🐣 First icon, 💖 Fan favourite (100 likes), 👥 Popular (10 followers), 🏆 Challenger, 🥇 Champion (win a weekly challenge), ✨ Inspiring (someone remixed your icon) and 💬 Chatty.</li>
