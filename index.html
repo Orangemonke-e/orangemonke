@@ -540,7 +540,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v77 <span class="tag new">New</span><span class="date">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v78 <span class="tag new">New</span><span class="date" data-time="2026-11-17T15:43:57Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>🔔 Fixed new updates in the bell list saying they came out hours ago (from midnight) when they had only just been released. They now show the real release time.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v77<span class="date" data-time="2026-11-17T15:33:45Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>💬 Talk to Orangemonke: tap the button at the top of the page to send Orangemonke a message. Say hi, ask a question or suggest a video!</li>
@@ -2788,9 +2802,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    // the newest update note
    const rel=document.querySelector('#update-notes .release');
    if(rel){const v=rel.querySelector('summary').firstChild.textContent.trim(),d=Date.parse((rel.querySelector('.date')||{}).textContent||''),li=[...rel.querySelectorAll('li')].find(l=>!/^Nothing /.test(l.textContent.trim()));
-    if(v&&isFinite(d)){ // the note only has a day, so use the moment this browser first saw the update if that's earlier (never a time in the future)
+    if(v&&isFinite(d)){
+     // Newer notes have the exact release time (data-time). Older ones only have a day, so use the moment this browser
+     // first saw the update, but no later than the end of that day (and never a time in the future).
+     const exact=Date.parse((rel.querySelector('.date')||{dataset:{}}).dataset.time||'');
      let first=Date.now();try{const k='mim_update_first_'+v,f=+localStorage.getItem(k);if(f)first=f;else localStorage.setItem(k,String(first))}catch(e){}
-     out.push({id:'u'+v,t:new Date(Math.min(d,first)).toISOString(),kind:'update',v,text:li?li.textContent.replace(/\s+/g,' ').trim():''})}}
+     const when=isFinite(exact)?Math.min(exact,Date.now()):Math.min(first,d+864e5-1000);
+     out.push({id:'u'+v,t:new Date(when).toISOString(),kind:'update',v,text:li?li.textContent.replace(/\s+/g,' ').trim():''})}}
    const seen=new Set();inboxRows=out.filter(x=>x.kind==='update'||x.kind==='picked'||(x.who&&!x.who.banned)).sort((a,b)=>b.t<a.t?-1:b.t>a.t?1:(a.kind==='reply'?-1:1))
     .filter(x=>!seen.has(x.id)&&seen.add(x.id)).slice(0,INBOX_MAX); // a reply on your icon shows once, as a reply
    inboxBadge();if(!$('inboxPop').hidden)renderInbox();
