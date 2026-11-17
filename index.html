@@ -575,7 +575,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v83 <span class="tag new">New</span><span class="date" data-time="2026-11-17T18:01:34Z">17 Nov 2026</span></summary>
+ <details class="release" open><summary>v84 <span class="tag new">New</span><span class="date" data-time="2026-11-17T21:36:18Z">17 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🖼️ Uploaded backgrounds can now be remixed: when you share an icon with your own background picture, the picture is saved with it, and Remix brings it back.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Before, remixing an icon with an uploaded background only gave a plain colour background. Icons shared before this update need sharing again to include their background.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v83<span class="date" data-time="2026-11-17T18:01:34Z">17 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -3186,6 +3200,13 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
      const u=await sb.storage.from('icons').upload(ip,b,{contentType:t,upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
      itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),...((it.sy||1)!==1?{h:Math.round(it.sy*1000)/1000}:{}),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
     design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
+   // An uploaded background picture is saved next to the icon too (cropped to the icon, 1024×1024), so remixes get it.
+   if(remixOn&&bgStyle==='image'&&bgImg){msg.textContent='Sharing your background…';const bc=mk(1024);bc.getContext('2d').drawImage(bgLayer(),0,0);
+    let bb=null;for(const q of [.88,.75,.6,.45]){bb=await new Promise(r=>bc.toBlob(r,'image/webp',q));if(bb&&bb.size<1000000)break}
+    if(bb&&bb.type==='image/webp'&&bb.size<1000000){const bp=me.id+'/items/'+Date.now().toString(36)+'-bg.webp';
+     const u=await sb.storage.from('icons').upload(bp,bb,{contentType:'image/webp',upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
+     itemPaths.push(bp);design.bgp=bp}
+    msg.textContent='Sharing…'}
    const inChal=remixOn&&$('shareChal').checked;if(inChal)design.challenge=chalWeek(0).key;
    const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
    const off=offTopicOn&&$('shareTopic').value==='off';if(off)row.off_topic=true;
@@ -3437,11 +3458,14 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function postItems(p){const d=p.design,its=d&&Array.isArray(d.items)?d.items:[];
   const ok=new RegExp('^'+String(p.user_id).replace(/[^0-9a-f-]/gi,'')+'/items/[a-z0-9]+-\\d{1,2}\\.(webp|png)$');
   return its.slice(0,MAX_SHARED_ITEMS).filter(i=>i&&typeof i.p==='string'&&ok.test(i.p))}
+ // the shared background picture, if the path is really in the sharer's own folder
+ function postBg(p){const b=p.design&&p.design.bgp,ok=new RegExp('^'+String(p.user_id).replace(/[^0-9a-f-]/gi,'')+'/items/[a-z0-9]+-bg\\.webp$');return typeof b==='string'&&ok.test(b)?b:null}
  function remix(p,pr){
-  applyState(p.design);remixSource={id:p.id};const its=postItems(p);
+  applyState(p.design);remixSource={id:p.id};const its=postItems(p),bgp=postBg(p);
+  if(bgp){const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{bgImg=im;bgImgId++;bgStyle='image';$('bgUpload').value='';buildBgGrid();draw()};im.src=sb.storage.from('icons').getPublicUrl(bgp).data.publicUrl}
   if(its.length)restoreItems(its.map(i=>({...i,url:sb.storage.from('icons').getPublicUrl(i.p).data.publicUrl})),p.design.order);else{clearItems();drawNow()}
   window.scrollTo({top:0,behavior:'smooth'});
-  toast('🎨 Remixing '+(p.title?'“'+p.title+'”':'an icon')+' by '+pr.display_name+(its.length?', with its '+its.length+' item'+(its.length===1?'':'s'):'')+'. Make it your own! (Undo to go back)');
+  toast('🎨 Remixing '+(p.title?'“'+p.title+'”':'an icon')+' by '+pr.display_name+([its.length?'its '+its.length+' item'+(its.length===1?'':'s'):'',bgp?'its background picture':''].filter(Boolean).map((t,i,a)=>(i?(i===a.length-1?' and ':', '):', with ')+t).join(''))+'. Make it your own! (Undo to go back)');
  }
  // ── 👤 Profiles: description, followers / following / icons, Follow button, and their icons.
  // Descriptions and followers need supabase/update-11-profiles.sql; until then profiles show without them.
@@ -3665,7 +3689,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    }
   }
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
-   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p)]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
+   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p),...(postBg(p)?[postBg(p)]:[])]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
     if(!confirm('Report this icon as mean or inappropriate?'))return;rb.disabled=true;
     const {error}=await sb.from('reports').insert({post_id:p.id});
