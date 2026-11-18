@@ -285,6 +285,15 @@ canvas.yt-mini{width:auto;aspect-ratio:1;filter:none;border-radius:50%}
 .ai-row{display:flex;gap:8px;margin-top:10px}.ai-row input{flex:1;min-width:0}
 .ai-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.ai-examples button{background:none;border:1px dashed var(--line);color:var(--muted);border-radius:99px;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}.ai-examples button:hover{color:var(--text);border-color:var(--accent)}
 .ai-result{font-size:12px;color:var(--accent);min-height:16px;margin-top:8px}
+.tour-spot{position:fixed;z-index:90;border-radius:16px;box-shadow:0 0 0 4px var(--accent),0 0 0 9999px #000a;pointer-events:none;transition:all .3s ease}
+.tour-spot.center{left:50%!important;top:45%!important;width:0!important;height:0!important;box-shadow:0 0 0 9999px #000a}
+.tour-block{position:fixed;inset:0;z-index:89}
+.tour-card{position:fixed;z-index:91;width:min(360px,calc(100vw - 24px));background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 50px #0009;padding:16px 16px 12px;transition:top .3s ease,left .3s ease}
+.tour-card h3{margin:0 0 6px;font-size:17px}.tour-card p{margin:0;font-size:14px;line-height:1.5;color:var(--muted)}.tour-card p b{color:var(--text)}
+.tour-foot{display:flex;align-items:center;gap:8px;margin-top:14px}.tour-dots{flex:1;font-size:12px;color:var(--muted)}
+.tour-invite{position:fixed;z-index:80;right:16px;bottom:16px;width:min(330px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--accent);border-radius:18px;box-shadow:0 14px 40px #0008;padding:14px 16px;animation:slideUp .3s ease}
+.tour-invite[hidden]{display:none}.tour-invite b{display:block;font-size:15px;margin-bottom:4px}.tour-invite p{margin:0 0 10px;font-size:13px;color:var(--muted)}.tour-invite div{display:flex;gap:8px}
+@media(max-width:600px){.tour-card{left:12px!important;right:12px;bottom:12px;top:auto!important;width:auto}}
 .credits{max-width:640px;margin:0 auto 22px;padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}
 .credits h2{font-size:15px;margin:0 0 10px}.credits{max-width:860px}
 .credits-body{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}@media(max-width:640px){.credits-body{grid-template-columns:1fr}}
@@ -551,12 +560,14 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="omBody"></div>
  </div>
 </div>
+<div class="tour-invite" id="tourInvite" hidden role="dialog" aria-labelledby="tourInviteTitle"><b id="tourInviteTitle">👋 New here?</b><p>Take a 1-minute tour of everything you can make.</p><div><button type="button" class="btn small primary" id="tourYes">🎓 Show me around</button><button type="button" class="btn small" id="tourNo">No thanks</button></div></div>
 <div class="install-backdrop" id="setPop" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
  <div class="install-card set-card">
   <div class="set-top"><h2 id="setTitle">⚙️ Settings</h2><button type="button" class="btn small" id="setClose" aria-label="Close settings">✕</button></div>
   <div class="set-sec" id="setAcct"></div>
   <div class="set-sec"><h3>🎨 Appearance</h3><div class="seg" id="setTheme" role="radiogroup" aria-label="Theme"><button type="button" class="btn small" data-v="light">☀️ Light</button><button type="button" class="btn small" data-v="dark">🌙 Dark</button><button type="button" class="btn small" data-v="auto">📱 Match my device</button></div></div>
   <div class="set-sec" id="setNotifySec" hidden><h3>🔔 Notifications</h3><p class="hint">Get a notification on this device when there's an update, or when someone likes, comments on or replies to your icons.</p><button type="button" class="notify-toggle" id="notifyToggle" hidden></button></div>
+  <div class="set-sec"><h3>🎓 Tutorial</h3><p class="hint">A quick tour of everything the maker can do.</p><button type="button" class="btn small" id="tourStart">🎓 Show the tutorial</button></div>
   <div class="set-sec"><h3>🏠 Homepage</h3><p class="hint">Hide the parts you don't use. This only changes this device.</p>
    <div class="set-checks" id="setShow">
     <label><input type="checkbox" data-hide="describe" checked> ✨ Describe your icon</label>
@@ -586,7 +597,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v89 <span class="tag new">New</span><span class="date" data-time="2026-11-18T15:46:31Z">18 Nov 2026</span></summary>
+ <details class="release" open><summary>v90 <span class="tag new">New</span><span class="date" data-time="2026-11-18T17:52:41Z">18 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎓 Tutorial: a quick guided tour of the maker. It highlights each part of the page and explains it, from Describe your icon to the gallery, weekly challenge and notifications.</li>
+   <li>New visitors are offered the tour once. You can watch it again any time from ⚙️ Settings → 🎓 Show the tutorial.</li>
+   <li>Use Next / Back (or the arrow keys) to move through it, and Skip (or Esc) to leave.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v89<span class="date" data-time="2026-11-18T15:46:31Z">18 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>↩️ Orangemonke can now reply to messages sent with 💬 Talk to Orangemonke.</li>
@@ -3845,6 +3872,65 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  $('trailerClose').onclick=close;
  pop.addEventListener('click',e=>{if(e.target===pop)close()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pop.hidden)close()});
+})();
+// 🎓 Tutorial: a guided tour that highlights each part of the page. Offered once on the first visit, and it can be
+// replayed from ⚙️ Settings. Steps whose part is hidden (switched off in Settings, or not signed in) are skipped.
+(function(){
+ const KEY='mim_tour_v1',get=()=>{try{return localStorage.getItem(KEY)}catch(e){return 'done'}},put=v=>{try{localStorage.setItem(KEY,v)}catch(e){}};
+ const sec=t=>[...document.querySelectorAll('.controls .section')].find(x=>(x.querySelector('h2')||{}).textContent?.startsWith(t));
+ const STEPS=[
+  [null,'👋 Welcome to Monke Icon Maker!','Make your own <b>Gorilla Tag-style YouTube icon</b> in a few taps. This quick tour shows you where everything is. You can leave any time.'],
+  [()=>document.querySelector('.preview-panel'),'🐒 Your icon','This is your icon. Every change you make shows up here straight away. <b>Undo</b>, <b>Redo</b> and <b>🎲 Random Monke</b> are just underneath.'],
+  [()=>$('describeSec'),'✨ Describe your icon','Don\'t know where to start? Type something like <b>“blue monke with a crown and a dog in space”</b> and tap <b>Make it</b>.'],
+  [()=>sec('🎨 Colours'),'🎨 Colours','Pick your monke\'s base, fur, face, eyes and background colours.'],
+  [()=>sec('🖼️ Backgrounds'),'🖼️ Backgrounds','Choose a background style, or <b>upload your own picture</b>.'],
+  [()=>sec('🎩 Accessories'),'🎩 Accessories','Hats, the banana, 🎧 headphones, a bandana, badges and a dog. Mix and match!'],
+  [()=>sec('🧸 Your own items'),'🧸 Your own items','Add your own pictures, or search for stickers and clip art. Drag them on the preview to move them, and stretch them with the handles.'],
+  [()=>sec('🗂️ Layers'),'🗂️ Layers','Choose what goes in front of what, like putting an item behind the monke.'],
+  [()=>sec('💾 Presets'),'💾 Presets','Save a design so you can load it again later, pictures and all.'],
+  [()=>$('download'),'⬇ Download','When you\'re happy, download your icon and upload it to YouTube. Under it you can also make a 📺 <b>channel banner</b>, a 🎬 <b>video thumbnail</b> and a 🗣️ <b>talking GIF</b>.'],
+  [()=>$('gallery'),'🌍 Community gallery','Sign in to <b>share your icons</b>, like and comment on other people\'s, follow creators and <b>🎨 Remix</b> any design.'],
+  [()=>$('chal'),'🏆 Weekly challenge','There\'s a new theme every Monday. Enter by ticking the challenge box when you share. The most-liked entry wins!'],
+  [()=>$('inboxBtn'),'🔔 Notifications','Likes, comments, replies, new followers and updates all show up here.'],
+  [()=>$('omBtn'),'💬 Talk to Orangemonke','Send Orangemonke a message. Every day one random message gets picked to read!'],
+  [()=>$('setBtn'),'⚙️ Settings','Change your account, light or dark mode and notifications, or hide parts of the page you don\'t use. You can replay this tour from here too.'],
+  [null,'🎉 You\'re ready!','Have fun making your monke. Try <b>🎲 Random Monke</b> if you want some ideas!']];
+ let steps=[],i=0,spot=null,card=null,block=null,raf=0;
+ const visible=e=>{if(!e)return false;if(e.closest('[hidden],.user-hidden'))return false;const r=e.getBoundingClientRect();return r.width>0&&r.height>0};
+ function place(){raf=0;if(!card)return;const [getEl]=steps[i],el=getEl&&getEl();
+  if(!el){spot.className='tour-spot center';Object.assign(card.style,{left:'50%',top:'50%',transform:'translate(-50%,-50%)'});return}
+  card.style.transform='';spot.className='tour-spot';const r=el.getBoundingClientRect(),pad=8,vh=innerHeight,vw=innerWidth;
+  const top=Math.max(4,r.top-pad),bot=Math.min(vh-4,r.bottom+pad);
+  Object.assign(spot.style,{left:Math.max(4,r.left-pad)+'px',top:top+'px',width:Math.min(vw-8,r.width+pad*2)+'px',height:Math.max(20,bot-top)+'px'});
+  if(vw<=600)return; // phones: the card sits at the bottom of the screen (CSS)
+  const cw=card.offsetWidth,ch=card.offsetHeight;let y=bot+12;if(y+ch>vh-8)y=top-ch-12;if(y<8)y=Math.max(8,Math.min(vh-ch-8,r.top+12));
+  let x=Math.min(vw-cw-12,Math.max(12,r.left+r.width/2-cw/2));if(r.height>vh*.6&&r.width<vw-cw-40){x=r.right+cw+24<vw?r.right+16:Math.max(12,r.left-cw-16);y=Math.max(12,Math.min(vh-ch-12,vh/2-ch/2))}
+  Object.assign(card.style,{left:x+'px',top:y+'px'})}
+ const later=()=>{if(!raf)raf=requestAnimationFrame(place)};
+ function show(n){i=n;const [getEl,title,html]=steps[i],el=getEl&&getEl();
+  card.innerHTML='';const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.innerHTML=html;card.append(h,p);
+  const f=document.createElement('div');f.className='tour-foot';const d=document.createElement('span');d.className='tour-dots';d.textContent=(i+1)+' of '+steps.length;f.appendChild(d);
+  const btn=(t,cls,fn)=>{const b=document.createElement('button');b.type='button';b.className='btn small'+(cls?' '+cls:'');b.textContent=t;b.onclick=fn;f.appendChild(b);return b};
+  if(i<steps.length-1)btn('Skip','',()=>end('skipped'));
+  if(i>0)btn('← Back','',()=>show(i-1));
+  const nx=btn(i===steps.length-1?'Let\'s go! 🐒':'Next →','primary',()=>i===steps.length-1?end('done'):show(i+1));card.appendChild(f);
+  if(el)el.scrollIntoView({behavior:'smooth',block:el.getBoundingClientRect().height>innerHeight*.7?'start':'center'});
+  place();setTimeout(place,350);setTimeout(place,800);nx.focus({preventScroll:true})}
+ function start(){
+  $('tourInvite').hidden=true;['setPop','omPop','inboxPop','cmPop','pfPop'].forEach(id=>{const e=$(id);if(e)e.hidden=true});
+  steps=STEPS.filter(([g])=>!g||visible(g()));if(card)end();
+  block=document.createElement('div');block.className='tour-block';spot=document.createElement('div');spot.className='tour-spot';
+  card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Tutorial');
+  document.body.append(block,spot,card);addEventListener('resize',later);addEventListener('scroll',later,true);document.addEventListener('keydown',key);show(0)}
+ function end(v){if(v)put(v);[block,spot,card].forEach(e=>e&&e.remove());block=spot=card=null;removeEventListener('resize',later);removeEventListener('scroll',later,true);document.removeEventListener('keydown',key)}
+ function key(e){if(!card)return;if(e.key==='Escape')end('skipped');else if(e.key==='ArrowRight'&&i<steps.length-1)show(i+1);else if(e.key==='ArrowLeft'&&i>0)show(i-1)}
+ window.startTour=start;
+ $('tourStart').onclick=()=>{$('setPop').hidden=true;start()};
+ $('tourYes').onclick=start;$('tourNo').onclick=()=>{$('tourInvite').hidden=true;put('skipped')};
+ // First visit: offer the tour after a few seconds, but never on top of another pop-up or when opened from a link
+ const linked=/[?&](comments|profile)=|#d=/.test(location.search+location.hash);
+ if(!get()&&!linked){const offer=()=>{if(get())return;const busy=['installPop','notifyPop','acctPop','setPop','omPop','cmPop','pfPop'].some(id=>{const e=$(id);return e&&!e.hidden});
+  if(busy){setTimeout(offer,8000);return}$('tourInvite').hidden=false;put('offered')};setTimeout(offer,4000)}
 })();
 // 🏠 Homepage settings: hide sections you don't use (remembered on this device), and only the 3 newest update notes by default.
 (function(){
