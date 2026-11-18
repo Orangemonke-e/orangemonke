@@ -143,6 +143,9 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .om-card .om-who{font-weight:800}.om-card .om-who.linkish{cursor:pointer}.om-card .om-when{font-size:12px;color:var(--muted)}.om-card .om-text{margin-top:6px;font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
 .om-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}.om-mine{padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px}.om-mine .om-text{white-space:pre-wrap;word-break:break-word}
 .om-mine .om-st{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}.om-mine.picked{border-color:var(--accent)}.om-mine.picked .om-st b{color:var(--accent)}
+.om-reply-box{margin:8px 0 4px 56px}.om-reply{padding:10px 12px;border-radius:12px;background:#ff9a2e1a;border:1px solid #ff9a2e55;font-size:14px;margin-bottom:6px}.om-reply b{display:block;font-size:12px;color:var(--accent);margin-bottom:2px}
+.om-reply-in{width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}.om-mine .om-reply{margin:8px 0 0}
+@media(max-width:480px){.om-reply-box{margin-left:0}}
 .om-count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
 .chal{margin:14px 0;padding:16px;border-radius:18px;border:1px solid #ff9a2e66;background:linear-gradient(135deg,#ff9a2e22,#ffd23f14 60%,transparent)}
 .chal-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.chal-kicker{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
@@ -583,7 +586,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v88 <span class="tag new">New</span><span class="date" data-time="2026-11-18T00:54:24Z">18 Nov 2026</span></summary>
+ <details class="release" open><summary>v89 <span class="tag new">New</span><span class="date" data-time="2026-11-18T15:46:31Z">18 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>↩️ Orangemonke can now reply to messages sent with 💬 Talk to Orangemonke.</li>
+   <li>If Orangemonke replies to your message, you get a 💬 notification in the bell list, and the reply shows under your message.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v88<span class="date" data-time="2026-11-18T00:54:24Z">18 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎧 Headphones (hand-drawn by Orangemonke)! Find them in Accessories: black, white, or any colour using the Accessory colour. They fit the Orangemonke base too.</li>
@@ -3045,6 +3063,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
     if(m&&m.id)out.push({id:'m'+m.id,t:firstSeen('m'+m.id,Date.now()),kind:'fan',who:{display_name:m.display_name,username:m.username,avatar_path:m.avatar_path,banned:false},uid:m.user_id,text:m.body})}));
    else if(fanOn)jobs.push(sb.from('fan_messages').select('id,body,picked_on').eq('user_id',uid).not('picked_on','is',null).order('picked_on',{ascending:false}).limit(5).then(r=>{if(noFanYet(r.error))return;
     (r.data||[]).forEach(m=>out.push({id:'p'+m.id,t:firstSeen('p'+m.id,Date.parse(m.picked_on+'T23:59:59')),kind:'picked',text:m.body}))}));
+   if(fanOn&&fanReplyOn&&!(profile&&profile.is_admin))jobs.push(sb.from('fan_messages').select('id,reply,replied_at').eq('user_id',uid).not('reply','is',null).order('replied_at',{ascending:false}).limit(5).then(r=>{if(noFanReplyYet(r.error)||noFanYet(r.error))return;
+    (r.data||[]).forEach(m=>out.push({id:'r'+m.id+(m.replied_at||''),t:m.replied_at,kind:'fanreply',text:m.reply}))}));
    await Promise.all(jobs.map(j=>j.catch(()=>{})));
    // the newest update note
    const rel=document.querySelector('#update-notes .release');
@@ -3056,7 +3076,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
      let first=Date.now();try{const k='mim_update_first_'+v,f=+localStorage.getItem(k);if(f)first=f;else localStorage.setItem(k,String(first))}catch(e){}
      const when=isFinite(exact)?Math.min(exact,Date.now()):Math.min(first,d+864e5-1000);
      out.push({id:'u'+v,t:new Date(when).toISOString(),kind:'update',v,text:li?li.textContent.replace(/\s+/g,' ').trim():''})}}
-   const seen=new Set();inboxRows=out.filter(x=>x.kind==='update'||x.kind==='picked'||(x.who&&!x.who.banned)).sort((a,b)=>b.t<a.t?-1:b.t>a.t?1:(a.kind==='reply'?-1:1))
+   const seen=new Set();inboxRows=out.filter(x=>x.kind==='update'||x.kind==='picked'||x.kind==='fanreply'||(x.who&&!x.who.banned)).sort((a,b)=>b.t<a.t?-1:b.t>a.t?1:(a.kind==='reply'?-1:1))
     .filter(x=>!seen.has(x.id)&&seen.add(x.id)).slice(0,INBOX_MAX); // a reply on your icon shows once, as a reply
    inboxBadge();if(!$('inboxPop').hidden)renderInbox();
   }finally{inboxBusy=false}
@@ -3067,9 +3087,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const list=$('inboxList'),s=shownSeen!==null?shownSeen:inboxSeen();list.innerHTML='';
   if(!inboxRows.length){list.appendChild(el('div','inbox-empty','Nothing yet. When someone likes, comments on or remixes your icons, replies to you or follows you, it shows up here.'));return}
   for(const x of inboxRows){const row=el('button','inbox-row'+(Date.parse(x.t)>s?' unread':''));row.type='button';
-   if(x.kind==='update'||x.kind==='picked')row.appendChild(el('span','iicon',x.kind==='update'?'📣':'⭐'));else row.appendChild(avatarImg(x.who.avatar_path));
+   if(x.kind==='update'||x.kind==='picked'||x.kind==='fanreply')row.appendChild(el('span','iicon',x.kind==='update'?'📣':x.kind==='picked'?'⭐':'💬'));else row.appendChild(avatarImg(x.who.avatar_path));
    const t=el('span','itxt'),name=x.who?x.who.display_name:'',icon=x.post&&x.post.title?' “'+x.post.title+'”':'';
-   const head=x.kind==='comment'?[name,' commented on your icon'+icon]:x.kind==='reply'?[name,' replied to you'+(icon?' on'+icon:'')]:x.kind==='like'?[name,' liked your icon'+icon]:x.kind==='follow'?[name,' started following you']:x.kind==='fan'?['📨 Today\'s message',' is from '+name]:x.kind==='picked'?['Orangemonke read your message!',' It was picked as the message of the day.']:['Monke Icon Maker '+x.v,' is here!'];
+   const head=x.kind==='comment'?[name,' commented on your icon'+icon]:x.kind==='reply'?[name,' replied to you'+(icon?' on'+icon:'')]:x.kind==='like'?[name,' liked your icon'+icon]:x.kind==='follow'?[name,' started following you']:x.kind==='fan'?['📨 Today\'s message',' is from '+name]:x.kind==='picked'?['Orangemonke read your message!',' It was picked as the message of the day.']:x.kind==='fanreply'?['Orangemonke replied',' to your message!']:['Monke Icon Maker '+x.v,' is here!'];
    t.appendChild(el('b',null,head[0]));t.appendChild(document.createTextNode(head[1]));
    if(x.text)t.appendChild(el('span','iq',x.kind==='update'?x.text:'“'+x.text+'”'));
    t.appendChild(el('small',null,ago(x.t)));row.appendChild(t);
@@ -3080,7 +3100,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   closeInbox();
   if(x.kind==='update'){if(window.showNotes)window.showNotes();document.getElementById('update-notes').scrollIntoView({behavior:'smooth',block:'start'});return}
   if(x.kind==='follow'){openProfile(x.uid);return}
-  if(x.kind==='fan'||x.kind==='picked'){openOm();return}
+  if(x.kind==='fan'||x.kind==='picked'||x.kind==='fanreply'){openOm();return}
   if(!x.post)return;shownSeen=null;const {data:p}=await sb.from('posts').select(postFields()).eq('id',x.post.id).maybeSingle();
   if(!p){toast('That icon has been deleted.');return}
   if(x.kind==='like'){gal.scrollIntoView({behavior:'smooth',block:'start'})}
@@ -3155,6 +3175,21 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  window.openSettings=openSettings;
  // ── 💬 Talk to Orangemonke: send a message; each day one random message from one random person is shown to the admin ──
  const dayName=d=>new Date(d+'T12:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short'});
+ // ↩️ Replies to messages (supabase/update-19-message-replies.sql). Until it's run, the Reply button stays hidden.
+ let fanReplyOn=true;const noFanReplyYet=e=>e&&/reply|replied_at/i.test(e.message||'')&&(fanReplyOn=false,true);
+ function replyBox(m){
+  const box=el('div','om-reply-box');
+  const show=()=>{box.innerHTML='';
+   if(m.reply){const q=el('div','om-reply');q.appendChild(el('b',null,'↩️ You replied'+(m.replied_at?' '+ago(m.replied_at):'')));q.appendChild(el('div','om-text',m.reply));box.appendChild(q)}
+   const b=el('button','btn small',m.reply?'✏️ Change reply':'↩️ Reply');b.type='button';b.onclick=edit;box.appendChild(b)};
+  const edit=()=>{box.innerHTML='';const ta=el('textarea');ta.maxLength=500;ta.rows=3;ta.value=m.reply||'';ta.placeholder='Reply to '+m.display_name+'… e.g. Thanks for the idea, it\'s out now!';ta.className='om-reply-in';box.appendChild(ta);
+   const row=el('div','set-btns');row.style.marginTop='6px';const go=el('button','btn small primary','📨 Send reply'),no=el('button','btn small','Cancel');go.type=no.type='button';row.append(go,no);box.appendChild(row);const msg=el('div','set-msg');box.appendChild(msg);
+   no.onclick=show;setTimeout(()=>ta.focus(),30);
+   go.onclick=async()=>{const v=ta.value.trim();if(!v&&!m.reply){ta.focus();return}go.disabled=true;msg.textContent='Sending…';
+    const {error}=await sb.rpc('reply_fan_message',{p_id:m.id,p_reply:v});go.disabled=false;
+    if(error){msg.textContent=/isn't allowed/i.test(error.message)?"That reply has a word that isn't allowed.":friendly(error);return}
+    m.reply=v||null;m.replied_at=v?new Date().toISOString():null;show();toast(v?'↩️ Reply sent! '+m.display_name+' will see it in their notifications.':'Reply removed.')}};
+  show();return box}
  function omCard(m,head){
   const c=el('div','om-card');c.appendChild(avatarImg(m.avatar_path));const b=el('div');b.style.minWidth='0';
   const w=el('div','om-who linkish',m.display_name+' ');w.appendChild(el('small',null,'@'+m.username));w.title='See their profile';w.onclick=()=>{closeOm();openProfile(m.user_id)};b.appendChild(w);
@@ -3169,13 +3204,15 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    const {data,error}=await sb.rpc('todays_fan_message',{p_skip:!!skip});if(noFanYet(error))return renderOm();if(skip)inboxSoon();if(error){d.appendChild(el('p','hint',friendly(error)));return}
    const m=(data||[])[0]||{waiting:0};
    if(m.id){d.appendChild(omCard(m,'Sent '+ago(m.created_at)));
+    if(fanReplyOn){const rr=await sb.from('fan_messages').select('reply,replied_at').eq('id',m.id).maybeSingle();if(!noFanReplyYet(rr.error)&&rr.data){Object.assign(m,rr.data);d.appendChild(replyBox(m))}}
     const row=el('div','set-btns');row.style.marginTop='10px';const del=el('button','btn small','🗑 Delete and pick another');del.type='button';
     del.title='If it\'s mean or spam: deletes it and picks a different one for today';del.onclick=()=>{if(confirm('Delete this message and pick another one for today?'))renderOm(true)};row.appendChild(del);d.appendChild(row)}
    else d.appendChild(el('p',null,'No messages yet. When people send you one, a random one shows up here every day.'));
    d.appendChild(el('div','om-count',m.waiting+' more message'+(m.waiting===1?'':'s')+' waiting'));
-   const past=await sb.from('fan_messages').select('id,body,created_at,picked_on,user_id,profiles!fan_messages_user_id_fkey(username,display_name,avatar_path)').not('picked_on','is',null).lt('picked_on',m.picked_on||'9999-12-31').order('picked_on',{ascending:false}).limit(14);
+   const pastQ=f=>sb.from('fan_messages').select('id,body,created_at,picked_on,user_id,'+f+'profiles!fan_messages_user_id_fkey(username,display_name,avatar_path)').not('picked_on','is',null).lt('picked_on',m.picked_on||'9999-12-31').order('picked_on',{ascending:false}).limit(14);
+   let past=await pastQ(fanReplyOn?'reply,replied_at,':'');if(noFanReplyYet(past.error))past=await pastQ('');
    if(past.data&&past.data.length){const h=sec('📜 Earlier days'),l=el('div','om-list');h.appendChild(l);
-    past.data.forEach(x=>l.appendChild(omCard({...x,...(x.profiles||{username:'deleted',display_name:'Deleted account'})},dayName(x.picked_on))))}
+    past.data.forEach(x=>{const mm={...x,...(x.profiles||{username:'deleted',display_name:'Deleted account'})};const w=el('div');w.appendChild(omCard(mm,dayName(x.picked_on)));if(fanReplyOn)w.appendChild(replyBox(mm));l.appendChild(w)})}
    return}
   // everyone else: write a message, and see your own ones
   const d=sec('✉️ Send a message');
@@ -3191,7 +3228,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    ta.value='';cnt.textContent='0/300';toast('📨 Sent! Fingers crossed it gets picked.');renderMine()};
   const mine=sec('📬 Your messages'),list=el('div','om-list');mine.appendChild(list);
   async function renderMine(){
-   const {data,error}=await sb.from('fan_messages').select('id,body,created_at,picked_on').eq('user_id',me.id).order('created_at',{ascending:false}).limit(10);
+   const mineQ=f=>sb.from('fan_messages').select('id,body,created_at,picked_on'+f).eq('user_id',me.id).order('created_at',{ascending:false}).limit(10);
+   let {data,error}=await mineQ(fanReplyOn?',reply,replied_at':'');if(noFanReplyYet(error))({data,error}=await mineQ(''));
    if(noFanYet(error))return renderOm();list.innerHTML='';
    if(!data||!data.length){list.appendChild(el('p','hint','You haven\'t sent any messages yet.'));return}
    const today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/London'});
@@ -3199,7 +3237,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    for(const x of data){const r=el('div','om-mine'+(x.picked_on?' picked':''));r.appendChild(el('div','om-text',x.body));const st=el('div','om-st');
     st.appendChild(x.picked_on?el('b',null,'⭐ Orangemonke read this on '+dayName(x.picked_on)+'!'):el('span',null,'⏳ Waiting to be picked · sent '+ago(x.created_at)));
     if(!x.picked_on){const del=el('button','btn small','🗑');del.type='button';del.title='Delete this message';del.onclick=async()=>{if(!confirm('Delete this message?'))return;const {error}=await sb.from('fan_messages').delete().eq('id',x.id);if(error)return toast(friendly(error));renderMine();send.disabled=false;msg.textContent=''};st.appendChild(del)}
-    r.appendChild(st);list.appendChild(r)}
+    r.appendChild(st);if(x.reply){const q=el('div','om-reply');q.appendChild(el('b',null,'💬 Orangemonke replied'+(x.replied_at?' '+ago(x.replied_at):'')));q.appendChild(el('div','om-text',x.reply));r.appendChild(q)}list.appendChild(r)}
   }
   renderMine();
  }
