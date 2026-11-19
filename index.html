@@ -610,7 +610,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v96 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:13:44Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v97 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:18:22Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>😆 Fixed the scream face going missing on the 🎙️ Live PNGtuber (and in OBS) when a Monke Icon Maker tab from before an update was still open. The live page now asks for an up-to-date copy of your monke and ignores old ones.</li>
+   <li>If a tab really is out of date, the live page tells you to reload it.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v96<span class="date" data-time="2026-11-19T16:13:44Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🖼️ The 🎙️ Live PNGtuber now sends your pictures to OBS: uploaded backgrounds, your own items and uploaded bases show up in OBS too (before, OBS only showed the background colour). You need to be signed in for this.</li>
@@ -4187,7 +4202,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  const CH='BroadcastChannel' in window?new BroadcastChannel('mim_live'):null;
  const toBlobP=c=>new Promise(r=>c.toBlob(r,'image/png'));
  async function packLayers(){const L=talkLayers();return {closed:await toBlobP(L.closed),open:await toBlobP(L.open),scream:await toBlobP(L.scream),bg:await toBlobP(L.bg),
-  clearBg:$('transparent').checked,can:!!L.can,hasPics:!!(items.length||(bgStyle==='image'&&bgImg)||customImg),t:Date.now()}}
+  clearBg:$('transparent').checked,can:!!L.can,hasPics:!!(items.length||(bgStyle==='image'&&bgImg)||customImg),v:2,t:Date.now()}}
  // ── main page: the button, and sending design changes to an open live page ──
  if(!LIVE){
   let sending=false,st=0;
@@ -4195,6 +4210,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
    sending=true;const u=location.pathname+'?live';if(w)w.location.href=u;else location.href=u};
   const push=()=>{clearTimeout(st);st=setTimeout(async()=>{const d=await packLayers();PDB.put('live',d).catch(()=>{});if(CH)CH.postMessage(d)},500)};
   {const prev=afterRender;afterRender=()=>{if(prev)prev();if(sending)push()}}
+  if(CH)CH.onmessage=e=>{if(e.data&&e.data.need){sending=true;push()}};
   // Used the live page before? Refresh its saved copy now (so it gets new faces after an update) and keep it up to date.
   PDB.get('live').then(d=>{if(d){sending=true;setTimeout(push,2500)}}).catch(()=>{});
   return;
@@ -4211,12 +4227,20 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  ['liveBg','liveShake','liveSens','liveScream'].forEach(id=>$(id).addEventListener('input',save));
  let L=null; // {closed, open, bg, clearBg, can}
  const bmp=b=>createImageBitmap(b);
- async function useData(d){const r=await useData2(d);if(r)queuePics();return r}
+ let fresh=false; // true once we have a copy from an up-to-date main page
+ async function useData(d){
+  if(d&&d.closed&&!d.v){ // from a tab opened before the scream face existed
+   if(CH)CH.postMessage({need:1}); // ask an up-to-date tab for a new copy
+   staleTab();if(fresh)return false; // keep the good copy we already have
+   if(!d.hasPics)return false; // no pictures: build it here from the design instead
+  }
+  if(d&&d.closed&&d.v)fresh=true;
+  const r=await useData2(d);if(r)queuePics();return r}
+ function staleTab(){const w=$('liveWarn');w.hidden=false;w.textContent='⚠️ You have a Monke Icon Maker tab open from before an update, so the 😆 scream face is missing. Reload that tab (or close it and open the site again), then reload this page.'}
  async function useData2(d){if(!d||!d.closed)return false;
-  if(!d.scream&&!d.hasPics)return false; // saved before the scream face: build it from the design instead
   const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
  function fromDesign(){const T=talkLayers();L={closed:T.closed,open:T.open,scream:T.scream,bg:T.bg,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink();queuePics()}
- function warn(){const w=$('liveWarn');w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
+ function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
  function updateLink(){const d=designLink(),i=d.indexOf('#'),base=d.slice(0,i).replace(/[?#].*$/,''),
    u=base+'?live&room='+ROOM+'&bg='+$('liveBg').value+'&shake='+$('liveShake').value+'&sens='+$('liveSens').value+'&scream='+$('liveScream').value+'&ui=0'+d.slice(i);$('liveLink').value=u;
