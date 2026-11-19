@@ -290,6 +290,7 @@ canvas.yt-mini{width:auto;aspect-ratio:1;filter:none;border-radius:50%}
 #liveRoot{position:fixed;inset:0}#liveRoot[hidden]{display:none}#liveCv{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:block;filter:none;width:auto;aspect-ratio:auto}
 .live-ui{position:absolute;left:12px;top:12px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 12px 40px #0008;font-size:13px}
 .live-ui[hidden]{display:none}.live-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}.live-head b{font-size:16px}
+.live-relay{font-size:12px;font-weight:700;margin:8px 0 0;min-height:1em}
 .live-tip{color:var(--muted);font-size:12px;margin:4px 0 10px}.live-warn{color:#ffb84d;font-size:12px;margin:8px 0}#liveMic{width:100%}
 .live-meter{position:relative;height:10px;border-radius:9px;background:#ffffff1a;margin:10px 0 8px;overflow:hidden}.live-meter i{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#28b65c,#ffd23f,#ff6a00)}.live-meter b{position:absolute;top:0;bottom:0;width:2px;background:#fff}
 .live-row{display:block;margin-top:10px;color:var(--muted);font-size:12px}.live-row select,.live-row input[type=range]{display:block;width:100%;margin-top:4px}
@@ -609,7 +610,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v91 <span class="tag new">New</span><span class="date" data-time="2026-11-19T15:37:57Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v92 <span class="tag new">New</span><span class="date" data-time="2026-11-19T15:47:49Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📡 The 🎙️ Live PNGtuber now works in OBS without OBS needing your mic: keep the live page open in your browser and it sends your mouth movements to OBS. No sound is sent, only when the mouth opens and closes.</li>
+   <li>The live page shows "✅ OBS is connected" once OBS has picked it up. It keeps working when the page is in the background.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The OBS steps no longer need you to change how OBS starts. Copy the OBS link again, because it now includes your own pairing code.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v91<span class="date" data-time="2026-11-19T15:37:57Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎙️ Live PNGtuber: tap "Live PNGtuber" under the download button. It opens a page with just your monke, and when you talk into your mic, it opens its mouth and bounces in time with your voice. Great for streams and recordings!</li>
@@ -3059,6 +3075,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   return m||'Something went wrong. Please try again.'};
 
  // Load the Supabase library only when it's needed, so the rest of the page stays fast.
+ window.monkeClient=()=>client(); // the 🎙️ live page uses it to send mouth movements to OBS
  function client(){
   if(sb)return Promise.resolve(sb);
   if(!loading)loading=new Promise((ok,fail)=>{const s=document.createElement('script');s.src=SUPABASE_JS;s.async=true;
@@ -4080,13 +4097,14 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   <label class="live-row">Shake<select id="liveShake"><option value="0">No shake</option><option value="1" selected>Small shake</option><option value="2">Big shake</option></select></label>
   <label class="live-row">Background<select id="liveBg"><option value="none" selected>See-through (for OBS)</option><option value="green">Green screen</option><option value="design">My icon's background</option></select></label>
   <p class="live-warn" id="liveWarn" hidden></p>
+  <p class="live-relay" id="liveRelay"></p>
   <details class="live-obs" open><summary>📺 Use it in OBS</summary>
    <ol>
     <li>In OBS, add a <b>Browser</b> source and paste this link as the URL (set the width and height to 1080):
      <div class="live-copy"><input id="liveLink" readonly><button type="button" class="btn small" data-copy="liveLink">Copy</button></div></li>
     <li>Paste this into the source's <b>Custom CSS</b> box. It hides everything except your monke and its cosmetics:
      <div class="live-copy"><textarea id="liveCss" readonly rows="2">.live-ui{display:none!important} body{background:rgba(0,0,0,0)!important;margin:0;overflow:hidden}</textarea><button type="button" class="btn small" data-copy="liveCss">Copy</button></div></li>
-    <li>So OBS can hear your mic, start OBS with <code>--enable-media-stream</code> (on Windows: right-click the OBS shortcut → Properties → add it to the end of <b>Target</b>). If the mouth doesn't move, right-click the source → <b>Interact</b> and click Start mic.</li>
+    <li><b>Keep this page open</b> with the mic on (it can be in the background, just don't close it). It sends your mouth movements to OBS, so OBS doesn't need your mic. No sound is sent.</li>
    </ol>
    <p class="live-tip">Or keep this page open in your browser with the green screen, and use OBS's <b>Window Capture</b> with a <b>Chroma Key</b> filter.</p>
    <p class="live-tip" id="liveLinkNote"></p>
@@ -4126,7 +4144,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  function warn(){const w=$('liveWarn');w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
  function updateLink(){const d=designLink(),i=d.indexOf('#'),base=d.slice(0,i).replace(/[?#].*$/,''),
-   u=base+'?live&bg='+$('liveBg').value+'&shake='+$('liveShake').value+'&sens='+$('liveSens').value+'&ui=0'+d.slice(i);$('liveLink').value=u;
+   u=base+'?live&room='+ROOM+'&bg='+$('liveBg').value+'&shake='+$('liveShake').value+'&sens='+$('liveSens').value+'&ui=0'+d.slice(i);$('liveLink').value=u;
   $('liveLinkNote').textContent=L&&L.hasPics?'⚠️ Your own items and uploaded pictures can\'t fit in a link, so the OBS link shows your monke without them. To keep them, use Window Capture instead.':''}
  (async()=>{
   // wait for the art (and a design link, if there is one) to load
@@ -4138,41 +4156,63 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   startMic(true);
  })();
  addEventListener('hashchange',()=>setTimeout(fromDesign,50));
- // ── mic ──
- let an=null,buf=null,ac=null,stream=null;
+ // ── mic ── (the sound is checked on the audio thread, so it keeps working when this tab is in the background)
+ let ac=null,stream=null,proc=null,micOn=false;
+ let lvl=0,env=0,open=false,since=0,talkT=0,seed=0;
+ const th=()=>.02+(100-+$('liveSens').value)/100*.4; // higher sensitivity = a quieter voice opens the mouth
+ function hear(level){const now=performance.now(),t=th();lvl=level;env=Math.max(level,env*.9);
+  // open past the line; close once the voice drops well below it, keeping each open for at least ~0.1 s so every syllable shows
+  const want=open?level>t*.7:level>t;if(want!==open&&now-since>(open?110:40)){open=want;since=now;if(open)seed++;send(true)}
+  if(env>t*.8){talkT=now;send(false)}}
  async function startMic(auto){
-  try{if(stream)stream.getTracks().forEach(t=>t.stop());
+  try{if(stream)stream.getTracks().forEach(t=>t.stop());if(proc){proc.disconnect();proc=null}
    const dev=$('liveDevice').value;stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:dev?{exact:dev}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:true}});
    ac=ac||new (window.AudioContext||window.webkitAudioContext)();await ac.resume();
-   const src=ac.createMediaStreamSource(stream);an=ac.createAnalyser();an.fftSize=1024;buf=new Float32Array(an.fftSize);src.connect(an);
+   const src=ac.createMediaStreamSource(stream),mute=ac.createGain();mute.gain.value=0;proc=ac.createScriptProcessor(1024,1,1);
+   proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i++)s+=d[i]*d[i];hear(Math.min(1,Math.sqrt(s/d.length)*6))};
+   src.connect(proc);proc.connect(mute);mute.connect(ac.destination);micOn=true;
    $('liveMic').textContent='🎙️ Mic is on';$('liveMic').classList.remove('primary');$('liveTip').textContent='Talk into your mic and your monke talks with you. Press H to hide or show the controls.';
    const ds=await navigator.mediaDevices.enumerateDevices(),sel=$('liveDevice'),cur=sel.value;sel.innerHTML='<option value="">Default mic</option>';
    ds.filter(d=>d.kind==='audioinput'&&d.deviceId&&d.deviceId!=='default').forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||'Mic '+(i+1);sel.appendChild(o)});sel.value=cur;
-  }catch(e){an=null;$('liveMic').textContent='🎙️ Start mic';$('liveMic').classList.add('primary');
+   connect();
+  }catch(e){micOn=false;$('liveMic').textContent='🎙️ Start mic';$('liveMic').classList.add('primary');
    if(!auto)$('liveTip').textContent=e&&e.name==='NotAllowedError'?'Your browser blocked the mic. Allow it (the 🎤 or 🔒 icon by the address bar) and try again.':'Couldn\'t find a mic. Plug one in and try again.'}
  }
  $('liveMic').onclick=()=>startMic(false);$('liveDevice').onchange=()=>startMic(false);
+ // ── 📡 sending the mouth to OBS: this page (with your mic) sends just "open / closed / how loud" to the copy in OBS
+ // through the gallery's live connection. No sound is sent. The room code in the OBS link pairs them up.
+ const ROOM=(()=>{let r=q.get('room');if(r&&/^[a-z0-9]{8,24}$/.test(r))return r;try{r=localStorage.getItem('mim_live_room')}catch(e){}
+  if(!r||!/^[a-z0-9]{8,24}$/.test(r)){r=Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>'abcdefghijkmnpqrstuvwxyz23456789'[x%32]).join('');try{localStorage.setItem('mim_live_room',r)}catch(e){}}return r})();
+ let ch=null,ready=false,lastSend=0,remote={open:false,env:0,t:-1e9},heardObs=-1e9,heardSender=-1e9;
+ async function connect(){if(ch||typeof monkeClient!=='function')return;try{const c=await monkeClient();
+  ch=c.channel('monke-live-'+ROOM,{config:{broadcast:{self:false}}});
+  ch.on('broadcast',{event:'m'},({payload:p})=>{if(!p)return;if(p.hi){heardObs=performance.now();return}remote={open:!!p.o,env:+p.e||0,t:performance.now()};heardSender=remote.t;status()})
+    .subscribe(st=>{ready=st==='SUBSCRIBED';status()})}catch(e){}}
+ function send(now){if(!ready||!micOn)return;const t=performance.now();if(!now&&t-lastSend<200)return;lastSend=t;
+  ch.send({type:'broadcast',event:'m',payload:{o:open?1:0,e:Math.round(env*100)/100}}).catch(()=>{})}
+ // the OBS copy says hello every few seconds, so this page can show that it's connected
+ setInterval(()=>{if(ready&&!micOn)ch.send({type:'broadcast',event:'m',payload:{hi:1}}).catch(()=>{});if(ready&&micOn&&!open)send(true);status()},4000);
+ function status(){const el=$('liveRelay');if(!el)return;const t=performance.now();
+  el.textContent=!micOn?(t-heardSender<6000?'📡 Getting your mouth movements from your other window.':''):!ready?'📡 Connecting to OBS…':t-heardObs<12000?'✅ OBS is connected. Keep this page open (it can be in the background).':'📡 Waiting for OBS… Add the OBS link below as a Browser source.'}
  // ── hide/show controls ──
  const showUi=v=>{$('liveUi').hidden=!v;$('liveShow').hidden=v};
  $('liveHide').onclick=()=>showUi(false);$('liveShow').onclick=()=>showUi(true);
  addEventListener('keydown',e=>{if((e.key==='h'||e.key==='H')&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))showUi($('liveUi').hidden)});
  if($('liveUi').hidden)$('liveShow').hidden=q.get('ui')==='0';
  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const t=$(b.dataset.copy);try{await navigator.clipboard.writeText(t.value);b.textContent='Copied!'}catch(e){t.select();document.execCommand('copy');b.textContent='Copied!'}setTimeout(()=>b.textContent='Copy',1500)});
+ connect(); // the OBS copy listens even if it has no mic of its own
  // ── animation ──
- let env=0,open=false,since=0,talkT=0,seed=0;
  function size(){const d=devicePixelRatio||1,S=Math.floor(Math.min(innerWidth,innerHeight));if(cv.width!==S*d){cv.width=cv.height=S*d;cv.style.width=cv.style.height=S+'px'}return S*d}
- function tick(now){requestAnimationFrame(tick);const S=size();
-  let lvl=0;if(an){an.getFloatTimeDomainData(buf);let s=0;for(let i=0;i<buf.length;i++)s+=buf[i]*buf[i];lvl=Math.min(1,Math.sqrt(s/buf.length)*6)}
-  env=Math.max(lvl,env*.9);const th=.02+(100-+$('liveSens').value)/100*.4; // higher sensitivity = quieter voice opens the mouth
-  $('liveLevel').style.width=Math.round(lvl*100)+'%';$('liveMark').style.left=Math.round(th*100)+'%';$('liveSensVal').textContent=$('liveSens').value;
-  // open past the line; close once the voice drops well below it, keeping each open for at least ~0.1 s so every syllable shows
-  const want=open?lvl>th*.7:lvl>th;if(want!==open&&now-since>(open?110:40)){open=want;since=now;if(open)seed++}
-  if(env>th*.8)talkT=now;const talking=now-talkT<250;
+ function tick(now){requestAnimationFrame(tick);const S=size(),t=th();
+  // no mic here (OBS)? use the mouth sent from your other window
+  const rem=!micOn&&now-remote.t<1500,o=micOn?open:rem&&remote.open,e=micOn?env:rem?remote.env:0,talking=micOn?now-talkT<250:rem&&e>t*.8;
+  if(rem&&o&&!tick.o)seed++;tick.o=o;
+  $('liveLevel').style.width=Math.round((micOn?lvl:e)*100)+'%';$('liveMark').style.left=Math.round(t*100)+'%';$('liveSensVal').textContent=$('liveSens').value;
   cx.clearRect(0,0,S,S);if(!L)return;
   const bg=$('liveBg').value;if(bg==='green'){cx.fillStyle='#00ff00';cx.fillRect(0,0,S,S)}else if(bg==='design'&&!L.clearBg)cx.drawImage(L.bg,0,0,S,S);
-  const lv=+$('liveShake').value,k=talking?lv*Math.min(2.2,.6+(env-th)*6):0,r=n=>{const x=Math.sin((seed*7.13+now*.02)*1.7+n*78.233)*43758.5453;return (x-Math.floor(x))*2-1};
-  const dx=r(1)*S*.008*k,dy=Math.max(-S*.045,r(2)*S*.005*k-(open&&lv?S*.014*Math.min(1.6,k||1):0)),rot=r(3)*.018*k;
-  cx.save();cx.translate(S/2+dx,S*1.05+dy);cx.rotate(rot);cx.scale(1.06,1.06);cx.drawImage(open&&L.can?L.open:L.closed,-S/2,-S,S,S);cx.restore()}
+  const lv=+$('liveShake').value,k=talking?lv*Math.min(2.2,.6+(e-t)*6):0,r=n=>{const x=Math.sin((seed*7.13+now*.02)*1.7+n*78.233)*43758.5453;return (x-Math.floor(x))*2-1};
+  const dx=r(1)*S*.008*k,dy=Math.max(-S*.045,r(2)*S*.005*k-(o&&lv?S*.014*Math.min(1.6,k||1):0)),rot=r(3)*.018*k;
+  cx.save();cx.translate(S/2+dx,S*1.05+dy);cx.rotate(rot);cx.scale(1.06,1.06);cx.drawImage(o&&L.can?L.open:L.closed,-S/2,-S,S,S);cx.restore()}
  requestAnimationFrame(tick);
 })();
 </script>
