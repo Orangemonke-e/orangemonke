@@ -412,6 +412,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
     <div class="field"><label for="itemLayer">Layer</label><select id="itemLayer"><option value="front">In front of the monke</option><option value="behind">Behind the monke</option></select></div>
     <div class="field"><label>&nbsp;</label><div style="display:flex;gap:8px"><button type="button" class="btn small" id="itemFlip">↔ Flip</button><button type="button" class="btn small danger" id="itemDelete">🗑 Remove</button></div></div>
    </div>
+   <label class="toggle" title="In 🗣️ talking GIFs and the 🎙️ Live PNGtuber, the monke shakes and bounces. Turn this on for backgrounds and signs that shouldn't move."><input type="checkbox" id="itemStill"> 📌 Stays still when the monke talks or shakes (for backgrounds and signs)</label>
    <div class="bg-remove">
     <button type="button" class="btn small" id="itemBgBtn">✨ Remove background</button>
     <div id="itemBgOpts" hidden>
@@ -610,7 +611,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v98 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:22:09Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v99 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:45:27Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📌 Stays still: a new switch for each of your own items. Turn it on and the item stays put when your monke talks, bounces and shakes in 🗣️ talking GIFs and on the 🎙️ Live PNGtuber (OBS too). Great for backgrounds and signs.</li>
+   <li>⬛ Fill the whole icon turns it on for you, because a picture filling the icon is usually a background.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The setting is saved in presets, shared icons and remixes.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v98<span class="date" data-time="2026-11-19T16:22:09Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -2004,7 +2020,8 @@ let items=[],selItem=null,itemSeq=0;
 // size = width; sy stretches the height (1 = the picture's own shape)
 const itemAspect=it=>(it.img.naturalHeight||it.img.height)/(it.img.naturalWidth||it.img.width);
 const itemH=it=>it.size*itemAspect(it)*(it.sy||1);
-const itemsKey=()=>items.map(i=>[i.id,i.x|0,i.y|0,i.size|0,Math.round((i.sy||1)*100),i.rot|0,i.behind?1:0,i.flip?1:0].join(',')).join(';');
+const itemsKey=()=>items.map(i=>[i.id,i.x|0,i.y|0,i.size|0,Math.round((i.sy||1)*100),i.rot|0,i.behind?1:0,i.flip?1:0,i.still?1:0].join(',')).join(';');
+let hideStill=false; // while making the talking frames, items that stay still are drawn on their own layers instead
 function drawItem(c,it){{const w=it.size,h=itemH(it);
  c.save();c.translate(it.x,it.y);c.rotate(it.rot*Math.PI/180);c.scale(it.flip?-1:1,1);c.drawImage(it.img,-w/2,-h/2,w,h);c.restore()}}
 function placeItemBox(){
@@ -2031,7 +2048,7 @@ function renderItemList(){
  canvas.style.touchAction=items.length?'none':'';canvas.style.cursor=items.length?'grab':'';
  if(selItem){syncItemSize();
   document.getElementById('itemRot').value=Math.round(selItem.rot);document.getElementById('itemRotVal').textContent=Math.round(selItem.rot)+'°';
-  document.getElementById('itemLayer').value=selItem.behind?'behind':'front';
+  document.getElementById('itemLayer').value=selItem.behind?'behind':'front';$('itemStill').checked=!!selItem.still;
   const on=selItem.bgTol!==null;document.getElementById('itemBgBtn').textContent=on?'↺ Restore original':'✨ Remove background';document.getElementById('itemBgOpts').hidden=!on;
   if(on){document.getElementById('itemBgTol').value=selItem.bgTol;document.getElementById('itemBgTolVal').textContent=selItem.bgTol}}
 }
@@ -2057,7 +2074,7 @@ function restoreItems(list,order){
  return Promise.all(list.map(d=>new Promise(res=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=()=>res(null);im.src=d.url}))).then(ims=>{
   const ids=ims.map((im,n)=>{if(!im||!im.naturalWidth)return null;const d=list[n],t=mk(80),tx=t.getContext('2d'),k=Math.min(80/im.naturalWidth,80/im.naturalHeight);
    tx.drawImage(im,(80-im.naturalWidth*k)/2,(80-im.naturalHeight*k)/2,im.naturalWidth*k,im.naturalHeight*k);
-   const it={id:++itemSeq,img:im,orig:im,bgTol:null,thumb:t.toDataURL(),x:num(d.x,-512,1536,512),y:num(d.y,-512,1536,420),size:num(d.s,30,2048,300),sy:num(d.h,.05,20,1),rot:num(d.r,-180,180,0),behind:!!d.b,flip:!!d.f};
+   const it={id:++itemSeq,img:im,orig:im,bgTol:null,thumb:t.toDataURL(),x:num(d.x,-512,1536,512),y:num(d.y,-512,1536,420),size:num(d.s,30,2048,300),sy:num(d.h,.05,20,1),rot:num(d.r,-180,180,0),behind:!!d.b,flip:!!d.f,still:!!d.st};
    items.push(it);return it.id});
   if(Array.isArray(order)){const o=order.map(k=>/^i\d{1,2}$/.test(k)?(ids[+k.slice(1)]?'item:'+ids[+k.slice(1)]:null):BUILTIN_LAYERS.includes(k)?k:null).filter(Boolean);
    if(OLD_LAYERS.every(k=>o.includes(k)))layerOrder=o}
@@ -2137,8 +2154,9 @@ $('itemW').addEventListener('input',e=>{if(!selItem)return;setItemW(selItem,+e.t
 $('itemHt').addEventListener('input',e=>{if(!selItem)return;setItemH(selItem,+e.target.value);syncItemSize();draw()});
 $('itemFill').onclick=()=>{if(!selItem)return;const it=selItem;it.x=512;it.y=512;it.rot=0;it.size=1024;it.sy=1/itemAspect(it);
  // a picture filling the icon is almost always a background, so put it behind everything
- const k='item:'+it.id;it.behind=true;if(layerOrder)layerOrder=[k,...fullOrder().filter(x=>x!==k)];
- renderItemList();draw();toast('⬛ Stretched to fill the icon and moved behind the monke.')};
+ const k='item:'+it.id;it.behind=true;it.still=true;$('itemStill').checked=true;if(layerOrder)layerOrder=[k,...fullOrder().filter(x=>x!==k)];
+ renderItemList();draw();toast('⬛ Stretched to fill the icon, moved behind the monke, and set to stay still.')};
+$('itemStill').onchange=e=>{if(!selItem)return;selItem.still=e.target.checked;draw()};
 $('itemUnstretch').onclick=()=>{if(!selItem)return;selItem.sy=1;syncItemSize();draw()};
 document.getElementById('itemRot').addEventListener('input',e=>{if(!selItem)return;selItem.rot=+e.target.value;document.getElementById('itemRotVal').textContent=selItem.rot+'°';draw()});
 document.getElementById('itemLayer').addEventListener('change',e=>{if(!selItem)return;selItem.behind=e.target.value==='behind';
@@ -2347,7 +2365,7 @@ function drawPart(c,k,m){
    if(badge==='camera')drawLayer(cameraImg,CAMERA_BOX,false,c)}}
  else if(k==='headphones'){headFit(c);drawLayer(headphonesArt(),HEADPHONES_BOX,false,c)}
  else if(k==='dog'){const dog=$('dog').value;if(dog==='right')drawLayer(dogImg,DOG_BOX_R,false,c);if(dog==='left')drawLayer(dogImg,DOG_BOX_L,true,c)}
- else{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(c,it)}
+ else{const it=items.find(i=>'item:'+i.id===k);if(it&&!(hideStill&&it.still))drawItem(c,it)}
  c.restore();
 }
 const HAT_NAMES={cap:'🧢 Cap',crown:'👑 Crown',tophat:'🎩 Top hat',halo:'😇 Halo',horns:'😈 Horns',catears:'🐱 Cat ears'};
@@ -2384,7 +2402,7 @@ $('layerReset').onclick=()=>{layerOrder=null;layersKey='';draw()};
 // thickness, so changing any colour (fur, face, background or the outline itself) reuses it.
 const maskC=mk(1024),maskX=maskC.getContext('2d'),outC=mk(1024),outX=outC.getContext('2d');let maskKey='',outKey='';
 function outlineLayer(thickness){
- const shape=[customImg?customId:0,$('base').value,fullOrder().join(','),$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,$('headphones').value,thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
+ const shape=[hideStill?1:0,customImg?customId:0,$('base').value,fullOrder().join(','),$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,$('headphones').value,thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
  if(shape!==maskKey){maskKey=shape;outKey='';maskX.clearRect(0,0,1024,1024);const T=thickness*1.5;
   for(const rad of [T,T*.5]){const n=48;for(let i=0;i<n;i++){const an=i/n*Math.PI*2;maskX.drawImage(figC,Math.cos(an)*rad,Math.sin(an)*rad)}}}
  if(shape+col!==outKey){outKey=shape+col;outX.globalCompositeOperation='source-over';outX.clearRect(0,0,1024,1024);outX.drawImage(maskC,0,0);
@@ -2755,7 +2773,7 @@ async function presetFiles(){
  const f={};
  if(items.length){const idx=new Map();f.items=[];
   for(const it of items){const w=it.img.naturalWidth||it.img.width,h=it.img.naturalHeight||it.img.height;idx.set('item:'+it.id,'i'+f.items.length);
-   f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0})}
+   f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0,st:it.still?1:0})}
   f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
  if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await toBlob(bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
  if(customImg){f.base=await toBlob(customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
@@ -2986,20 +3004,25 @@ document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn
   const key=JSON.stringify(captureState())+'|'+bgStyle+'|'+itemsKey()+'|'+(layerOrder?fullOrder():'')+'|'+customId+'|'+bgImgId+'|'+imgsLoaded+'|'+talkImg.naturalWidth+'|'+screamImg.naturalWidth;
   if(lay&&key===layKey)return lay;
   const tr=$('transparent'),was=tr.checked,grab=()=>{const c=mk(1024);c.getContext('2d').drawImage(canvas,0,0);return c};
-  tr.checked=true;talkOpen=false;drawNow();const closed=grab();
+  tr.checked=true;hideStill=true;talkOpen=false;drawNow();const closed=grab();
   const can=!customImg&&$('base').value!=='orange'&&!!talkImg.naturalWidth;
   let open=closed,scream=closed;if(can){talkOpen=true;drawNow();open=grab();talkOpen=false;if(screamImg.naturalWidth){talkScream=true;drawNow();scream=grab();talkScream=false}else scream=open}
-  tr.checked=was;drawNow();
+  hideStill=false;tr.checked=was;drawNow();
   const bg=mk(1024);bg.getContext('2d').drawImage(bgLayer(),0,0);
-  $('talkWarn').hidden=can;layKey=key;return lay={closed,open,scream,bg,can};
+  // 📌 items that stay still: the ones behind the monke and the ones in front of it, each on their own layer
+  const order=fullOrder(),mi=order.indexOf('monke'),back=mk(1024),front=mk(1024);let hasStill=false;
+  order.forEach((k,n)=>{const it=k.startsWith('item:')&&items.find(i=>'item:'+i.id===k);if(it&&it.still){hasStill=true;drawItem((n<mi?back:front).getContext('2d'),it)}});
+  $('talkWarn').hidden=can;layKey=key;return lay={closed,open,scream,bg,back,front,hasStill,can};
  }
  window.talkLayers=layers;
  function frame(c,i,S,bgMode){
   const f=frames[i]||{open:false,talk:false},L=layers(),[dx,dy,rot]=wobble(i,f,S);
   c.clearRect(0,0,S,S);
   if(bgMode==='green'){c.fillStyle='#00ff00';c.fillRect(0,0,S,S)}else if(bgMode==='design'&&!$('transparent').checked)c.drawImage(L.bg,0,0,S,S);
+  if(L.hasStill)c.drawImage(L.back,0,0,S,S);
   // pivot at the bottom middle; drawn slightly bigger and lower so the shake never shows a gap under the body
   c.save();c.translate(S/2+dx,S*1.05+dy);c.rotate(rot);c.scale(1.06,1.06);c.drawImage(f.open?(f.scream?L.scream:L.open):L.closed,-S/2,-S,S,S);c.restore();
+  if(L.hasStill)c.drawImage(L.front,0,0,S,S);
  }
  function showWords(w){const box=$('talkWords');box.textContent='';words.forEach((t,i)=>{const e=document.createElement(i===w?'b':'span');e.textContent=t;box.append(e,' ')})}
  function play(now){raf=requestAnimationFrame(play);if(!frames.length)return;const i=Math.floor((now-t0)/DELAY)%frames.length;if(i===lastI)return;lastI=i;
@@ -3503,7 +3526,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
     for(const it of items.slice(0,MAX_SHARED_ITEMS)){const c=mk(it.img.naturalWidth||it.img.width,it.img.naturalHeight||it.img.height);c.getContext('2d').drawImage(it.img,0,0);
      const b=await new Promise(r=>c.toBlob(r,'image/webp',.9)),t=b&&b.type==='image/webp'?'image/webp':'image/png',ip=me.id+'/items/'+stamp+'-'+saved.length+(t==='image/webp'?'.webp':'.png');
      const u=await sb.storage.from('icons').upload(ip,b,{contentType:t,upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
-     itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),...((it.sy||1)!==1?{h:Math.round(it.sy*1000)/1000}:{}),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0})}
+     itemPaths.push(ip);idx.set('item:'+it.id,'i'+saved.length);saved.push({p:ip,x:Math.round(it.x),y:Math.round(it.y),s:Math.round(it.size),...((it.sy||1)!==1?{h:Math.round(it.sy*1000)/1000}:{}),r:Math.round(it.rot),f:it.flip?1:0,b:it.behind?1:0,...(it.still?{st:1}:{})})}
     design.items=saved;design.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k).filter(Boolean);msg.textContent='Sharing…'}
    // An uploaded background picture is saved next to the icon too (cropped to the icon, 1024×1024), so remixes get it.
    if(remixOn&&bgStyle==='image'&&bgImg){msg.textContent='Sharing your background…';const bc=mk(1024);bc.getContext('2d').drawImage(bgLayer(),0,0);
@@ -4216,7 +4239,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
 (function(){
  const CH='BroadcastChannel' in window?new BroadcastChannel('mim_live'):null;
  const toBlobP=c=>new Promise(r=>c.toBlob(r,'image/png'));
- async function packLayers(){const L=talkLayers();return {closed:await toBlobP(L.closed),open:await toBlobP(L.open),scream:await toBlobP(L.scream),bg:await toBlobP(L.bg),
+ async function packLayers(){const L=talkLayers();return {closed:await toBlobP(L.closed),open:await toBlobP(L.open),scream:await toBlobP(L.scream),bg:await toBlobP(L.bg),back:L.hasStill?await toBlobP(L.back):null,front:L.hasStill?await toBlobP(L.front):null,
   clearBg:$('transparent').checked,can:!!L.can,hasPics:!!(items.length||(bgStyle==='image'&&bgImg)||customImg),v:2,t:Date.now()}}
  // ── main page: the button, and sending design changes to an open live page ──
  if(!LIVE){
@@ -4253,8 +4276,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   const r=await useData2(d);if(r)queuePics();return r}
  function staleTab(){const w=$('liveWarn');w.hidden=false;w.textContent='⚠️ You have a Monke Icon Maker tab open from before an update, so the 😆 scream face is missing. Reload that tab (or close it and open the site again), then reload this page.'}
  async function useData2(d){if(!d||!d.closed)return false;
-  const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
- function fromDesign(){const T=talkLayers();L={closed:T.closed,open:T.open,scream:T.scream,bg:T.bg,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink();queuePics()}
+  const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),back:d.back?await bmp(d.back):null,front:d.front?await bmp(d.front):null,clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
+ function fromDesign(){const T=talkLayers();L={closed:T.closed,open:T.open,scream:T.scream,bg:T.bg,back:T.hasStill?T.back:null,front:T.hasStill?T.front:null,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink();queuePics()}
  function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
  function updateLink(){const d=designLink(),i=d.indexOf('#'),base=d.slice(0,i).replace(/[?#].*$/,''),
@@ -4319,13 +4342,13 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  function queuePics(){if(IN_OBS)return;clearTimeout(picT);picT=setTimeout(uploadPics,1500)}
  async function uploadPics(){
   const u=typeof monkeUser==='function'&&monkeUser();if(!u||!L||picBusy){status();return}picBusy=true;
-  try{const c=await monkeClient(),ver=Date.now().toString(36),pre=u.id+'/live/'+ROOM+'-'+ver,names=['closed','open','scream','bg'];
+  try{const c=await monkeClient(),ver=Date.now().toString(36),pre=u.id+'/live/'+ROOM+'-'+ver,names=['closed','open','scream','bg',...(L.back?['back','front']:[])];
    for(const n of names){const k=document.createElement('canvas');k.width=k.height=1024;k.getContext('2d').drawImage(L[n],0,0,1024,1024);
     let bl=null;for(const qq of [.9,.75,.6]){bl=await new Promise(r=>k.toBlob(r,'image/webp',qq));if(bl&&bl.size<1000000)break}
     const up=await c.storage.from('icons').upload(pre+'-'+n+'.webp',bl,{contentType:'image/webp',upsert:false});if(up.error)throw up.error}
    let old=null;try{old=localStorage.getItem('mim_live_pic');localStorage.setItem('mim_live_pic',pre)}catch(e){}
-   if(old&&old!==pre&&old.startsWith(u.id+'/live/'))c.storage.from('icons').remove(names.map(n=>old+'-'+n+'.webp')).catch(()=>{});
-   pic={pic:pre,can:L.can?1:0,clear:L.clearBg?1:0};sendPic()}
+   if(old&&old!==pre&&old.startsWith(u.id+'/live/'))c.storage.from('icons').remove(['closed','open','scream','bg','back','front'].map(n=>old+'-'+n+'.webp')).catch(()=>{});
+   pic={pic:pre,can:L.can?1:0,clear:L.clearBg?1:0,still:L.back?1:0};sendPic()}
   catch(e){pic=null}finally{picBusy=false;status()}}
  function sendPic(){if(ready&&pic)ch.send({type:'broadcast',event:'m',payload:pic}).catch(()=>{})}
  // OBS: load the pictures it's told about
@@ -4333,8 +4356,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  async function loadPic(p){if(!IN_OBS&&micOn)return;if(!PIC_RE.test(p.pic||'')||p.pic===picNow)return;picNow=p.pic;
   const c=await monkeClient(),url=n=>c.storage.from('icons').getPublicUrl(p.pic+'-'+n+'.webp').data.publicUrl;
   const get=n=>new Promise((ok,no)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>ok(im);im.onerror=no;im.src=url(n)});
-  try{const [closed,open,scream,bg]=await Promise.all(['closed','open','scream','bg'].map(get));if(picNow!==p.pic)return;
-   L={closed,open,scream,bg,clearBg:!!p.clear,can:!!p.can,hasPics:true};warn();gotPic=true;status()}catch(e){picNow=''}}
+  try{const [closed,open,scream,bg,back,front]=await Promise.all(['closed','open','scream','bg',...(p.still?['back','front']:[])].map(get));if(picNow!==p.pic)return;
+   L={closed,open,scream,bg,back:back||null,front:front||null,clearBg:!!p.clear,can:!!p.can,hasPics:true};warn();gotPic=true;status()}catch(e){picNow=''}}
  let gotPic=false;
  // signing in finishes a moment after the page opens, so check again for a little while
  if(!IN_OBS){let tries=0;const iv=setInterval(()=>{tries++;const u=typeof monkeUser==='function'&&monkeUser();if(u&&L&&!pic&&!picBusy){updateLink();queuePics()}if(pic||tries>15)clearInterval(iv)},2000)}
@@ -4358,9 +4381,10 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   $('liveLevel').style.width=Math.round((micOn?lvl:e)*100)+'%';$('liveMark').style.left=Math.round(t*100)+'%';$('liveMark2').style.left=Math.min(99,Math.round(sth()*100))+'%';$('liveScreamVal').textContent=$('liveScream').value>=100?'(never)':$('liveScream').value;$('liveSensVal').textContent=$('liveSens').value;
   cx.clearRect(0,0,S,S);if(!L)return;
   const bg=$('liveBg').value;if(bg==='green'){cx.fillStyle='#00ff00';cx.fillRect(0,0,S,S)}else if(bg==='design'&&!L.clearBg)cx.drawImage(L.bg,0,0,S,S);
+  if(L.back)cx.drawImage(L.back,0,0,S,S);
   const lv=+$('liveShake').value,k=talking?lv*Math.min(2.2,.6+(e-t)*6):0,r=n=>{const x=Math.sin((seed*7.13+now*.02)*1.7+n*78.233)*43758.5453;return (x-Math.floor(x))*2-1};
   const dx=r(1)*S*.008*k,dy=Math.max(-S*.045,r(2)*S*.005*k-(o&&lv?S*.014*Math.min(1.6,k||1):0)),rot=r(3)*.018*k;
-  cx.save();cx.translate(S/2+dx,S*1.05+dy);cx.rotate(rot);cx.scale(1.06,1.06);cx.drawImage(o&&L.can?(sc?L.scream:L.open):L.closed,-S/2,-S,S,S);cx.restore();cv.dataset.face=o?(sc?'scream':'open'):'closed'}
+  cx.save();cx.translate(S/2+dx,S*1.05+dy);cx.rotate(rot);cx.scale(1.06,1.06);cx.drawImage(o&&L.can?(sc?L.scream:L.open):L.closed,-S/2,-S,S,S);cx.restore();if(L.front)cx.drawImage(L.front,0,0,S,S);cv.dataset.face=o?(sc?'scream':'open'):'closed'}
  requestAnimationFrame(tick);
 })();
 </script>
