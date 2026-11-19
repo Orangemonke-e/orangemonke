@@ -614,7 +614,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v100 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:51:38Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v101 <span class="tag new">New</span><span class="date" data-time="2026-11-19T19:59:55Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🖼️ Your uploaded pictures are now remembered too: when you refresh the page or come back later, your uploaded background, your own items (with their size, stretch and position) and an uploaded monke base are all still there. Before, only the settings were remembered.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>They're kept in this browser, like your presets. 🔄 Reset design clears them.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v100<span class="date" data-time="2026-11-19T16:51:38Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🆕 Update check: when a new update comes out, the 🎙️ Live PNGtuber (in your browser and in OBS) reloads itself automatically, so it always matches the main page. Your settings stay the same.</li>
@@ -2760,7 +2774,27 @@ function applyState(o){
  buildBgGrid();
 }
 let autoT=null;
-function scheduleAutosave(){if(!storageOK||LIVE)return;clearTimeout(autoT);autoT=setTimeout(()=>lsSet(LS_AUTO,captureState()),250)}
+function scheduleAutosave(){if(!storageOK||LIVE)return;clearTimeout(autoT);autoT=setTimeout(()=>lsSet(LS_AUTO,captureState()),250);scheduleAutoPics()}
+// 🖼️ Your uploaded pictures (background, items, monke base) are autosaved too, so they come back after a refresh.
+// They're kept in this browser (IndexedDB), like presets. Each picture is only turned into a file once.
+let autoPicT=0,autoPicKey=null,autoPicsReady=false;
+const blobOnce=async(o,src,w,h,type,q)=>o._blob||(o._blob=await toBlob(src,w,h,type,q));
+function scheduleAutoPics(){if(!autoPicsReady)return;clearTimeout(autoPicT);autoPicT=setTimeout(saveAutoPics,800)}
+async function saveAutoPics(){
+ const key=[itemsKey(),bgImg?bgImgId:0,bgStyle==='image'?1:0,customImg?customId:0,JSON.stringify(customImg?customRoles:0),customImg?$('match').value:'',layerOrder?fullOrder().join():''].join('|');
+ if(key===autoPicKey)return;autoPicKey=key;
+ try{
+  if(!items.length&&!bgImg&&!customImg){await PDB.del('autosave');return}
+  const f={};
+  if(items.length){const idx=new Map();f.items=[];
+   for(const it of items){const w=it.img.naturalWidth||it.img.width,h=it.img.naturalHeight||it.img.height;idx.set('item:'+it.id,'i'+f.items.length);
+    f.items.push({blob:await blobOnce(it.img,it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0,st:it.still?1:0})}
+   f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
+  if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await blobOnce(bgImg,bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
+  if(customImg){f.base=await blobOnce(customImg,customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
+  await PDB.put('autosave',f);
+ }catch(e){autoPicKey=null}
+}
 function presetMsg(t){$('presetMsg').textContent=t}
 function renderPresets(){
  const list=$('presetList');list.innerHTML='';
@@ -2801,7 +2835,10 @@ const blobImg=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const u=
 async function loadPresetFiles(p){
  // A preset brings back exactly its own pictures. One without any (or saved before presets kept pictures) clears them.
  let f=null;if(p.files&&Object.keys(p.files).length)try{f=await PDB.get(p.id)}catch(e){}
- f=f||{};
+ return applyFiles(f||{},p.data);
+}
+async function applyFiles(f,data){
+ const p={data};
  // monke base
  const base=await blobImg(f.base);
  if(base){customImg=base;customId++;setupCustom();if(f.roles){customRoles=f.roles;buildRoles();buildPalette()}
@@ -2872,6 +2909,11 @@ function autoName(){
 }
 renderPresets();
 if(storageOK){const a=lsGet(LS_AUTO);if(a)applyState(a)} // bring back the last design
+// …and its pictures (not when opening someone's design link, or on the 🎙️ live page)
+if(storageOK&&!LIVE&&!/^#d=/.test(location.hash))PDB.get('autosave').then(async f=>{if(f&&(f.items||f.bg||f.base)){const a=lsGet(LS_AUTO)||captureState();await applyFiles(f,a);
+  // the restored design is where Undo starts from (so Undo can't take the pictures away again)
+  setTimeout(()=>{clearTimeout(histT);histT=null;undoStack=[];redoStack=[];histCur=histSnap();histButtons()},450)}}).catch(()=>{}).finally(()=>{autoPicsReady=true});
+else autoPicsReady=true;
 if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P"').then(()=>draw());
 // 🎲 Random Monke: a random outfit. Leaves the name tag and any uploaded base alone.
 (function(){
