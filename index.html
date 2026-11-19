@@ -610,7 +610,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v94 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:05:22Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v95 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:10:08Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>😆 Fixed the scream face not showing on the 🎙️ Live PNGtuber page in your browser (it only showed in OBS). The page was using a copy of your monke saved before the scream face existed. Opening the main page now refreshes that copy automatically.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v94<span class="date" data-time="2026-11-19T16:05:22Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>😆 Scream face (hand-drawn by Orangemonke): on the 🎙️ Live PNGtuber, when you shout or scream, your monke squeezes its eyes shut like &gt;&lt; and screams with you. It works in OBS too.</li>
@@ -4164,7 +4178,10 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   let sending=false,st=0;
   $('liveOpenBtn').onclick=async()=>{const w=window.open('about:blank','monke-live');try{await PDB.put('live',await packLayers())}catch(e){}
    sending=true;const u=location.pathname+'?live';if(w)w.location.href=u;else location.href=u};
-  if(CH){const prev=afterRender;afterRender=()=>{if(prev)prev();if(!sending)return;clearTimeout(st);st=setTimeout(async()=>{const d=await packLayers();PDB.put('live',d).catch(()=>{});CH.postMessage(d)},500)}}
+  const push=()=>{clearTimeout(st);st=setTimeout(async()=>{const d=await packLayers();PDB.put('live',d).catch(()=>{});if(CH)CH.postMessage(d)},500)};
+  {const prev=afterRender;afterRender=()=>{if(prev)prev();if(sending)push()}}
+  // Used the live page before? Refresh its saved copy now (so it gets new faces after an update) and keep it up to date.
+  PDB.get('live').then(d=>{if(d){sending=true;setTimeout(push,2500)}}).catch(()=>{});
   return;
  }
  // ── the live page ──
@@ -4179,7 +4196,9 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  ['liveBg','liveShake','liveSens','liveScream'].forEach(id=>$(id).addEventListener('input',save));
  let L=null; // {closed, open, bg, clearBg, can}
  const bmp=b=>createImageBitmap(b);
- async function useData(d){if(!d||!d.closed)return false;const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
+ async function useData(d){if(!d||!d.closed)return false;
+  if(!d.scream&&!d.hasPics)return false; // saved before the scream face: build it from the design instead
+  const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
  function fromDesign(){const T=talkLayers();L={closed:T.closed,open:T.open,scream:T.scream,bg:T.bg,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink()}
  function warn(){const w=$('liveWarn');w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
