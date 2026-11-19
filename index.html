@@ -610,7 +610,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v97 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:18:22Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v98 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:22:09Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>😆 The scream face now stays on for as long as you keep screaming. Before, it dropped off after a moment, because the browser turned your mic down during long screams and small wobbles in your voice ended it.</li>
+   <li>Once you go past the red line it keeps screaming while you're still loud, even when you take a quick breath, and goes back to normal about half a second after you stop.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v97<span class="date" data-time="2026-11-19T16:18:22Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -4258,18 +4273,19 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  addEventListener('hashchange',()=>setTimeout(fromDesign,50));
  // ── mic ── (the sound is checked on the audio thread, so it keeps working when this tab is in the background)
  let ac=null,stream=null,proc=null,micOn=false;
- let lvl=0,env=0,open=false,since=0,talkT=0,seed=0,scream=false,screamT=0;
+ let lvl=0,env=0,senv=0,open=false,since=0,talkT=0,seed=0,scream=false,screamT=0;
  const sth=()=>+$('liveScream').value/100; // 100 = never scream
  const th=()=>.02+(100-+$('liveSens').value)/100*.4; // higher sensitivity = a quieter voice opens the mouth
- function hear(level){const now=performance.now(),t=th();lvl=level;env=Math.max(level,env*.9);
+ function hear(level){const now=performance.now(),t=th();lvl=level;env=Math.max(level,env*.9);senv=Math.max(level,senv*.95); // senv: a slow envelope for screams
   // open past the line; close once the voice drops well below it, keeping each open for at least ~0.1 s so every syllable shows
-  const want=open?level>t*.7:level>t;if(want!==open&&now-since>(open?110:40)){open=want;since=now;if(open)seed++;send(true)}
+  const want=scream||(open?level>t*.7:level>t);if(want!==open&&now-since>(open?110:40)){open=want;since=now;if(open)seed++;send(true)}
   // loud enough: scream face (stays on for at least ~0.3 s so it's easy to see)
-  const st=sth();if(open&&st<1&&level>st){if(!scream){scream=true;send(true)}screamT=now}else if(scream&&(now-screamT>300||!open)){scream=false;send(true)}
+  // scream: start when you go past the red line, and keep it while you're still loud (wobbles in a long scream don't end it)
+  const st=sth();if(st<1&&(level>st||(scream&&senv>st*.6))){if(!scream){scream=true;send(true)}screamT=now}else if(scream&&now-screamT>200){scream=false;send(true)}
   if(env>t*.8){talkT=now;send(false)}}
  async function startMic(auto){
   try{if(stream)stream.getTracks().forEach(t=>t.stop());if(proc){proc.disconnect();proc=null}
-   const dev=$('liveDevice').value;stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:dev?{exact:dev}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:true}});
+   const dev=$('liveDevice').value;stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:dev?{exact:dev}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:false}}) // no auto gain: it turns the mic down during a long scream;
    ac=ac||new (window.AudioContext||window.webkitAudioContext)();await ac.resume();
    const src=ac.createMediaStreamSource(stream),mute=ac.createGain();mute.gain.value=0;proc=ac.createScriptProcessor(1024,1,1);
    proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i++)s+=d[i]*d[i];hear(Math.min(1,Math.sqrt(s/d.length)*6))};
