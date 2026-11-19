@@ -297,6 +297,8 @@ canvas.yt-mini{width:auto;aspect-ratio:1;filter:none;border-radius:50%}
 .live-obs{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}.live-obs summary{cursor:pointer;font-weight:700}.live-obs ol{padding-left:18px;margin:8px 0}.live-obs li{margin:8px 0;line-height:1.45}
 .live-copy{display:flex;gap:6px;margin-top:6px}.live-copy input,.live-copy textarea{flex:1;min-width:0;font:12px ui-monospace,monospace;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);resize:none}
 .live-obs code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:12px}.live-show{position:absolute;left:12px;top:12px;opacity:.6}.live-show:hover{opacity:1}.live-show[hidden]{display:none}
+.upd-bar{position:fixed;z-index:85;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--accent);box-shadow:0 10px 30px #0008;font-size:14px;font-weight:700;max-width:calc(100vw - 24px)}
+.upd-bar[hidden]{display:none}
 .tour-spot{position:fixed;z-index:90;border-radius:16px;box-shadow:0 0 0 4px var(--accent),0 0 0 9999px #000a;pointer-events:none;transition:all .3s ease}
 .tour-spot.center{left:50%!important;top:45%!important;width:0!important;height:0!important;box-shadow:0 0 0 9999px #000a}
 .tour-block{position:fixed;inset:0;z-index:89}
@@ -574,6 +576,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="omBody"></div>
  </div>
 </div>
+<div class="upd-bar" id="updBar" hidden role="status"><span id="updText">🆕 A new update is out!</span><button type="button" class="btn small primary" id="updGo">Reload</button><button type="button" class="btn small" id="updNo" aria-label="Not now">✕</button></div>
 <div class="tour-invite" id="tourInvite" hidden role="dialog" aria-labelledby="tourInviteTitle"><b id="tourInviteTitle">👋 New here?</b><p>Take a 1-minute tour of everything you can make.</p><div><button type="button" class="btn small primary" id="tourYes">🎓 Show me around</button><button type="button" class="btn small" id="tourNo">No thanks</button></div></div>
 <div class="install-backdrop" id="setPop" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
  <div class="install-card set-card">
@@ -611,7 +614,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v99 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:45:27Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v100 <span class="tag new">New</span><span class="date" data-time="2026-11-19T16:51:38Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🆕 Update check: when a new update comes out, the 🎙️ Live PNGtuber (in your browser and in OBS) reloads itself automatically, so it always matches the main page. Your settings stay the same.</li>
+   <li>On the main page, a small "🆕 new update is out" bar appears with a Reload button, so you never lose what you're working on.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>📌 Fixes items set to "Stays still" going missing in OBS when the live page was opened before the last update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v99<span class="date" data-time="2026-11-19T16:45:27Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>📌 Stays still: a new switch for each of your own items. Turn it on and the item stays put when your monke talks, bounces and shakes in 🗣️ talking GIFs and on the 🎙️ Live PNGtuber (OBS too). Great for backgrounds and signs.</li>
@@ -4098,6 +4116,20 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  const linked=/[?&](comments|profile)=|#d=/.test(location.search+location.hash);
  if(!get()&&!linked&&!LIVE){const offer=()=>{if(get())return;const busy=['installPop','notifyPop','acctPop','setPop','omPop','cmPop','pfPop'].some(id=>{const e=$(id);return e&&!e.hidden});
   if(busy){setTimeout(offer,8000);return}$('tourInvite').hidden=false;put('offered')};setTimeout(offer,4000)}
+})();
+// 🆕 Update check: every few minutes, see if a newer version of the site is out (by its newest update note).
+// The 🎙️ live page (in the browser and in OBS) reloads itself so it never runs old code next to an updated tab.
+// The main page shows a "Reload" bar instead, so nothing you're working on is lost.
+(function(){
+ const ver=html=>{const m=/<details class="release"[^>]*><summary>(v\d+)/.exec(html);return m?m[1]:null};
+ const mine=ver(document.documentElement.outerHTML);if(!mine)return;let told=false;
+ async function check(){if(told||!navigator.onLine)return;
+  try{const r=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const now=ver(await r.text());
+   if(!now||now===mine||+now.slice(1)<=+mine.slice(1))return;
+   if(LIVE){location.reload();return}
+   told=true;$('updText').textContent='🆕 Monke Icon Maker '+now+' is out!';$('updBar').hidden=false}catch(e){}}
+ $('updGo').onclick=()=>location.reload();$('updNo').onclick=()=>{$('updBar').hidden=true};
+ setInterval(check,(LIVE?3:10)*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
 })();
 // 🏠 Homepage settings: hide sections you don't use (remembered on this device), and only the 3 newest update notes by default.
 (function(){
