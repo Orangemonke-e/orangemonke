@@ -610,7 +610,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v92 <span class="tag new">New</span><span class="date" data-time="2026-11-19T15:47:49Z">19 Nov 2026</span></summary>
+ <details class="release" open><summary>v93 <span class="tag new">New</span><span class="date" data-time="2026-11-19T15:51:46Z">19 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📺 The 🎙️ Live PNGtuber knows when it's inside OBS. It no longer tries to use the mic there, and it tells you whether it's paired with the live page in your browser (✅ Connected) or what to do if it isn't.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>No more "Your browser blocked the mic" message in OBS.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v92<span class="date" data-time="2026-11-19T15:47:49Z">19 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>📡 The 🎙️ Live PNGtuber now works in OBS without OBS needing your mic: keep the live page open in your browser and it sends your mouth movements to OBS. No sound is sent, only when the mouth opens and closes.</li>
@@ -4130,6 +4144,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   return;
  }
  // ── the live page ──
+ // OBS's browser can't use the mic, so in OBS this page only listens for the mouth movements sent from your browser
+ const IN_OBS=!!window.obsstudio;
  $('liveRoot').hidden=false;document.title='🎙️ Live PNGtuber · Monke Icon Maker';
  const cv=$('liveCv'),cx=cv.getContext('2d'),q=new URLSearchParams(location.search),saved=(()=>{try{return JSON.parse(localStorage.getItem('mim_live_opts')||'{}')}catch(e){return{}}})();
  const opt=(id,k)=>{const v=q.get(k)??saved[k];if(v!=null&&[...$(id).options||[]].some(o=>o.value===v)||($(id).type==='range'&&v!=null))$(id).value=v};
@@ -4153,7 +4169,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   let ok=false;if(!window.__liveFromLink){try{ok=await useData(await PDB.get('live'))}catch(e){}}
   if(!ok)fromDesign();
   if(CH)CH.onmessage=e=>useData(e.data);
-  startMic(true);
+  if(IN_OBS){$('liveMic').style.display='none';$('liveDevice').closest('label').style.display='none';$('liveTip').textContent='📺 You\'re in OBS. OBS can\'t use your mic, so your monke gets its mouth movements from the 🎙️ Live PNGtuber page open in your normal browser.';status()}
+  else startMic(true);
  })();
  addEventListener('hashchange',()=>setTimeout(fromDesign,50));
  // ── mic ── (the sound is checked on the audio thread, so it keeps working when this tab is in the background)
@@ -4178,6 +4195,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
   }catch(e){micOn=false;$('liveMic').textContent='🎙️ Start mic';$('liveMic').classList.add('primary');
    if(!auto)$('liveTip').textContent=e&&e.name==='NotAllowedError'?'Your browser blocked the mic. Allow it (the 🎤 or 🔒 icon by the address bar) and try again.':'Couldn\'t find a mic. Plug one in and try again.'}
  }
+ if(IN_OBS)setInterval(status,1000);
  $('liveMic').onclick=()=>startMic(false);$('liveDevice').onchange=()=>startMic(false);
  // ── 📡 sending the mouth to OBS: this page (with your mic) sends just "open / closed / how loud" to the copy in OBS
  // through the gallery's live connection. No sound is sent. The room code in the OBS link pairs them up.
@@ -4193,6 +4211,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  // the OBS copy says hello every few seconds, so this page can show that it's connected
  setInterval(()=>{if(ready&&!micOn)ch.send({type:'broadcast',event:'m',payload:{hi:1}}).catch(()=>{});if(ready&&micOn&&!open)send(true);status()},4000);
  function status(){const el=$('liveRelay');if(!el)return;const t=performance.now();
+  if(IN_OBS){const paired=!!q.get('room');el.textContent=!paired?'⚠️ Not paired yet. Open the 🎙️ Live PNGtuber page in your normal browser (Chrome or Edge), click Copy next to the OBS link, and paste it as this Browser source\'s URL.'
+    :t-heardSender<6000?'✅ Connected! Your mouth movements are coming from your browser.':!ready?'📡 Connecting…':'📡 Waiting for your browser… Open the 🎙️ Live PNGtuber page in Chrome or Edge with the mic on (the same one you copied this link from).';return}
   el.textContent=!micOn?(t-heardSender<6000?'📡 Getting your mouth movements from your other window.':''):!ready?'📡 Connecting to OBS…':t-heardObs<12000?'✅ OBS is connected. Keep this page open (it can be in the background).':'📡 Waiting for OBS… Add the OBS link below as a Browser source.'}
  // ── hide/show controls ──
  const showUi=v=>{$('liveUi').hidden=!v;$('liveShow').hidden=v};
