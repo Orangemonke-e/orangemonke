@@ -1,9 +1,6 @@
--- Monke Icon Maker: catch more ways of asking for Discord.
+-- Monke Icon Maker: safety filter update.
 -- Run once in Supabase: SQL Editor > new blank snippet > paste all of this > Run. Safe to run again.
--- (Needs update-20 first. New projects: setup.sql has it all.)
---
--- Now also: "do u have discord", "u use discord?", "add me on discord", "what's ur discord", "got dc?", and asking
--- across two comments in either order: "Got" then "Discord", or "I love disco" then "Do u have" (the first one is censored).
+-- (Needs update-20 first.)
 
 create or replace function public.discord_re(part text) returns text
 language sql immutable as $$
@@ -26,8 +23,6 @@ begin
   return t;
 end $$;
 
--- Comments: also the other order. If this comment is just "do u have" / "u got it?", and the person's last comment
--- (within 15 minutes) mentioned Discord, that word in the last comment is censored.
 create or replace function public.censor_discord_comment() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare prev text; prev_id uuid; d text := public.discord_re('disc');
@@ -43,7 +38,6 @@ begin
   return new;
 end $$;
 
--- censor what's already there with the wider rules
 update public.comments set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.fan_messages set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.posts set title = public.censor_discord(title) where title is distinct from public.censor_discord(title);

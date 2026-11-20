@@ -956,9 +956,7 @@ end $$;
 revoke execute on function public.reply_fan_message(uuid, text) from public, anon;
 grant execute on function public.reply_fan_message(uuid, text) to authenticated;
 
--- ───────────────────────── Censor "got discord" (update-20) ─────────────────────────
-
--- the pieces: separators between letters (spaces, dots…), "got", optional little words, and "discord"/"disco" with look-alikes
+-- ───────────────────────── Safety filter (update-20 to update-23) ─────────────────────────
 create or replace function public.discord_re(part text) returns text
 language sql immutable as $$
   select case part
@@ -967,8 +965,6 @@ language sql immutable as $$
     when 'disc' then 'd[^a-z0-9]{0,3}[i1!|l][^a-z0-9]{0,3}[s5$z][^a-z0-9]{0,3}[c(<k][^a-z0-9]{0,3}[o0](?:[^a-z0-9]{0,3}r[^a-z0-9]{0,3}d)?'
   end $$;
 
--- censor "got … discord" anywhere in the text; with "prev" (the person's last comment), also a "discord" at the start
--- when that comment ended with "got"
 create or replace function public.censor_discord(t text, prev text default null) returns text
 language plpgsql immutable as $$
 declare g text := public.discord_re('got'); m text := public.discord_re('mid'); d text := public.discord_re('disc');
@@ -982,7 +978,6 @@ begin
 end $$;
 grant execute on function public.censor_discord(text, text) to anon, authenticated;
 
--- The censoring runs before the other checks ("aa_" makes these triggers go first).
 create or replace function public.censor_discord_comment() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare prev text;
@@ -1015,14 +1010,11 @@ begin new.display_name := public.censor_discord(new.display_name); new.bio := pu
 drop trigger if exists aa_censor_discord on public.profiles;
 create trigger aa_censor_discord before insert or update of display_name, bio on public.profiles for each row execute function public.censor_discord_profile();
 
--- censor what's already there
 update public.comments set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.fan_messages set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.posts set title = public.censor_discord(title) where title is distinct from public.censor_discord(title);
 update public.profiles set display_name = public.censor_discord(display_name), bio = public.censor_discord(bio)
  where display_name is distinct from public.censor_discord(display_name) or bio is distinct from public.censor_discord(bio);
-
--- ───────────────────────── More "got discord" censoring (update-21) ─────────────────────────
 
 create or replace function public.discord_re(part text) returns text
 language sql immutable as $$
@@ -1045,8 +1037,6 @@ begin
   return t;
 end $$;
 
--- Comments: also the other order. If this comment is just "do u have" / "u got it?", and the person's last comment
--- (within 15 minutes) mentioned Discord, that word in the last comment is censored.
 create or replace function public.censor_discord_comment() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare prev text; prev_id uuid; d text := public.discord_re('disc');
@@ -1062,12 +1052,58 @@ begin
   return new;
 end $$;
 
--- censor what's already there with the wider rules
 update public.comments set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.fan_messages set body = public.censor_discord(body) where body is distinct from public.censor_discord(body);
 update public.posts set title = public.censor_discord(title) where title is distinct from public.censor_discord(title);
 update public.profiles set display_name = public.censor_discord(display_name), bio = public.censor_discord(bio)
  where display_name is distinct from public.censor_discord(display_name) or bio is distinct from public.censor_discord(bio);
+
+create or replace function public.hash_out(t text, pat text) returns text
+language plpgsql immutable as $$
+declare pos int; s text; n int := 0;
+begin
+  if t is null then return null; end if;
+  loop
+    n := n + 1; exit when n > 50;
+    pos := regexp_instr(t, pat, 1, 1, 0, 'i'); exit when pos = 0;
+    s := regexp_substr(t, pat, 1, 1, 'i'); exit when s is null or s = '';
+    t := overlay(t placing repeat('#', length(s)) from pos for length(s));
+  end loop;
+  return t;
+end $$;
+
+create or replace function public.censor_discord(t text, prev text default null) returns text
+language plpgsql immutable as $$
+declare g text := public.discord_re('got'); m text := public.discord_re('mid'); d text := public.discord_re('disc');
+begin
+  if t is null then return null; end if;
+  t := public.hash_out(t, '(?<![a-z0-9])' || g || m || d);
+  if prev is not null and prev ~* ('(^|[^a-z0-9])' || g || m || '[^a-z0-9]*$') then
+    t := public.hash_out(t, '(?<=^[^a-z0-9]{0,5})' || d);
+  end if;
+  return t;
+end $$;
+
+create or replace function public.censor_discord_comment() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare prev text; prev_id uuid; d text := public.discord_re('disc');
+begin
+  select c.body, c.id into prev, prev_id from public.comments c
+   where c.user_id = new.user_id and c.created_at > now() - interval '15 minutes'
+     and (tg_op = 'INSERT' or c.id <> new.id)
+   order by c.created_at desc limit 1;
+  new.body := public.censor_discord(new.body, prev);
+  if tg_op = 'INSERT' and prev_id is not null and new.body ~* public.discord_re('ask') and prev ~* ('(^|[^a-z0-9])' || d) then
+    update public.comments set body = public.hash_out(body, '(?<![a-z0-9])' || d) where id = prev_id;
+  end if;
+  return new;
+end $$;
+
+update public.comments set body = replace(body, '***', '###') where body like '%***%';
+update public.fan_messages set body = replace(body, '***', '###') where body like '%***%';
+update public.posts set title = replace(title, '***', '###') where title like '%***%';
+update public.profiles set display_name = replace(display_name, '***', '###'), bio = replace(bio, '***', '###')
+ where display_name like '%***%' or bio like '%***%';
 
 -- ───────────────────────── Make yourself admin ─────────────────────────
 -- After you've created your own account on the site, run this line once (with your username):
