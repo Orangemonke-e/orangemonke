@@ -263,6 +263,7 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .trailer-card video{display:block;width:100%;aspect-ratio:16/9;border-radius:18px;background:#000;box-shadow:0 24px 70px #000c}
 .trailer-close{position:absolute;right:0;top:-46px}
 .art-wrap{position:relative;width:min(100%,520px)}.art-wrap canvas{width:100%}
+.face-setup{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.item-box.face-box{pointer-events:auto;cursor:move;border-color:#ff3b8d;touch-action:none}.item-box.face-box[hidden]{display:none}
 .item-box{position:absolute;left:0;top:0;border:2px dashed var(--accent);box-shadow:0 0 0 1px #0008;pointer-events:none;transform-origin:center}
 .item-side{position:absolute;width:16px;height:16px;border-radius:4px;background:#fff;border:3px solid var(--accent);box-shadow:0 2px 6px #0008;pointer-events:auto;touch-action:none}.item-side-w{right:-10px;top:calc(50% - 8px);cursor:ew-resize}.item-side-h{bottom:-10px;left:calc(50% - 8px);cursor:ns-resize}
 .item-handle{position:absolute;right:-11px;bottom:-11px;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 6px #0008;pointer-events:auto;cursor:nwse-resize;touch-action:none}
@@ -326,7 +327,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 <main>
 <section class="preview-panel">
  <div class="panel-head"><strong>YOUR ICON</strong><span class="hint">Live preview · 1024 × 1024</span></div>
- <div class="stage"><div class="art-wrap"><canvas id="art" width="1024" height="1024"></canvas><div class="yt-guide" id="ytGuide" hidden aria-hidden="true"></div><div class="item-box" id="itemBox" hidden><div class="item-handle" id="itemHandle" title="Drag to resize"></div><div class="item-side item-side-w" id="itemHandleW" title="Drag to stretch wider or thinner"></div><div class="item-side item-side-h" id="itemHandleH" title="Drag to stretch taller or shorter"></div></div></div></div>
+ <div class="stage"><div class="art-wrap"><canvas id="art" width="1024" height="1024"></canvas><div class="yt-guide" id="ytGuide" hidden aria-hidden="true"></div><div class="item-box face-box" id="faceBoxM" hidden title="Talking mouth: drag to move"><div class="item-handle" data-face="m" title="Drag to resize"></div></div><div class="item-box face-box" id="faceBoxE" hidden title="Scream eyes: drag to move"><div class="item-handle" data-face="e" title="Drag to resize"></div></div><div class="item-box" id="itemBox" hidden><div class="item-handle" id="itemHandle" title="Drag to resize"></div><div class="item-side item-side-w" id="itemHandleW" title="Drag to stretch wider or thinner"></div><div class="item-side item-side-h" id="itemHandleH" title="Drag to stretch taller or shorter"></div></div></div></div>
  <div class="preview-actions"><span class="hint">Your changes update automatically</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button><button class="btn small" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button><button class="btn small" id="random">🎲 Random Monke</button><button class="btn small" id="reset">↺ Reset design</button></div></div>
  <div class="yt-prev" id="ytPrevBox">
   <div class="yt-head"><strong>How it looks on YouTube</strong><label class="toggle"><input id="ytCircle" type="checkbox"> ⭕ Show YouTube circle</label></div>
@@ -445,6 +446,24 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="roles"></div>
   <div class="field" style="margin-top:12px"><label for="match">Colour match strength <span id="matchVal">50</span></label><input id="match" type="range" min="0" max="100" value="50"></div>
   <button type="button" class="btn small" id="autoDetect" style="margin-top:10px">✨ Auto-detect parts</button>
+  <div class="face-setup">
+   <label class="toggle"><input type="checkbox" id="faceOn"> 🗣️ Give this base a talking mouth and 😆 scream eyes (for talking GIFs and the Live PNGtuber)</label>
+   <div id="faceOpts" hidden>
+    <button type="button" class="btn small" id="faceEditBtn" style="margin-top:8px">✏️ Move or resize the mouth and eyes</button>
+    <div id="faceEditUi" hidden>
+    <div class="note">Drag the mouth and the eyes on the preview to move them, and drag their round corners to resize them.</div>
+    <div class="seg face-view" id="faceView" style="margin-top:8px"><button type="button" class="btn small" data-v="normal">😐 Normal</button><button type="button" class="btn small sel" data-v="open">🗣️ Talking</button><button type="button" class="btn small" data-v="scream">😆 Screaming</button></div>
+    <div class="row" style="margin-top:10px">
+     <div class="field"><label for="faceMouthS">👄 Mouth size</label><input id="faceMouthS" type="range" min="40" max="600" value="150"></div>
+     <div class="field"><label for="faceEyesS">👀 Eyes size</label><input id="faceEyesS" type="range" min="60" max="800" value="260"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label for="faceGap">↔ Space between the eyes</label><input id="faceGap" type="range" min="40" max="250" value="100"></div>
+    <label class="toggle"><input type="checkbox" id="faceCover" checked> Cover the base's own mouth and eyes with this colour <input type="color" id="faceCol" value="#e5e5e5" style="width:44px;height:26px;padding:0;border:0;background:none;vertical-align:middle"></label>
+    <button type="button" class="btn small" id="faceAutoCol" style="margin-top:8px">🎯 Pick the colour from my base</button>
+    <button type="button" class="btn small primary" id="faceDone" style="margin-top:8px">✅ Done</button>
+    </div>
+   </div>
+  </div>
  </div>
  <div class="field" style="margin-top:16px"><label for="fileName">File name (optional)</label><div class="file-name"><input id="fileName" type="text" maxlength="60" placeholder="my-monke-youtube-icon" autocomplete="off" spellcheck="false"><span>.png</span></div></div>
  <button class="btn primary" id="download" style="width:100%;margin-top:10px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
@@ -482,7 +501,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
    <div class="field"><label for="talkBg">Background</label><select id="talkBg"><option value="green" selected>Green screen (for OBS and video editors)</option><option value="design">My icon's background</option><option value="none">See-through</option></select></div>
    <div class="field"><label for="talkSize">Size</label><select id="talkSize"><option value="384">Small (384 px)</option><option value="512" selected>Medium (512 px)</option><option value="768">Big (768 px)</option></select></div>
   </div>
-  <p class="note" id="talkWarn" hidden>The mouth only opens on the Classic monke base, so this monke will just shake. Switch Monke base to Classic monke to make it talk.</p>
+  <p class="note" id="talkWarn" hidden>The mouth only opens on the Classic monke base, or on an uploaded base once you've turned on its 🗣️ talking mouth (in “Set up your custom base”). This monke will just shake.</p>
   <button type="button" class="btn primary" id="talkDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download talking GIF</button>
   <div class="note" id="talkMsg"></div>
  </div>
@@ -614,7 +633,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v107 <span class="tag new">New</span><span class="date" data-time="2026-11-20T19:55:07Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v108 <span class="tag new">New</span><span class="date" data-time="2026-11-20T20:28:24Z">20 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🗣️ Uploaded bases can talk now! In “Set up your custom base”, turn on the talking mouth and scream eyes, then drag them onto your monke's face and resize them with their corners or the sliders.</li>
+   <li>Your monke then opens its mouth in 🗣️ talking GIFs and on the 🎙️ Live PNGtuber, and makes the 😆 scream face when you shout.</li>
+   <li>The base's own mouth and eyes are covered with its face colour while it talks, picked from your base automatically (you can change it).</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The mouth and eyes only show on your icon while you're placing them. Tap ✅ Done when they're in the right spot.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v107<span class="date" data-time="2026-11-20T19:55:07Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -2367,7 +2402,7 @@ function render(){
  const order=fullOrder();if(layerOrder)syncBehind(order);
  for(const k of order)if(layerOn(k))drawPart(figX,k,m);
  const haloFront=hat==='halo'&&order.indexOf('hat')>order.indexOf('monke');
- placeItemBox();
+ placeItemBox();placeFaceBoxes();
  ctx.clearRect(0,0,1024,1024);
  if(!$('transparent').checked)ctx.drawImage(bgLayer(),0,0);
  const thickness=+$('outline').value;
@@ -2478,7 +2513,8 @@ function fullOrder(){
 function syncBehind(o){const mi=o.indexOf('monke');items.forEach(i=>{i.behind=o.indexOf('item:'+i.id)<mi})}
 function drawPart(c,k,m){
  const hat=$('hat').value,hc=$('hatColor').value;c.save();
- if(k==='monke')c.drawImage(m.canvas,m.dx,0,m.dw,1024);
+ if(k==='monke'){c.drawImage(m.canvas,m.dx,0,m.dw,1024);
+  if(customImg&&customFace.on){const mode=talkScream?'scream':talkOpen?'open':(faceEditing()&&!hideStill&&faceView!=='normal'?faceView:null);if(mode)drawFace(c,mode)}}
  // Orangemonke wears its own banana peel
  else if(k==='banana'){if(isOrange())drawLayer(peelImg,PEEL_BOX,false,c);else drawLayer(bananaImg,BANANA_BOX,false,c)}
  else if(k==='hat'){
@@ -2653,7 +2689,54 @@ function setupCustom(){
  customPalette=detectPalette(customSrc);autoDetect(false);
  $('customSetup').hidden=false;buildRoles();buildPalette();
 }
-function clearCustom(){customImg=null;customSrc=null;customSt=null;customRoles={fur:null,face:null,belly:null,eyes:null};armedRole=null;$('customSetup').hidden=true;canvas.classList.remove('picking');$('pickHint').textContent='';$('upload').value=''}
+// 🗣️ Talking face for uploaded bases: Orangemonke's hand-drawn open mouth and >< scream eyes, placed and sized by you.
+// They're only drawn when the monke talks (talking GIFs, Live PNGtuber) or while you're setting them up.
+const faceMouthImg=new Image(),faceEyesImg=new Image();faceMouthImg.onload=faceEyesImg.onload=()=>draw();
+faceMouthImg.src='data:image/webp;base64,UklGRh4CAABXRUJQVlA4TBICAAAvsgAVEHDctpEkMf+495ipKvsdIYe2bVN71q/Xve63bdu2bVudbSO2bdu28yP+3cV28iYAXRNpM+WrmGUhBIosuQmXoU631bY65LJRM977SfofoSnSYMRLuBxVOiy3w0m3PDHpva+k0TidCiPOQuSo1GGBHQ657olPfpKudB3rCRSZchMoTrEqQ9bZ76Tn5r320V/S+RoxlEifJTfR8rVYbqNDzrpnxldSds74lUCDKTepipXpsNoe90z6ReoVn0lFG8VXxT3pxo9OtiQOP/vZEf5tyHv8TejHVjyorB3FeNSFboh42J9m8Hwv3uPNVgzhVTmdMMXLRhvB+4VgYhseYmYXkjCUbxOY61QPmNyCUczuQBWmN0AO4xnlw0arw5nBTvPRLMHWZBSxNxc2E0J5gt2SIqnDdvsDccB+k3FwYhijODKKFlzJOQhf3KkuhZ841WgGozg2gm6cG0A07mV0Hk5WeZsnONrWy2zE2V7fJR+Hn0XE6Tf5hONFX+Qyzrf8HtUIaOYa2oh4DFJeYh4xJd1hHYJafoUkRDV6A9KegLz7PEdgvtv0I7Llu5Da5CbkXoTkW5xEdG472CC8oQ3I78k4f9DgNKvR4SxuKJH2JPSoZYwnaNLZIVajyxnc0OYE9El8zRM0qvgl69CpPa9IQqtvENHrY96j2ofsR7dsHpGBdi14gDb6NfmPr6j4D8eQEg==';
+faceEyesImg.src='data:image/webp;base64,UklGRn4FAABXRUJQVlA4THEFAAAvDYEiEJDktpEgSfz/t3e7yu6OjJxjBAXk/9fm0Rfm7u7umrm7u7uvEJgEJoXC3AqFuRUKcwsU5hYITO5u7gucBAKvFCY9Cq8EJp8JoIvXQIL+Eq0CPPtDcBsAXP8zEOK/ojEIrspMfNY1xAWg2j2x8TQjin+Zl6QBXiY0wP/ZV2Qx3vICeHhBLuO9M6/kPYF+t6MISeteOIPnkldjLsJaP7IYb+VdjCTijxC8Fv8j7/oDREWuxEA0Nf/kWQauX4gzKHpFD20LQXgdMijaRI+NCQG6XoUImlrT2xTsvQhpFOVTkBeCR9fgGYoSFBULAXdgPJr6UVi/FIy/AAkU/U3FFKTWJ4eiE1T1KgS53WmHpvFUlggBmi9OFEVZ6iuTAmtt8lB0hr4yBY92xkDTCPpSb0PAxiRR9IO+19wUDFyXDyi6TF+dguSutEbTcvryFOQ2xUSTvp8bAvbERdEr+kVdU2AuCU3b6EdT4GxIDE1N6GflhYD9+BtN+mXbUtBuN8qg6SD9eApObIaJplr08ynI7EUaRS5N6EII2AqaTJrRoBQs3ohpaOpBY6bg0T6cQJFHk/JDwDYEKDpDs1qXwiqMQJNB02qQgvgepNGkiWVD4G9BFkVJmlk6BKzATDQZNLUxKRh6PikUPaPJU3DidIpQFKPZ/RGC4Gi6omkoTW9bCDiYTSgK6IA6pmDSqTxD0Uk6oy8hsI+kFpom0SldCIF/INtQ9IUOal4I0OA03qIoRWdNweKjaI6mEXRafgiuH4SFogwd2MEQcAwpFF2nIzNSMOIIasmiaDGdOgV7D2AxirLK0Lk5Ifh7PPdQdI+OzgwBKs/mB4oidHhNUrB4MMtR9EMtOn8KzowljaLrtEL3QpCbSRk5FK2iJZoUAvQYyGI0laE9piA1jssoekur5IUgM4wARRYt08EQMIlJaOpI69QjBYvHsA5FP2ilKXCmMK3AoaXyQ/wpSCJmAa3VugzNyQnRZiM0qTDBps0iafkoniWg7mKQdI9GRdbRrTAQpVGdCQHmrkQcURqVgaJ2+xBgPl8awDYQ5o3CQll2FQhL0qjCFsDdA8KiNKwPNcCFHTARtorm9aEGWLcAZxCmmWVqkGOcjo+sDE1tvB8twO2zIewEDW5dDZA4GMIsmt3BGsA8lAYIM2h6lXk1wMATiSCsDB1QR19q8EXl40ggq4gOaWgN8PYwHGS9pXNaVQNcP4kiZJ2go9pWA+w6BsIW02ldqEGRaUfQA2HN6cCutwB/azCfTcj6QWfWWl4L8Gw6F5AV0LHNrAGOjuYVsu7Rye2qATbNJYOsOB2eWwPMHQph4+n8PtagiDGQoQjTCjX3pQXIU20aFsK0RT1qAGcWNrI+0CJZNcDBQTxD1gXapVgNMHcKIbIsWqfrNQgYE2iHsI60UA0ELYD3eyYhTEu1oAa492N2IesH7VW0BjjzS54h6xGtVqoGiP6MEFknaLse1QDmTyiDsLm0YEENQsb3mYSwarRiPWqAZ2p9mSTCtGYLaoAzX+UZsvJo0w7WAOb3CJHl0bL9UQOM+RKE7aJ166eoBkVafIFaCBtKG7e8BvBrYgjT1u2tAfI6XIRp8T7UAG4BYSHt3t81wLYUwlxav7AGiEQQtokuUMceZDV/ZQTCDLpDq2qA1AsHEaZ7dKKGZwJkFdFV8ks+PEKYR5epfIeeIuwM3afxBbueIGwxXakFKXn02UyEVaFbFc+o/EkMYbpZewNi9JGNrCK6XO4r+oysR3S9mvjyTIMH6kYk6IbNVfTAM3oqEjCGLln0Ez1nv1KN7pnzH/EXJHhBd+06AHqt6AmPbls1jnbv6AGb/gY/MOmPkPEfXenPkAWA/hLZfLp9AA==';
+const FACE_DEFAULT={on:false,mx:512,my:600,ms:150,ex:512,ey:470,es:260,gap:100,cover:true,col:'#e5e5e5'};
+let customFace={...FACE_DEFAULT},faceView='open',faceEdit=false; // faceEdit: the mouth and eyes show on the preview only while you're placing them
+function faceSane(f){const o={...FACE_DEFAULT};if(f&&typeof f==='object')for(const k in o){const v=f[k];if(typeof o[k]==='number'&&isFinite(+v))o[k]=Math.max(-512,Math.min(1536,+v));else if(typeof o[k]==='boolean')o[k]=!!v;else if(k==='col'&&/^#[0-9a-f]{6}$/i.test(v))o[k]=v}return o}
+const faceGeom=()=>{const F=customFace,mA=faceMouthImg.naturalWidth?faceMouthImg.naturalHeight/faceMouthImg.naturalWidth:.47,eA=faceEyesImg.naturalWidth?faceEyesImg.naturalHeight/faceEyesImg.naturalWidth:.51,
+ mh=F.ms*mA,eh=F.es*eA,hw=F.es/2,off=F.es*.3*F.gap/100;return {mw:F.ms,mh,eh,hw,off,ew:off*2+hw}};
+function drawFace(c,mode){const F=customFace,G=faceGeom();if(!faceMouthImg.naturalWidth||!faceEyesImg.naturalWidth)return;c.save();
+ if(mode==='scream'){const W=faceEyesImg.naturalWidth,H=faceEyesImg.naturalHeight;
+  for(const s of [-1,1]){const cx=F.ex+s*G.off;if(F.cover){c.fillStyle=F.col;c.beginPath();c.ellipse(cx,F.ey,G.hw*.62,G.eh*.68,0,0,Math.PI*2);c.fill()}
+   c.drawImage(faceEyesImg,s<0?0:W/2,0,W/2,H,cx-G.hw/2,F.ey-G.eh/2,G.hw,G.eh)}}
+ if(F.cover){c.fillStyle=F.col;c.beginPath();c.ellipse(F.mx,F.my,G.mw*.58,G.mh*.75,0,0,Math.PI*2);c.fill()}
+ c.drawImage(faceMouthImg,F.mx-G.mw/2,F.my-G.mh/2,G.mw,G.mh);c.restore()}
+const faceEditing=()=>!!customImg&&customFace.on&&faceEdit&&!$('customSetup').hidden;
+function faceEditOff(){if(!faceEdit)return;faceEdit=false;syncFaceUi();drawNow()}
+function placeFaceBoxes(){const on=faceEditing(),M=$('faceBoxM'),E=$('faceBoxE');M.hidden=E.hidden=!on;if(!on)return;
+ const k=canvas.clientWidth/1024,F=customFace,G=faceGeom(),put=(el,x,y,w,h)=>Object.assign(el.style,{left:(x-w/2)*k+'px',top:(y-h/2)*k+'px',width:w*k+'px',height:h*k+'px',transform:'none'});
+ put(M,F.mx,F.my,G.mw,G.mh);put(E,F.ex,F.ey,G.ew,G.eh)}
+function syncFaceUi(){const F=customFace;$('faceOn').checked=F.on;$('faceOpts').hidden=!F.on;$('faceEditUi').hidden=!faceEdit;$('faceEditBtn').hidden=faceEdit;$('faceMouthS').value=F.ms;$('faceEyesS').value=F.es;$('faceGap').value=F.gap;$('faceCover').checked=F.cover;$('faceCol').value=F.col;
+ document.querySelectorAll('#faceView .btn').forEach(b=>b.classList.toggle('sel',b.dataset.v===faceView))}
+// the colour around the mouth on your base, to cover its own mouth and eyes
+function faceAutoColour(){if(!customImg)return;const x=figX,F=customFace,G=faceGeom(),seen=new Map();
+ const pts=[];for(let i=0;i<16;i++){const a=i/16*Math.PI*2;pts.push([F.mx+Math.cos(a)*G.mw*.7,F.my+Math.sin(a)*G.mh*.9],[F.ex+Math.cos(a)*G.ew*.6,F.ey+Math.sin(a)*G.eh*.8])}
+ for(const [px,py] of pts){if(px<0||py<0||px>=1024||py>=1024)continue;const d=x.getImageData(px|0,py|0,1,1).data;if(d[3]<200)continue;const lum=(d[0]+d[1]+d[2])/3;if(lum<60)continue;
+  const k=((d[0]>>4)<<8)|((d[1]>>4)<<4)|(d[2]>>4);const e=seen.get(k)||{n:0,r:0,g:0,b:0};e.n++;e.r+=d[0];e.g+=d[1];e.b+=d[2];seen.set(k,e)}
+ let best=null;seen.forEach(e=>{if(!best||e.n>best.n)best=e});if(!best)return;const h=v=>Math.round(v/best.n).toString(16).padStart(2,'0');F.col='#'+h(best.r)+h(best.g)+h(best.b);syncFaceUi()}
+$('faceOn').onchange=e=>{customFace.on=e.target.checked;faceEdit=customFace.on;if(customFace.on){faceView='open';const v=faceView;faceView='normal';drawNow();faceAutoColour();faceView=v}syncFaceUi();draw()};
+$('faceEditBtn').onclick=()=>{faceEdit=true;faceView='open';syncFaceUi();draw()};$('faceDone').onclick=faceEditOff;
+$('faceMouthS').oninput=e=>{customFace.ms=+e.target.value;draw()};$('faceEyesS').oninput=e=>{customFace.es=+e.target.value;draw()};$('faceGap').oninput=e=>{customFace.gap=+e.target.value;draw()};
+$('faceCover').onchange=e=>{customFace.cover=e.target.checked;draw()};$('faceCol').oninput=e=>{customFace.col=e.target.value;draw()};
+$('faceAutoCol').onclick=()=>{const v=faceView;faceView='normal';drawNow();faceAutoColour();faceView=v;draw()};
+document.querySelectorAll('#faceView .btn').forEach(b=>b.onclick=()=>{faceView=b.dataset.v;syncFaceUi();draw()});
+{let fd=null;const pt=e=>canvasPoint(e);
+ const down=(part,mode)=>e=>{if(!faceEditing())return;const [x,y]=pt(e),F=customFace;fd={part,mode,dx:x-(part==='m'?F.mx:F.ex),dy:y-(part==='m'?F.my:F.ey)};e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()};
+ const move=e=>{if(!fd)return;const [x,y]=pt(e),F=customFace,G=faceGeom();
+  if(fd.mode==='move'){if(fd.part==='m'){F.mx=x-fd.dx;F.my=y-fd.dy}else{F.ex=x-fd.dx;F.ey=y-fd.dy}}
+  else if(fd.part==='m'){F.ms=Math.max(40,Math.min(600,2*Math.abs(x-F.mx)));$('faceMouthS').value=F.ms}
+  else{F.es=Math.max(60,Math.min(800,2*Math.abs(x-F.ex)/(.6*F.gap/100+.5)));$('faceEyesS').value=F.es}
+  draw()};
+ const up=()=>{fd=null};
+ [['faceBoxM','m'],['faceBoxE','e']].forEach(([id,part])=>{const b=$(id),h=b.querySelector('.item-handle');
+  b.addEventListener('pointerdown',down(part,'move'));h.addEventListener('pointerdown',down(part,'size'));
+  [b,h].forEach(el=>{el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)})});
+ window.addEventListener('resize',placeFaceBoxes)}
+function clearCustom(){customFace={...FACE_DEFAULT};faceEdit=false;syncFaceUi();customImg=null;customSrc=null;customSt=null;customRoles={fur:null,face:null,belly:null,eyes:null};armedRole=null;$('customSetup').hidden=true;canvas.classList.remove('picking');$('pickHint').textContent='';$('upload').value=''}
 function detectPalette(d){
  const px=d.data,m=new Map();let total=0;
  for(let i=0;i<px.length;i+=4){if(px[i+3]<200)continue;total++;const k=(px[i]>>4)<<8|(px[i+1]>>4)<<4|(px[i+2]>>4);let e=m.get(k);if(!e){e={n:0,r:0,g:0,b:0};m.set(k,e)}e.n++;e.r+=px[i];e.g+=px[i+1];e.b+=px[i+2]}
@@ -2881,7 +2964,7 @@ let autoPicT=0,autoPicKey=null,autoPicsReady=false;
 const blobOnce=async(o,src,w,h,type,q)=>o._blob||(o._blob=await toBlob(src,w,h,type,q));
 function scheduleAutoPics(){if(!autoPicsReady)return;clearTimeout(autoPicT);autoPicT=setTimeout(saveAutoPics,800)}
 async function saveAutoPics(){
- const key=[itemsKey(),bgImg?bgImgId:0,bgStyle==='image'?1:0,customImg?customId:0,JSON.stringify(customImg?customRoles:0),customImg?$('match').value:'',layerOrder?fullOrder().join():''].join('|');
+ const key=[itemsKey(),bgImg?bgImgId:0,bgStyle==='image'?1:0,customImg?customId:0,JSON.stringify(customImg?customRoles:0),JSON.stringify(customImg?customFace:0),customImg?$('match').value:'',layerOrder?fullOrder().join():''].join('|');
  if(key===autoPicKey)return;autoPicKey=key;
  try{
   if(!items.length&&!bgImg&&!customImg){await PDB.del('autosave');return}
@@ -2891,7 +2974,7 @@ async function saveAutoPics(){
     f.items.push({blob:await blobOnce(it.img,it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0,st:it.still?1:0})}
    f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
   if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await blobOnce(bgImg,bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
-  if(customImg){f.base=await blobOnce(customImg,customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
+  if(customImg){f.face={...customFace};f.base=await blobOnce(customImg,customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
   await PDB.put('autosave',f);
  }catch(e){autoPicKey=null}
 }
@@ -2928,7 +3011,7 @@ async function presetFiles(){
    f.items.push({blob:await toBlob(it.img,w,h,'image/png'),x:it.x,y:it.y,s:it.size,h:it.sy||1,r:it.rot,f:it.flip?1:0,b:it.behind?1:0,st:it.still?1:0})}
   f.order=fullOrder().map(k=>k.startsWith('item:')?idx.get(k):k)}
  if(bgImg){const k=Math.min(1,2048/Math.max(bgImg.naturalWidth,bgImg.naturalHeight));f.bg=await toBlob(bgImg,Math.round(bgImg.naturalWidth*k),Math.round(bgImg.naturalHeight*k),'image/webp',.92);f.bgOn=bgStyle==='image'}
- if(customImg){f.base=await toBlob(customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
+ if(customImg){f.face={...customFace};f.base=await toBlob(customImg,customImg.naturalWidth,customImg.naturalHeight,'image/png');f.roles=JSON.parse(JSON.stringify(customRoles));f.match=$('match').value}
  return f;
 }
 const blobImg=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const u=URL.createObjectURL(b),im=new Image();im.onload=()=>r(im);im.onerror=()=>r(null);im.src=u});
@@ -2943,6 +3026,7 @@ async function applyFiles(f,data){
  const base=await blobImg(f.base);
  if(base){customImg=base;customId++;setupCustom();if(f.roles){customRoles=f.roles;buildRoles();buildPalette()}
   ['fur','face','eyes'].forEach(id=>{const v=p.data&&p.data[id];if(typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v))$(id).value=v}); /* setting up the base resets the colours */
+  customFace=faceSane(f.face);faceEdit=false;syncFaceUi();
   if(f.match!=null){$('match').value=f.match;$('matchVal').textContent=f.match}}else if(customImg){clearCustom();$('upload').value=''}
  // background
  const bg=await blobImg(f.bg);
@@ -3161,12 +3245,12 @@ document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn
  }
  // The monke (outline, items, halo and name tag) on a clear background, mouth closed and open, plus the icon background
  function layers(){
-  const key=JSON.stringify(captureState())+'|'+bgStyle+'|'+itemsKey()+'|'+(layerOrder?fullOrder():'')+'|'+customId+'|'+bgImgId+'|'+imgsLoaded+'|'+talkImg.naturalWidth+'|'+screamImg.naturalWidth;
+  const key=JSON.stringify(captureState())+'|'+bgStyle+'|'+itemsKey()+'|'+(layerOrder?fullOrder():'')+'|'+customId+'|'+bgImgId+'|'+imgsLoaded+'|'+talkImg.naturalWidth+'|'+screamImg.naturalWidth+'|'+JSON.stringify(customFace)+faceMouthImg.naturalWidth;
   if(lay&&key===layKey)return lay;
   const tr=$('transparent'),was=tr.checked,grab=()=>{const c=mk(1024);c.getContext('2d').drawImage(canvas,0,0);return c};
   tr.checked=true;hideStill=true;talkOpen=false;drawNow();const closed=grab();
-  const can=!customImg&&$('base').value!=='orange'&&!!talkImg.naturalWidth;
-  let open=closed,scream=closed;if(can){talkOpen=true;drawNow();open=grab();talkOpen=false;if(screamImg.naturalWidth){talkScream=true;drawNow();scream=grab();talkScream=false}else scream=open}
+  const can=customImg?customFace.on:($('base').value!=='orange'&&!!talkImg.naturalWidth);
+  let open=closed,scream=closed;if(can){talkOpen=true;drawNow();open=grab();talkOpen=false;if(screamImg.naturalWidth||customImg){talkScream=true;drawNow();scream=grab();talkScream=false}else scream=open}
   hideStill=false;tr.checked=was;drawNow();
   const bg=mk(1024);bg.getContext('2d').drawImage(bgLayer(),0,0);
   // 📌 items that stay still: the ones behind the monke and the ones in front of it, each on their own layer
@@ -3297,7 +3381,7 @@ document.getElementById('shareLink').onclick=async()=>{
 };
 window.addEventListener('hashchange',readDesignLink);
 setTimeout(readDesignLink,0);
-$('download').onclick=()=>{drawNow();let a=document.createElement('a');a.download=fileName();a.href=canvas.toDataURL('image/png');a.click()};
+$('download').onclick=()=>{faceEditOff();drawNow();let a=document.createElement('a');a.download=fileName();a.href=canvas.toDataURL('image/png');a.click()};
 // 🌍 Community gallery: accounts and shared icons, stored in Supabase (see supabase/setup.sql and GALLERY-SETUP.md).
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
 // to be public, and the database rules in setup.sql decide what each person is allowed to do.
@@ -3669,7 +3753,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function updateShareThumb(){const t=$('shareThumb').getContext('2d');t.clearRect(0,0,96,96);t.drawImage(canvas,0,0,96,96)}
  $('shareJump').onclick=()=>{gal.scrollIntoView({behavior:'smooth',block:'start'});if(!me)client().then(()=>{if(!me)openAcct('in')});else updateShareThumb()};
  canvas.addEventListener('mouseenter',()=>{if(me)updateShareThumb()});
- $('shareGo').onclick=async()=>{
+ $('shareGo').onclick=async()=>{faceEditOff();
   if(!me)return openAcct('in');const msg=$('shareMsg'),btn=$('shareGo');btn.disabled=true;msg.textContent='Sharing…';
   try{
    const title=$('shareTitle').value.trim().slice(0,40)||null;
@@ -4456,7 +4540,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  async function useData2(d){if(!d||!d.closed)return false;
   const op=await bmp(d.open);L={closed:await bmp(d.closed),open:op,scream:d.scream?await bmp(d.scream):op,bg:await bmp(d.bg),back:d.back?await bmp(d.back):null,front:d.front?await bmp(d.front):null,clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
  function fromDesign(){const T=talkLayers();L={closed:T.closed,open:T.open,scream:T.scream,bg:T.bg,back:T.hasStill?T.back:null,front:T.hasStill?T.front:null,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink();queuePics()}
- function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, so this monke will bounce but not open its mouth.'}
+ function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, or on an uploaded base with its 🗣️ talking mouth turned on. This monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
  function updateLink(){const d=designLink(),i=d.indexOf('#'),base=d.slice(0,i).replace(/[?#].*$/,''),
    u=base+'?live&room='+ROOM+'&bg='+$('liveBg').value+'&shake='+$('liveShake').value+'&sens='+$('liveSens').value+'&scream='+$('liveScream').value+'&ui=0'+d.slice(i);$('liveLink').value=u;
