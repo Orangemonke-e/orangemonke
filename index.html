@@ -614,7 +614,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v105 <span class="tag new">New</span><span class="date" data-time="2026-11-20T19:48:11Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v106 <span class="tag new">New</span><span class="date" data-time="2026-11-20T19:51:26Z">20 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing added in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>🛡️ When your new comment causes your last one to be censored (like “I love disco” then “Do u have”), the last one now updates on screen straight away.</li>
+   <li>Comments posted in pairs before the censoring was added get checked too.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v105<span class="date" data-time="2026-11-20T19:48:11Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🛡️ More ways of asking for Discord are censored: “do u have discord”, “u use discord?”, “add me on discord”, “what's ur discord”, “join my discord” and “got dc?”.</li>
@@ -3897,6 +3912,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    if(error){msg.textContent=friendly(error);return}
    sb.functions.invoke(NOTIFY_FUNCTION,{body:{type:'comment',comment_id:data.id,url:location.href}}).catch(()=>{}); // tell the owner, other commenters and who you replied to
    setReply(null);$('cmText').value='';$('cmCount').textContent='0/200';const list=$('cmList');list.appendChild(commentRow(data));emptyCheck();list.scrollTop=list.scrollHeight;setCount(cmPost.id,1);
+   // a comment can censor your previous one (e.g. "I love disco" then "do u have"), so refresh your recent comments on screen
+   {const since=new Date(Date.now()-16*60000).toISOString(),pid=cmPost.id;
+    sb.from('comments').select('id,body').eq('post_id',pid).eq('user_id',me.id).gt('created_at',since).then(({data:rs})=>{(rs||[]).forEach(r=>{
+     const el2=$('cmList').querySelector(`.cm[data-id="${r.id}"] .cm-body`);if(el2&&el2.textContent!==r.body)el2.textContent=r.body;const c=cmById.get(r.id);if(c)c.body=r.body})})}
   }finally{send.disabled=!!(profile&&profile.banned)}
  });
  // ── 📣 Admin: send an update notification to everyone who turned them on (through the notify-update function) ──
