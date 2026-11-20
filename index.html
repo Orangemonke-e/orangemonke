@@ -431,6 +431,25 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="layerList" class="layer-list"></div>
   <button type="button" class="btn small" id="layerReset" style="margin-top:8px">↺ Normal order</button>
  </div>
+ <div class="section" id="faceSec"><h2>🗣️ Talking face</h2>
+   <div class="note" style="margin-top:0">For 🗣️ talking GIFs and the 🎙️ Live PNGtuber. Use this when your monke is covered by your own items, or with an uploaded base, to put the talking mouth and 😆 scream eyes exactly where you want them.</div>
+   <label class="toggle"><input type="checkbox" id="faceOn"> Use my own mouth and eyes position</label>
+   <div id="faceOpts" hidden>
+    <button type="button" class="btn small" id="faceEditBtn" style="margin-top:8px">✏️ Move or resize the mouth and eyes</button>
+    <div id="faceEditUi" hidden>
+    <div class="note">Drag the mouth and the eyes on the preview to move them, and drag their round corners to resize them.</div>
+    <div class="seg face-view" id="faceView" style="margin-top:8px"><button type="button" class="btn small" data-v="normal">😐 Normal</button><button type="button" class="btn small sel" data-v="open">🗣️ Talking</button><button type="button" class="btn small" data-v="scream">😆 Screaming</button></div>
+    <div class="row" style="margin-top:10px">
+     <div class="field"><label for="faceMouthS">👄 Mouth size</label><input id="faceMouthS" type="range" min="40" max="600" value="150"></div>
+     <div class="field"><label for="faceEyesS">👀 Eyes size</label><input id="faceEyesS" type="range" min="60" max="800" value="260"></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label for="faceGap">↔ Space between the eyes</label><input id="faceGap" type="range" min="40" max="250" value="100"></div>
+    <label class="toggle"><input type="checkbox" id="faceCover" checked> Cover what's under the mouth and eyes with this colour <input type="color" id="faceCol" value="#e5e5e5" style="width:44px;height:26px;padding:0;border:0;background:none;vertical-align:middle"></label>
+    <button type="button" class="btn small" id="faceAutoCol" style="margin-top:8px">🎯 Pick the colour from my icon</button>
+    <button type="button" class="btn small primary" id="faceDone" style="margin-top:8px">✅ Done</button>
+    </div>
+   </div>
+  </div>
  <div class="section"><h2>✨ Finishing touches</h2>
   <div class="field"><label for="outline">Outline thickness <span id="outlineVal">0</span></label><input id="outline" type="range" min="0" max="18" value="0"></div>
   <div class="field" style="margin-top:12px"><label for="outlineColor">Outline colour</label><input id="outlineColor" type="color" value="#ffffff"></div>
@@ -446,24 +465,6 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="roles"></div>
   <div class="field" style="margin-top:12px"><label for="match">Colour match strength <span id="matchVal">50</span></label><input id="match" type="range" min="0" max="100" value="50"></div>
   <button type="button" class="btn small" id="autoDetect" style="margin-top:10px">✨ Auto-detect parts</button>
-  <div class="face-setup">
-   <label class="toggle"><input type="checkbox" id="faceOn"> 🗣️ Give this base a talking mouth and 😆 scream eyes (for talking GIFs and the Live PNGtuber)</label>
-   <div id="faceOpts" hidden>
-    <button type="button" class="btn small" id="faceEditBtn" style="margin-top:8px">✏️ Move or resize the mouth and eyes</button>
-    <div id="faceEditUi" hidden>
-    <div class="note">Drag the mouth and the eyes on the preview to move them, and drag their round corners to resize them.</div>
-    <div class="seg face-view" id="faceView" style="margin-top:8px"><button type="button" class="btn small" data-v="normal">😐 Normal</button><button type="button" class="btn small sel" data-v="open">🗣️ Talking</button><button type="button" class="btn small" data-v="scream">😆 Screaming</button></div>
-    <div class="row" style="margin-top:10px">
-     <div class="field"><label for="faceMouthS">👄 Mouth size</label><input id="faceMouthS" type="range" min="40" max="600" value="150"></div>
-     <div class="field"><label for="faceEyesS">👀 Eyes size</label><input id="faceEyesS" type="range" min="60" max="800" value="260"></div>
-    </div>
-    <div class="field" style="margin-top:10px"><label for="faceGap">↔ Space between the eyes</label><input id="faceGap" type="range" min="40" max="250" value="100"></div>
-    <label class="toggle"><input type="checkbox" id="faceCover" checked> Cover the base's own mouth and eyes with this colour <input type="color" id="faceCol" value="#e5e5e5" style="width:44px;height:26px;padding:0;border:0;background:none;vertical-align:middle"></label>
-    <button type="button" class="btn small" id="faceAutoCol" style="margin-top:8px">🎯 Pick the colour from my base</button>
-    <button type="button" class="btn small primary" id="faceDone" style="margin-top:8px">✅ Done</button>
-    </div>
-   </div>
-  </div>
  </div>
  <div class="field" style="margin-top:16px"><label for="fileName">File name (optional)</label><div class="file-name"><input id="fileName" type="text" maxlength="60" placeholder="my-monke-youtube-icon" autocomplete="off" spellcheck="false"><span>.png</span></div></div>
  <button class="btn primary" id="download" style="width:100%;margin-top:10px;padding:14px">⬇ Download YouTube Icon (PNG)</button>
@@ -501,7 +502,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
    <div class="field"><label for="talkBg">Background</label><select id="talkBg"><option value="green" selected>Green screen (for OBS and video editors)</option><option value="design">My icon's background</option><option value="none">See-through</option></select></div>
    <div class="field"><label for="talkSize">Size</label><select id="talkSize"><option value="384">Small (384 px)</option><option value="512" selected>Medium (512 px)</option><option value="768">Big (768 px)</option></select></div>
   </div>
-  <p class="note" id="talkWarn" hidden>The mouth only opens on the Classic monke base, or on an uploaded base once you've turned on its 🗣️ talking mouth (in “Set up your custom base”). This monke will just shake.</p>
+  <p class="note" id="talkWarn" hidden>The mouth only opens on the Classic monke base. For any other base (or a monke covered by your items), turn on “Use my own mouth and eyes position” in 🗣️ Talking face. This monke will just shake.</p>
   <button type="button" class="btn primary" id="talkDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download talking GIF</button>
   <div class="note" id="talkMsg"></div>
  </div>
@@ -633,7 +634,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v110 <span class="tag new">New</span><span class="date" data-time="2026-11-20T21:15:39Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v111 <span class="tag new">New</span><span class="date" data-time="2026-11-20T21:23:25Z">20 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🗣️ Talking face section: turn on “Use my own mouth and eyes position” to put the talking mouth and 😆 scream eyes anywhere. Great when your monke is covered by your own items, like a character you made from pictures.</li>
+   <li>Drag and resize them on the preview. In 🗣️ talking GIFs and the 🎙️ Live PNGtuber, they go on top of everything and move with your character.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>The talking mouth for uploaded bases has moved into this new section, and it's saved with your design (presets, share links and remixes too).</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v110<span class="date" data-time="2026-11-20T21:15:39Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing added in this update.</li>
@@ -2444,6 +2460,7 @@ function render(){
  const nm=segMonke?$('name').value.trim():'';
  if(nm){ctx.save();const PF='"Press Start 2P",monospace';ctx.font='18px '+PF;const nw=ctx.measureText(nm).width,fs=nw>250?Math.max(9,Math.floor(18*250/nw)):18;
   ctx.font=fs+'px '+PF;ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.lineJoin='miter';ctx.miterLimit=2;ctx.lineWidth=Math.max(4,Math.round(fs/3));ctx.strokeStyle='#151515';const nx=352+(isOrange()?ORANGE_BODY_DX:0);ctx.strokeText(nm,nx,908);ctx.fillStyle='#fff';ctx.fillText(nm,nx,908);ctx.restore()}
+ if(faceEditing()&&!hideStill&&faceView!=='normal')drawFace(ctx,faceView); // preview while you're placing it (never downloaded)
  updateNameHint();
  renderLayers();
  drawYtMinis();
@@ -2543,7 +2560,7 @@ function syncBehind(o){const mi=o.indexOf('monke');items.forEach(i=>{i.behind=o.
 function drawPart(c,k,m){
  const hat=$('hat').value,hc=$('hatColor').value;c.save();
  if(k==='monke'){c.drawImage(m.canvas,m.dx,0,m.dw,1024);
-  if(customImg&&customFace.on){const mode=talkScream?'scream':talkOpen?'open':(faceEditing()&&!hideStill&&faceView!=='normal'?faceView:null);if(mode)drawFace(c,mode)}}
+}
  // Orangemonke wears its own banana peel
  else if(k==='banana'){if(isOrange())drawLayer(peelImg,PEEL_BOX,false,c);else drawLayer(bananaImg,BANANA_BOX,false,c)}
  else if(k==='hat'){
@@ -2734,7 +2751,7 @@ function drawFace(c,mode){const F=customFace,G=faceGeom();if(!faceMouthImg.natur
    c.drawImage(faceEyesImg,s<0?0:W/2,0,W/2,H,cx-G.hw/2,F.ey-G.eh/2,G.hw,G.eh)}}
  if(F.cover){c.fillStyle=F.col;c.beginPath();c.ellipse(F.mx,F.my,G.mw*.58,G.mh*.75,0,0,Math.PI*2);c.fill()}
  c.drawImage(faceMouthImg,F.mx-G.mw/2,F.my-G.mh/2,G.mw,G.mh);c.restore()}
-const faceEditing=()=>!!customImg&&customFace.on&&faceEdit&&!$('customSetup').hidden;
+const faceEditing=()=>customFace.on&&faceEdit;
 function faceEditOff(){if(!faceEdit)return;faceEdit=false;syncFaceUi();drawNow()}
 function placeFaceBoxes(){const on=faceEditing(),M=$('faceBoxM'),E=$('faceBoxE');M.hidden=E.hidden=!on;if(!on)return;
  const k=canvas.clientWidth/1024,F=customFace,G=faceGeom(),put=(el,x,y,w,h)=>Object.assign(el.style,{left:(x-w/2)*k+'px',top:(y-h/2)*k+'px',width:w*k+'px',height:h*k+'px',transform:'none'});
@@ -2742,8 +2759,8 @@ function placeFaceBoxes(){const on=faceEditing(),M=$('faceBoxM'),E=$('faceBoxE')
 function syncFaceUi(){const F=customFace;$('faceOn').checked=F.on;$('faceOpts').hidden=!F.on;$('faceEditUi').hidden=!faceEdit;$('faceEditBtn').hidden=faceEdit;$('faceMouthS').value=F.ms;$('faceEyesS').value=F.es;$('faceGap').value=F.gap;$('faceCover').checked=F.cover;$('faceCol').value=F.col;
  document.querySelectorAll('#faceView .btn').forEach(b=>b.classList.toggle('sel',b.dataset.v===faceView))}
 // the colour around the mouth on your base, to cover its own mouth and eyes
-function faceAutoColour(){if(!customImg)return;const x=figX,F=customFace,G=faceGeom(),seen=new Map();
- const pts=[];for(let i=0;i<16;i++){const a=i/16*Math.PI*2;pts.push([F.mx+Math.cos(a)*G.mw*.7,F.my+Math.sin(a)*G.mh*.9],[F.ex+Math.cos(a)*G.ew*.6,F.ey+Math.sin(a)*G.eh*.8])}
+function faceAutoColour(){const x=figX,F=customFace,G=faceGeom(),seen=new Map();
+ const pts=[];for(let i=0;i<24;i++){const a=i/24*Math.PI*2;pts.push([F.mx+Math.cos(a)*G.mw*.62,F.my+Math.sin(a)*G.mh*.85])} // around the mouth: usually the face colour
  for(const [px,py] of pts){if(px<0||py<0||px>=1024||py>=1024)continue;const d=x.getImageData(px|0,py|0,1,1).data;if(d[3]<200)continue;const lum=(d[0]+d[1]+d[2])/3;if(lum<60)continue;
   const k=((d[0]>>4)<<8)|((d[1]>>4)<<4)|(d[2]>>4);const e=seen.get(k)||{n:0,r:0,g:0,b:0};e.n++;e.r+=d[0];e.g+=d[1];e.b+=d[2];seen.set(k,e)}
  let best=null;seen.forEach(e=>{if(!best||e.n>best.n)best=e});if(!best)return;const h=v=>Math.round(v/best.n).toString(16).padStart(2,'0');F.col='#'+h(best.r)+h(best.g)+h(best.b);syncFaceUi()}
@@ -2968,6 +2985,7 @@ document.addEventListener('keydown',e=>{
 });
 function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;
  if(layerOrder)o.layers=fullOrder().filter(k=>BUILTIN_LAYERS.includes(k)); // your own items aren't saved in designs
+ if(customFace.on)o.face={...customFace}; // 🗣️ your own talking face position
  return o}
 function applyState(o){
  if(!o||typeof o!=='object')return;
@@ -2983,6 +3001,7 @@ function applyState(o){
  bgStyle=BGS.some(b=>b.id===o.bgStyle)?o.bgStyle:'solid';
  const L=o.layers;layerOrder=Array.isArray(L)&&L.every(k=>BUILTIN_LAYERS.includes(k))&&OLD_LAYERS.every(k=>L.includes(k))?L.slice():null;
  $('outlineVal').textContent=$('outline').value;$('glowVal').textContent=$('glow').value;
+ customFace=faceSane(o.face&&typeof o.face==='object'?o.face:null);if(!customFace.on)faceEdit=false;if(typeof syncFaceUi==='function')syncFaceUi();
  buildBgGrid();
 }
 let autoT=null;
@@ -3055,7 +3074,7 @@ async function applyFiles(f,data){
  const base=await blobImg(f.base);
  if(base){customImg=base;customId++;setupCustom();if(f.roles){customRoles=f.roles;buildRoles();buildPalette()}
   ['fur','face','eyes'].forEach(id=>{const v=p.data&&p.data[id];if(typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v))$(id).value=v}); /* setting up the base resets the colours */
-  customFace=faceSane(f.face);faceEdit=false;syncFaceUi();
+  if(f.face){customFace=faceSane(f.face);faceEdit=false;syncFaceUi()}
   if(f.match!=null){$('match').value=f.match;$('matchVal').textContent=f.match}}else if(customImg){clearCustom();$('upload').value=''}
  // background
  const bg=await blobImg(f.bg);
@@ -3277,7 +3296,7 @@ document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn
   const key=JSON.stringify(captureState())+'|'+bgStyle+'|'+itemsKey()+'|'+(layerOrder?fullOrder():'')+'|'+customId+'|'+bgImgId+'|'+imgsLoaded+'|'+talkImg.naturalWidth+'|'+screamImg.naturalWidth+'|'+JSON.stringify(customFace)+faceMouthImg.naturalWidth;
   if(lay&&key===layKey)return lay;
   const tr=$('transparent'),was=tr.checked,grab=()=>{const c=mk(1024);c.getContext('2d').drawImage(canvas,0,0);return c};
-  const can=customImg?customFace.on:($('base').value!=='orange'&&!!talkImg.naturalWidth);
+  const own=customFace.on,can=own||(!customImg&&$('base').value!=='orange'&&!!talkImg.naturalWidth);
   // 📌 Slices in the exact layer order: runs of parts that move (monke, accessories, items) and runs of items that stay still.
   // A moving slice has a closed, open and scream version (only the one with the monke actually changes).
   const order=fullOrder().filter(k=>layerOn(k)),segs=[];let hasStill=false;
@@ -3288,8 +3307,10 @@ document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn
   for(const g of segs){
    if(g.still){const c=mk(1024),x=c.getContext('2d');g.keys.forEach(k=>{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(x,it)});g.c=c;continue}
    segOnly=new Set(g.keys);talkOpen=false;talkScream=false;drawNow();g.c=grab();g.o=g.s=g.c;
-   if(can&&g.keys.includes('monke')){talkOpen=true;drawNow();g.o=grab();talkOpen=false;if(screamImg.naturalWidth||customImg){talkScream=true;drawNow();g.s=grab();talkScream=false}else g.s=g.o}}
+   if(can&&!own&&g.keys.includes('monke')){talkOpen=true;drawNow();g.o=grab();talkOpen=false;if(screamImg.naturalWidth||customImg){talkScream=true;drawNow();g.s=grab();talkScream=false}else g.s=g.o}}
   segOnly=null;hideStill=false;tr.checked=was;drawNow();
+  // your own mouth and eyes: their own moving layer, on top of everything
+  if(own){const e=mk(1024),o=mk(1024),sc=mk(1024);drawFace(o.getContext('2d'),'open');drawFace(sc.getContext('2d'),'scream');segs.push({still:false,keys:[],c:e,o,s:sc})}
   const bg=mk(1024);bg.getContext('2d').drawImage(bgLayer(),0,0);
   $('talkWarn').hidden=can;layKey=key;return lay={segs:segs.map(g=>({m:!g.still,c:g.c,o:g.o,s:g.s})),bg,hasStill,can};
  }
@@ -4580,7 +4601,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
    if(d.back)segs.push({m:false,c:await bmp(d.back)});segs.push({m:true,c,o,s});if(d.front)segs.push({m:false,c:await bmp(d.front)})}
   L={segs,bg:await bmp(d.bg),clearBg:d.clearBg,can:d.can,hasPics:d.hasPics};warn();updateLink();return true}
  function fromDesign(){const T=talkLayers();L={segs:T.segs,bg:T.bg,clearBg:$('transparent').checked,can:!!T.can,hasPics:false};warn();updateLink();queuePics()}
- function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base, or on an uploaded base with its 🗣️ talking mouth turned on. This monke will bounce but not open its mouth.'}
+ function warn(){const w=$('liveWarn');if(!w.hidden&&/scream face is missing/.test(w.textContent)&&!fresh)return;w.hidden=L.can;w.textContent='The mouth only opens on the Classic monke base. For any other base (or a monke covered by your items), turn on “Use my own mouth and eyes position” in 🗣️ Talking face on the main page. This monke will bounce but not open its mouth.'}
  // the link for OBS: your design packed in, plus these settings, with the controls hidden
  function updateLink(){const d=designLink(),i=d.indexOf('#'),base=d.slice(0,i).replace(/[?#].*$/,''),
    u=base+'?live&room='+ROOM+'&bg='+$('liveBg').value+'&shake='+$('liveShake').value+'&sens='+$('liveSens').value+'&scream='+$('liveScream').value+'&ui=0'+d.slice(i);$('liveLink').value=u;
