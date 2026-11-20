@@ -614,7 +614,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v103 <span class="tag new">New</span><span class="date" data-time="2026-11-20T17:25:11Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v104 <span class="tag new">New</span><span class="date" data-time="2026-11-20T19:44:05Z">20 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🛡️ Safety: asking people for their Discord (“Got Discord?”, “got disco”, “got d i s c o r d” and other spellings) is now censored to *** in comments, replies, messages to Orangemonke, icon titles, names and profile descriptions.</li>
+   <li>Splitting it into two comments (“Got” and then “Discord”) gets censored too.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Talking about Discord normally (like “I love Discord”) is still fine.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v103<span class="date" data-time="2026-11-20T17:25:11Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>😈 New hand-drawn horns by Orangemonke! They replace the old ones, which were made with AI, and still use the Accessory colour.</li>
@@ -3454,8 +3469,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   {const f=field('Display name'),line=el('div','set-line'),inp=el('input');inp.type='text';inp.maxLength=30;inp.value=p.display_name||'';line.appendChild(inp);f.appendChild(line);
    const save=btn(line,'Save',async()=>{const v=inp.value.trim();if(!v){inp.focus();return}if(v===p.display_name)return setMsg('That\'s already your name.');save.disabled=true;
     if(await badWords(v)){save.disabled=false;setMsg(BAD_NAME);return}
-    const {error}=await sb.from('profiles').update({display_name:v}).eq('id',me.id);save.disabled=false;
-    if(error)return setMsg(friendly(error));if(profile)profile.display_name=v;renderAcct();loadPosts(true);setMsg('✓ Name saved.')},'primary');
+    const {data:nd,error}=await sb.from('profiles').update({display_name:v}).eq('id',me.id).select('display_name').maybeSingle();save.disabled=false;
+    if(error)return setMsg(friendly(error));const nv=(nd&&nd.display_name)||v;if(profile)profile.display_name=nv;inp.value=nv;renderAcct();loadPosts(true);setMsg('✓ Name saved.')},'primary');
    inp.addEventListener('keydown',e=>{if(e.key==='Enter')save.click()})}
   if(followsOn){const f=field('Description (shows on your profile)'),ta=el('textarea');ta.maxLength=160;ta.placeholder='e.g. I make Gorilla Tag videos!';f.appendChild(ta);
    sb.from('profiles').select('bio').eq('id',me.id).maybeSingle().then(r=>{if(r.data&&!ta.value)ta.value=r.data.bio||''});
