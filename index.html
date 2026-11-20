@@ -633,7 +633,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v108 <span class="tag new">New</span><span class="date" data-time="2026-11-20T20:28:24Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v109 <span class="tag new">New</span><span class="date" data-time="2026-11-20T20:40:12Z">20 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📺 OBS now follows the 🎙️ Live PNGtuber page's Background and Shake settings. Change them on the live page in your browser and OBS changes straight away, with no need to copy the OBS link again.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Fixes the monke's background not showing in OBS after switching to the new website address.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v108<span class="date" data-time="2026-11-20T20:28:24Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🗣️ Uploaded bases can talk now! In “Set up your custom base”, turn on the talking mouth and scream eyes, then drag them onto your monke's face and resize them with their corners or the sliders.</li>
@@ -4486,7 +4500,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
      <div class="live-copy"><input id="liveLink" readonly><button type="button" class="btn small" data-copy="liveLink">Copy</button></div></li>
     <li>Paste this into the source's <b>Custom CSS</b> box. It hides everything except your monke and its cosmetics:
      <div class="live-copy"><textarea id="liveCss" readonly rows="2">.live-ui{display:none!important} body{background:rgba(0,0,0,0)!important;margin:0;overflow:hidden}</textarea><button type="button" class="btn small" data-copy="liveCss">Copy</button></div></li>
-    <li><b>Keep this page open</b> with the mic on (it can be in the background, just don't close it). It sends your mouth movements to OBS, so OBS doesn't need your mic. No sound is sent.</li>
+    <li><b>Keep this page open</b> with the mic on (it can be in the background, just don't close it). It sends your mouth movements to OBS, so OBS doesn't need your mic. No sound is sent. Changing the Background or Shake here changes them in OBS too.</li>
    </ol>
    <p class="live-tip">Or keep this page open in your browser with the green screen, and use OBS's <b>Window Capture</b> with a <b>Chroma Key</b> filter.</p>
    <p class="live-tip" id="liveLinkNote"></p>
@@ -4523,7 +4537,7 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  const opt=(id,k)=>{const v=q.get(k)??saved[k];if(v!=null&&[...$(id).options||[]].some(o=>o.value===v)||($(id).type==='range'&&v!=null))$(id).value=v};
  opt('liveBg','bg');opt('liveShake','shake');opt('liveSens','sens');opt('liveScream','scream');
  if(q.get('ui')==='0')$('liveUi').hidden=true;
- const save=()=>{try{localStorage.setItem('mim_live_opts',JSON.stringify({bg:$('liveBg').value,shake:$('liveShake').value,sens:$('liveSens').value,scream:$('liveScream').value}))}catch(e){}updateLink()};
+ const save=()=>{if(typeof sendCfg==='function')sendCfg();try{localStorage.setItem('mim_live_opts',JSON.stringify({bg:$('liveBg').value,shake:$('liveShake').value,sens:$('liveSens').value,scream:$('liveScream').value}))}catch(e){}updateLink()};
  ['liveBg','liveShake','liveSens','liveScream'].forEach(id=>$(id).addEventListener('input',save));
  let L=null; // {closed, open, bg, clearBg, can}
  const bmp=b=>createImageBitmap(b);
@@ -4591,12 +4605,12 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  let ch=null,ready=false,lastSend=0,remote={open:false,env:0,t:-1e9},heardObs=-1e9,heardSender=-1e9;
  async function connect(){if(ch||typeof monkeClient!=='function')return;try{const c=await monkeClient();
   ch=c.channel('monke-live-'+ROOM,{config:{broadcast:{self:false}}});
-  ch.on('broadcast',{event:'m'},({payload:p})=>{if(!p)return;if(p.hi){heardObs=performance.now();sendPic();return}if(p.pic){loadPic(p);return}remote={open:!!p.o,scream:!!p.s,env:+p.e||0,t:performance.now()};heardSender=remote.t;status()})
+  ch.on('broadcast',{event:'m'},({payload:p})=>{if(!p)return;if(p.hi){heardObs=performance.now();sendPic();sendCfg();return}if(p.cfg){useCfg(p.cfg);return}if(p.pic){loadPic(p);return}remote={open:!!p.o,scream:!!p.s,env:+p.e||0,t:performance.now()};heardSender=remote.t;status()})
     .subscribe(st=>{ready=st==='SUBSCRIBED';status()})}catch(e){}}
  function send(now){if(!ready||!micOn)return;const t=performance.now();if(!now&&t-lastSend<200)return;lastSend=t;
   ch.send({type:'broadcast',event:'m',payload:{o:open?1:0,s:scream?1:0,e:Math.round(env*100)/100}}).catch(()=>{})}
  // the OBS copy says hello every few seconds, so this page can show that it's connected
- setInterval(()=>{if(ready&&!micOn)ch.send({type:'broadcast',event:'m',payload:{hi:1}}).catch(()=>{});if(ready&&micOn&&pic&&Math.random()<.4)sendPic();if(ready&&micOn&&!open)send(true);status()},4000);
+ setInterval(()=>{if(ready&&!micOn)ch.send({type:'broadcast',event:'m',payload:{hi:1}}).catch(()=>{});if(ready&&micOn&&pic&&Math.random()<.4)sendPic();else if(ready&&micOn&&Math.random()<.3)sendCfg();if(ready&&micOn&&!open)send(true);status()},4000);
  // 🖼️ Pictures for OBS: the link can only carry the design, not uploaded pictures. When you're signed in, this page
  // uploads your finished monke (each face, plus the background) to your own folder, and tells OBS where to find them.
  let pic=null,picBusy=false,picT=0;
@@ -4612,7 +4626,10 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
    if(old&&old!==pre&&old.startsWith(u.id+'/live/'))c.storage.from('icons').remove(['closed','open','scream','bg','back','front'].map(n=>old+'-'+n+'.webp')).catch(()=>{});
    pic={pic:pre,can:L.can?1:0,clear:L.clearBg?1:0,still:L.back?1:0};sendPic()}
   catch(e){pic=null}finally{picBusy=false;status()}}
- function sendPic(){if(ready&&pic)ch.send({type:'broadcast',event:'m',payload:pic}).catch(()=>{})}
+ function sendPic(){if(ready&&pic)ch.send({type:'broadcast',event:'m',payload:pic}).catch(()=>{});sendCfg()}
+ // ⚙️ OBS follows this page's Background and Shake, so you never need to copy the OBS link again after changing them
+ function sendCfg(){if(ready&&!IN_OBS&&micOn)ch.send({type:'broadcast',event:'m',payload:{cfg:{bg:$('liveBg').value,shake:$('liveShake').value}}}).catch(()=>{})}
+ function useCfg(c){if(!c||!(IN_OBS||!micOn))return;for(const [id,v] of [['liveBg',c.bg],['liveShake',c.shake]])if([...$(id).options].some(o=>o.value===v))$(id).value=v}
  // OBS: load the pictures it's told about
  let picNow='';
  async function loadPic(p){if(!IN_OBS&&micOn)return;if(!PIC_RE.test(p.pic||'')||p.pic===picNow)return;picNow=p.pic;
