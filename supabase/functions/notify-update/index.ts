@@ -147,7 +147,7 @@ async function handleComment(req: Request, env: (k: string) => string | undefine
   const t = await fetch(`${base}/rest/v1/rpc/comment_push_targets`, { method: 'POST', headers: serviceHeaders(key), body: JSON.stringify({ p_comment: commentId }) });
   if (!t.ok) return json({ error: 'Could not read the device list.' }, 500);
   const targets: { endpoint: string; p256dh: string; auth_secret: string; kind: string; author_name: string; post_title: string; body: string; post_id: string }[] = await t.json();
-  let site = 'https://kaigroves15-hash.github.io/orangemonke/';
+  let site = './'; // the page sends its own address; './' is a fallback that works wherever the site lives
   try { const u = new URL(pageUrl); if (u.protocol === 'https:') site = u.origin + u.pathname.replace(/[^/]*$/, ''); } catch { /* keep the default */ }
   let sent = 0; const gone: string[] = [];
   await Promise.all(targets.map(async (s) => {
@@ -165,7 +165,7 @@ async function handleComment(req: Request, env: (k: string) => string | undefine
 
 const siteFrom = (pageUrl: string) => {
   try { const u = new URL(pageUrl); if (u.protocol === 'https:') return u.origin + u.pathname.replace(/[^/]*$/, ''); } catch { /* use the default */ }
-  return 'https://kaigroves15-hash.github.io/orangemonke/';
+  return './';
 };
 
 async function handleFollow(req: Request, env: (k: string) => string | undefined, vapid: { publicKey: string; privateKey: string; subject: string }, followeeId: string, pageUrl: string) {
