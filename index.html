@@ -147,6 +147,10 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .om-reply-box{margin:8px 0 4px 56px}.om-reply{padding:10px 12px;border-radius:12px;background:#ff9a2e1a;border:1px solid #ff9a2e55;font-size:14px;margin-bottom:6px}.om-reply b{display:block;font-size:12px;color:var(--accent);margin-bottom:2px}
 .om-reply-in{width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}.om-mine .om-reply{margin:8px 0 0}
 @media(max-width:480px){.om-reply-box{margin-left:0}}
+.req-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.req-tag{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px;white-space:nowrap}
+.om-req{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;margin-top:4px}
+.om-reqbox{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;cursor:pointer}.om-reqbox input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent)}
 .om-count{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
 .chal{margin:14px 0;padding:16px;border-radius:18px;border:1px solid #ff9a2e66;background:linear-gradient(135deg,#ff9a2e22,#ffd23f14 60%,transparent)}
 .chal-head{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}.chal-kicker{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
@@ -376,13 +380,14 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   </div>
  </div>
  <div class="section"><h2>🎩 Accessories</h2>
+  <div class="req-note">✏️ Want something that isn't here? <button type="button" class="btn small" id="reqBtn">🎨 Ask Orangemonke to draw it</button></div>
   <div class="field"><label for="hat">Head accessory</label><select id="hat"><option value="none">No accessory</option><option value="cap">Baseball cap</option><option value="crown">Crown</option><option value="halo">Halo</option><option value="horns">Horns</option><option value="tophat">Top hat</option><option value="catears">Cat ears</option></select></div>
   <div id="haloOpts" hidden>
    <div class="row" style="margin-top:12px"><div class="field"><label for="haloColor">Halo colour</label><input id="haloColor" type="color" value="#ffff00"></div><div class="field"><label for="glowColor">Glow colour</label><input id="glowColor" type="color" value="#ffff00"></div></div>
    <div class="field" style="margin-top:12px"><label for="glow">Halo glow <span id="glowVal">60</span></label><input id="glow" type="range" min="0" max="100" value="60"></div>
   </div>
   <div class="field" style="margin-top:12px"><label for="banana">Banana</label><select id="banana"><option value="none">No banana</option><option value="show">Banana headband</option></select></div>
-  <div class="field" style="margin-top:12px"><label for="headphones">Headphones</label><select id="headphones"><option value="none">No headphones</option><option value="black">🎧 Black headphones</option><option value="white">🎧 White headphones</option><option value="colour">🎧 Headphones in the accessory colour</option></select></div>
+  <div class="field" style="margin-top:12px"><label for="headphones">Headphones <span class="req-tag" title="Drawn by Orangemonke because a fan asked for it">🎨 requested by a fan</span></label><select id="headphones"><option value="none">No headphones</option><option value="black">🎧 Black headphones</option><option value="white">🎧 White headphones</option><option value="colour">🎧 Headphones in the accessory colour</option></select></div>
   <div class="field" style="margin-top:12px"><label for="dog">Dog</label><select id="dog"><option value="none">No dog</option><option value="right">Dog on the right</option><option value="left">Dog on the left</option></select></div>
   <div class="row" style="margin-top:12px">
    <div class="field"><label for="hatColor">Accessory colour</label><input id="hatColor" type="color" value="#ffd52a"></div>
@@ -634,7 +639,23 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v113 <span class="tag new">New</span><span class="date" data-time="2026-11-20T21:32:57Z">20 Nov 2026</span></summary>
+ <details class="release" open><summary>v114 <span class="tag new">New</span><span class="date" data-time="2026-11-21T09:13:33Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎨 Ask for an accessory: in 🎩 Accessories, tap “Ask Orangemonke to draw it” to request something that isn't in the maker yet, like a pirate hat. Orangemonke draws the cosmetics by hand.</li>
+   <li>💬 Talk to Orangemonke has a new “This is an accessory request” box, so requests stand out.</li>
+   <li>Cosmetics that came from a request get a 🎨 “requested by a fan” tag, starting with the 🎧 headphones.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Nothing changed in this update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v113<span class="date" data-time="2026-11-20T21:32:57Z">20 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>😱 Loudest face (hand-drawn by Orangemonke): scream even louder than the 😆 scream face and your monke opens its mouth wide upwards. Set how loud with the new “😱 Loudest face” slider on the 🎙️ Live PNGtuber (the purple line). It works in OBS too.</li>
@@ -3726,7 +3747,8 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function omCard(m,head){
   const c=el('div','om-card');c.appendChild(avatarImg(m.avatar_path));const b=el('div');b.style.minWidth='0';
   const w=el('div','om-who linkish',m.display_name+' ');w.appendChild(el('small',null,'@'+m.username));w.title='See their profile';w.onclick=()=>{closeOm();openProfile(m.user_id)};b.appendChild(w);
-  b.appendChild(el('div','om-when',head));b.appendChild(el('div','om-text',m.body));c.appendChild(b);return c}
+  b.appendChild(el('div','om-when',head));const rq=/^🎨 Accessory request: /.test(m.body||'');if(rq)b.appendChild(el('span','om-req','🎨 Accessory request'));
+  b.appendChild(el('div','om-text',rq?m.body.replace(/^🎨 Accessory request: /,''):m.body));c.appendChild(b);return c}
  async function renderOm(skip){
   const box=$('omBody');box.innerHTML='';const sec=(h)=>{const d=el('div','set-sec');if(h)d.appendChild(el('h3',null,h));box.appendChild(d);return d};
   if(!sb||!fanOn){sec().appendChild(el('p','hint','Messages aren\'t switched on yet. Check back soon!'));return}
@@ -3750,11 +3772,15 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   // everyone else: write a message, and see your own ones
   const d=sec('✉️ Send a message');
   d.appendChild(el('p','hint','Say hi, ask a question or tell Orangemonke what video to make next! Every day one random message from one random person gets picked for Orangemonke to read. Only Orangemonke can see messages. You can send one a day.'));
+  const rq=el('label','om-reqbox'),rc=el('input');rc.type='checkbox';rc.id='omReq';rq.append(rc,document.createTextNode('🎨 This is an accessory request: something you\'d like Orangemonke to draw for the maker'));d.appendChild(rq);
   const ta=el('textarea');ta.maxLength=300;ta.rows=4;ta.placeholder='Hi Orangemonke! …';ta.id='omText';ta.style.cssText='width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)';d.appendChild(ta);
-  const cnt=el('div','om-count','0/300');d.appendChild(cnt);ta.oninput=()=>{cnt.textContent=ta.value.length+'/300'};
+  const REQ='🎨 Accessory request: ',cnt=el('div','om-count','0/300');d.appendChild(cnt);
+  const lim=()=>rc.checked?300-REQ.length:300,count=()=>{ta.maxLength=lim();if(ta.value.length>lim())ta.value=ta.value.slice(0,lim());cnt.textContent=ta.value.length+'/'+lim()};
+  ta.oninput=count;rc.onchange=()=>{ta.placeholder=rc.checked?'e.g. A pirate hat with a skull on it, for the monke\'s head':'Hi Orangemonke! …';count();ta.focus()};
+  if(omWantReq){rc.checked=true;omWantReq=false;rc.onchange()}
   const row=el('div','set-btns'),send=el('button','btn primary','📨 Send to Orangemonke');send.type='button';row.appendChild(send);d.appendChild(row);const msg=el('div','set-msg');d.appendChild(msg);
   if(profile&&profile.banned){send.disabled=true;ta.disabled=true;msg.textContent='Your account has been banned, so you can\'t send messages.'}
-  send.onclick=async()=>{const v=ta.value.trim();if(!v){ta.focus();return}send.disabled=true;msg.textContent='Sending…';
+  send.onclick=async()=>{const t=ta.value.trim();if(!t){ta.focus();return}const v=(rc.checked?REQ:'')+t;send.disabled=true;msg.textContent='Sending…';
    if(await badWords(v)){send.disabled=false;msg.textContent="That message has a word that isn't allowed.";return}
    const {error}=await sb.from('fan_messages').insert({body:v});send.disabled=false;
    if(noFanYet(error))return renderOm();if(error){msg.textContent=/one message a day/i.test(error.message)?'You can send one message a day. Come back tomorrow!':friendly(error);return}
@@ -3774,7 +3800,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   }
   renderMine();
  }
- function openOm(){$('omPop').hidden=false;$('omClose').focus();renderOm()}
+ let omWantReq=false;
+ function openOm(req){omWantReq=!!req;$('omPop').hidden=false;$('omClose').focus();renderOm()}
+ $('reqBtn').onclick=()=>{if(sb||GALLERY.url)client().then(()=>openOm(true)).catch(()=>openOm(true));else openOm(true)};
  function closeOm(){$('omPop').hidden=true}
  $('omBtn').onclick=openOm;$('omClose').onclick=closeOm;
  $('omPop').addEventListener('click',e=>{if(e.target===$('omPop'))closeOm()});
