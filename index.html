@@ -148,6 +148,17 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .om-reply-in{width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--text)}.om-mine .om-reply{margin:8px 0 0}
 @media(max-width:480px){.om-reply-box{margin-left:0}}
 .req-note{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.cos-list{display:flex;flex-wrap:wrap;gap:8px}
+.cos-chip{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.cos-chip img{width:28px;height:28px;object-fit:contain;border-radius:50%;background:var(--panel)}
+.cos-chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset;font-weight:700}
+.cos-f{display:block;margin-bottom:10px}.cos-f>span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.cos-f input,.cos-f select{width:100%}
+.cos-files{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cos-up{margin:0;font-size:13px}.cos-up.done{border-color:var(--accent)}
+@media (max-width:480px){.cos-files{grid-template-columns:1fr}}
+.cos-prev{margin-top:10px;text-align:center}.cos-prev canvas{display:block;margin:0 auto;width:min(256px,100%);height:auto;aspect-ratio:1;border-radius:12px;border:1px solid var(--line)}
+.cos-nudge{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;margin-top:6px}
+.cos-admin{display:flex;flex-direction:column;gap:6px}
+.cos-row{display:flex;align-items:center;gap:8px;font-size:13px}.cos-row img{width:36px;height:36px;object-fit:contain;background:var(--panel2);border-radius:8px}.cos-row span{flex:1}
 .req-tag{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px;white-space:nowrap}
 .om-req{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;margin-top:4px}
 .om-reqbox{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;cursor:pointer}.om-reqbox input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent)}
@@ -389,6 +400,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="field" style="margin-top:12px"><label for="banana">Banana</label><select id="banana"><option value="none">No banana</option><option value="show">Banana headband</option></select></div>
   <div class="field" style="margin-top:12px"><label for="headphones">Headphones <span class="req-tag" title="Drawn by Orangemonke because a fan asked for it">🎨 requested by a fan</span></label><select id="headphones"><option value="none">No headphones</option><option value="black">🎧 Black headphones</option><option value="white">🎧 White headphones</option><option value="colour">🎧 Headphones in the accessory colour</option></select></div>
   <div class="field" style="margin-top:12px"><label for="dog">Dog</label><select id="dog"><option value="none">No dog</option><option value="right">Dog on the right</option><option value="left">Dog on the left</option></select></div>
+  <div class="field" id="cosWrap" style="margin-top:12px" hidden><label>✨ More cosmetics <span class="req-tag" title="Hand drawn by Orangemonke">🎨 hand drawn</span></label><div class="cos-list" id="cosList" role="group" aria-label="More cosmetics"></div><div class="note" style="margin-top:6px">Tap to wear one. You can wear as many as you like.</div></div>
   <div class="row" style="margin-top:12px">
    <div class="field"><label for="hatColor">Accessory colour</label><input id="hatColor" type="color" value="#ffd52a"></div>
    <div class="field"><label for="bandana">Bandana</label><select id="bandana"><option value="none">None</option><option value="asset">Red bandana</option></select></div>
@@ -564,6 +576,25 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="install-btns"><button type="button" class="btn" id="notifyNo">Not now</button><button type="button" class="btn primary" id="notifyYes">Turn on</button></div>
  </div>
 </div>
+<div class="install-backdrop cm-pop" id="cosPop" hidden role="dialog" aria-modal="true" aria-labelledby="cosTitle">
+ <div class="install-card set-card">
+  <div class="set-top"><h2 id="cosTitle">➕ Add a cosmetic</h2><button type="button" class="btn small" id="cosClose" aria-label="Close">✕</button></div>
+  <div class="set-sec"><p class="hint" style="margin:0 0 12px">It appears for everyone in 🎩 Accessories → ✨ More cosmetics.</p>
+  <label class="field cos-f"><span>Name</span><input id="cosName" type="text" maxlength="40" placeholder="e.g. Pirate hat" autocomplete="off"></label>
+  <label class="field cos-f"><span>Where it goes</span><select id="cosSlot"><option value="head">On the head</option><option value="body">On the body</option><option value="other">Somewhere else</option></select></label>
+  <div class="cos-files">
+   <label class="upload cos-up"><span id="cosF1Lbl">1️⃣ The cosmetic <b>on the monke</b></span><input id="cosF1" type="file" accept="image/png,image/webp,image/jpeg"></label>
+   <label class="upload cos-up"><span id="cosF2Lbl">2️⃣ The cosmetic <b>by itself</b></span><input id="cosF2" type="file" accept="image/png,image/webp,image/jpeg"></label>
+  </div>
+  <div class="cos-prev" id="cosPrevWrap" hidden><canvas id="cosPrev" width="512" height="512"></canvas>
+   <div class="cos-nudge"><span class="hint">Not quite lined up?</span>
+    <button type="button" class="btn small" data-n="l" aria-label="Move left">⬅️</button><button type="button" class="btn small" data-n="r" aria-label="Move right">➡️</button><button type="button" class="btn small" data-n="u" aria-label="Move up">⬆️</button><button type="button" class="btn small" data-n="d" aria-label="Move down">⬇️</button><button type="button" class="btn small" data-n="-" aria-label="Smaller">➖</button><button type="button" class="btn small" data-n="+" aria-label="Bigger">➕</button>
+   </div></div>
+  <div class="note" id="cosMsg" style="min-height:18px;margin:8px 0"></div>
+  <div class="install-btns"><button type="button" class="btn" id="cosCancel">Close</button><button type="button" class="btn primary" id="cosSave" disabled>💾 Save for everyone</button></div></div>
+  <div class="set-sec"><h3>Your cosmetics</h3><div id="cosAdminList" class="cos-admin"></div></div>
+ </div>
+</div>
 <div class="install-backdrop cm-pop" id="sendPop" hidden role="dialog" aria-modal="true" aria-labelledby="sendTitle">
  <div class="install-card">
   <h2 id="sendTitle" style="font-size:17px;margin:0 0 6px">📣 Notify everyone</h2>
@@ -618,7 +649,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
     <label><input type="checkbox" data-hide="trailer" checked> 🎬 Trailer button</label>
     <label><input type="checkbox" data-hide="notes" checked> 📝 Update notes</label>
    </div></div>
-  <div class="set-sec" id="setAdmin" hidden><h3>🛡️ Admin</h3><div class="set-btns"><button type="button" class="btn small" id="notifyAll">📣 Notify everyone</button></div></div>
+  <div class="set-sec" id="setAdmin" hidden><h3>🛡️ Admin</h3><div class="set-btns"><button type="button" class="btn small" id="notifyAll">📣 Notify everyone</button><button type="button" class="btn small" id="cosAddBtn">➕ Add a cosmetic</button></div></div>
  </div>
 </div>
 <div class="install-backdrop" id="acctPop" hidden role="dialog" aria-modal="true" aria-labelledby="acctTitle">
@@ -639,7 +670,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v114 <span class="tag new">New</span><span class="date" data-time="2026-11-21T09:13:33Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v115 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:00:13Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>✨ More cosmetics: a new list in 🎩 Accessories with new hand-drawn cosmetics from Orangemonke. Tap one to wear it. You can wear as many as you like.</li>
+   <li>More cosmetics are saved in your designs, presets, design links and remixes, and work in talking GIFs and the 🎙️ Live PNGtuber.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>New cosmetics can now come out without a website update.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v114<span class="date" data-time="2026-11-21T09:13:33Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎨 Ask for an accessory: in 🎩 Accessories, tap “Ask Orangemonke to draw it” to request something that isn't in the maker yet, like a pirate hat. Orangemonke draws the cosmetics by hand.</li>
@@ -2589,8 +2635,69 @@ function drawLayer(im,box,flip,c){
 function headFit(c){if(isOrange()){const [k,x,y]=ORANGE_HEAD;c.translate(x,y);c.scale(k,k)}}
 // 🗂️ Layers: every part of the icon is a layer, drawn back to front. layerOrder is null for the normal order, or the
 // order you picked (built-in parts plus "item:<id>" for your own items).
-const BUILTIN_LAYERS=['monke','headphones','banana','hat','bandana','badge','dog'];
-const OLD_LAYERS=['monke','banana','hat','bandana','badge','dog']; // designs saved before the headphones only list these
+const BUILTIN_LAYERS=['monke','headphones','banana','hat','extras','bandana','badge','dog'];
+// ✨ More cosmetics: drawn by Orangemonke and added from the website (⚙️ Settings → 🛡️ Admin). Everyone can wear them.
+// Each one is a picture placed at x/y/w/h in the base art's 2048×1152 coordinates, like the built-in accessories.
+const COS_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,LS_COS='mim_cosmetics_v1';
+let cosmetics=[],extras=[],cosPending=null; // cosPending: the one being added, shown on the preview only
+const cosUrl=path=>GALLERY.url+'/storage/v1/object/public/icons/'+path.split('/').map(encodeURIComponent).join('/');
+function cosSane(r){return r&&COS_RE.test(r.id)&&typeof r.name==='string'&&typeof r.image_path==='string'&&['head','body','other'].includes(r.slot)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)}
+function setCosmetics(rows){const old=new Map(cosmetics.map(c=>[c.id,c]));
+ cosmetics=(Array.isArray(rows)?rows:[]).filter(cosSane).map(r=>{const o=old.get(r.id);if(o&&o.image_path===r.image_path)return o;
+  const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{imgsLoaded++;draw()};img.src=cosUrl(r.image_path);
+  return{id:r.id,name:r.name.slice(0,40),slot:r.slot,image_path:r.image_path,x:r.x,y:r.y,w:r.w,h:r.h,img}});
+ if(typeof renderCosList==='function')renderCosList();draw()}
+async function loadCosmetics(){
+ try{const c=lsGet(LS_COS);if(Array.isArray(c))setCosmetics(c)}catch(e){}
+ try{const r=await fetch(GALLERY.url+'/rest/v1/cosmetics?select=id,name,slot,image_path,x,y,w,h&order=created_at',{headers:{apikey:GALLERY.key}});
+  if(!r.ok)return;const rows=await r.json();setCosmetics(rows);try{localStorage.setItem(LS_COS,JSON.stringify(rows))}catch(e){}}catch(e){}
+}
+const cosReady=c=>c.img.complete&&c.img.naturalWidth>0;
+function cosWorn(){const on=cosmetics.filter(c=>extras.includes(c.id)&&cosReady(c));if(cosPending&&cosPending.img.width)on.push(cosPending);return on}
+function drawCosmetic(c,cos){c.save();if(cos.slot==='head')headFit(c);else if(cos.slot==='body'&&isOrange())c.translate(ORANGE_BODY_DX,0);
+ drawLayer(cos.img,[cos.x,cos.y,cos.w,cos.h],false,c);c.restore()}
+// The ✨ More cosmetics list in 🎩 Accessories: tap to wear or take off.
+function renderCosList(){const wrap=$('cosWrap'),list=$('cosList');if(!wrap)return;wrap.hidden=!cosmetics.length;list.innerHTML='';
+ cosmetics.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='cos-chip';b.setAttribute('aria-pressed',extras.includes(c.id));
+  const im=document.createElement('img');im.alt='';im.crossOrigin='anonymous';im.src=cosUrl(c.image_path);b.appendChild(im);b.appendChild(document.createTextNode(c.name));
+  b.onclick=()=>{extras=extras.includes(c.id)?extras.filter(x=>x!==c.id):[...extras,c.id];b.setAttribute('aria-pressed',extras.includes(c.id));draw()};list.appendChild(b)})}
+// ➕ Lining a cosmetic up: picture 1 is the cosmetic on the monke, picture 2 is the cosmetic by itself.
+// Picture 2 is found inside picture 1 (any size or crop), first roughly on small copies, then closely at full size.
+function cosCanvas(src,w,h){const c=mk(w,h),x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingQuality='high';x.drawImage(src,0,0,w,h);return{c,d:x.getImageData(0,0,w,h).data}}
+function cosAlphaBox(c){const w=c.width,h=c.height,p=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;let x0=w,y0=h,x1=-1,y1=-1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(p[(y*w+x)*4+3]>24){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+ return x1<0?null:[x0,y0,x1-x0+1,y1-y0+1]}
+function cosHasClear(c){const w=c.width,h=c.height,p=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,w,h).data;let n=0;for(let i=3;i<p.length;i+=16)if(p[i]<200)n++;return n>p.length/16*.01}
+function cosFind(pic1,pic2){
+ const w1=pic1.naturalWidth||pic1.width,h1=pic1.naturalHeight||pic1.height,w2=pic2.naturalWidth||pic2.width,h2=pic2.naturalHeight||pic2.height;
+ let full=mk(w2,h2);full.getContext('2d').drawImage(pic2,0,0);
+ if(!cosHasClear(full))full=removeBackground(full,35); // no see-through background: take it off, like ✨ Remove background
+ const bb=cosAlphaBox(full);if(!bb)return null;
+ const crop=mk(bb[2],bb[3]);crop.getContext('2d').drawImage(full,bb[0],bb[1],bb[2],bb[3],0,0,bb[2],bb[3]);
+ const f1=1152/h1,ox=(2048-w1*f1)/2,toBase=(x,y,w,h)=>({x:Math.round(ox+x*f1),y:Math.round(y*f1),w:Math.max(1,Math.round(w*f1)),h:Math.max(1,Math.round(h*f1))});
+ if(w2===w1&&h2===h1)return{crop,...toBase(...bb),score:0}; // same size as picture 1: it's already in the right place
+ const tw0=crop.width,th0=crop.height;
+ // how well picture 2 at width tw, top-left (px,py), matches level L (a copy of picture 1). Only solid pixels count.
+ const score=(L,tw,px,py,T)=>{let s=0;const W=L.w,d=L.d;for(let i=0;i<T.n;i++){const X=px+T.u[i],Y=py+T.v[i];if(X<0||Y<0||X>=W||Y>=L.h){s+=19200;continue}
+   const k=(Y*W+X)*4,r=d[k]-T.r[i],g=d[k+1]-T.g[i],b=d[k+2]-T.b[i],e=r*r+g*g+b*b;s+=e<19200?e:19200}return s/T.n};
+ const tmpl=(tw,max)=>{const th=Math.max(1,Math.round(tw*th0/tw0)),t=cosCanvas(crop,tw,th),pts=[];for(let i=0;i<tw*th;i++)if(t.d[i*4+3]>230)pts.push(i);
+   const step=Math.max(1,pts.length/max),T={n:0,u:[],v:[],r:[],g:[],b:[],th};for(let j=0;j<pts.length;j+=step){const i=pts[Math.floor(j)];T.u.push(i%tw);T.v.push((i/tw)|0);T.r.push(t.d[i*4]);T.g.push(t.d[i*4+1]);T.b.push(t.d[i*4+2]);T.n++}return T};
+ const level=w=>{const h=Math.max(1,Math.round(h1*w/w1)),c=cosCanvas(pic1,w,h);return{w,h,d:c.d,k:w/w1}};
+ // 1) rough: every size and place on a small copy, keeping the best few
+ const A=level(Math.min(128,w1));let cand=[];
+ for(let tw=5;tw<=A.w;tw*=1.06){const T=tmpl(Math.round(tw),180);if(T.n<6||T.th>A.h)continue;const tR=Math.round(tw);
+  for(let py=0;py+T.th<=A.h;py++)for(let px=0;px+tR<=A.w;px++){const s=score(A,tR,px,py,T);if(cand.length<40||s<cand[cand.length-1].s){cand.push({s,tw:tw/A.k,x:px/A.k,y:py/A.k});cand.sort((a,b)=>a.s-b.s);if(cand.length>40)cand.pop()}}}
+ const keep=[];for(const c of cand){if(keep.every(k=>Math.abs(k.x-c.x)>c.tw*.3||Math.abs(k.y-c.y)>c.tw*.3||Math.abs(k.tw/c.tw-1)>.15))keep.push(c);if(keep.length>=5)break}
+ // 2) close: around each of those on bigger copies
+ const refine=(L,c,span,pct,stepPct,max)=>{let best={...c,s:1e9};for(let m=1-pct;m<=1+pct+1e-9;m+=stepPct){const tw=Math.max(3,Math.round(c.tw*m*L.k)),T=tmpl(tw,max);if(T.n<4)continue;
+   const cx=Math.round(c.x*L.k),cy=Math.round(c.y*L.k);for(let dy=-span;dy<=span;dy++)for(let dx=-span;dx<=span;dx++){const s=score(L,tw,cx+dx,cy+dy,T);if(s<best.s)best={s,tw:tw/L.k,x:(cx+dx)/L.k,y:(cy+dy)/L.k}}}return best};
+ const B=level(Math.min(512,w1));let best=null;
+ for(const c of keep){const r=refine(B,c,Math.ceil(B.k/A.k)+1,.08,.01,700);if(!best||r.s<best.s)best=r}
+ if(!best)return null;
+ if(w1>512){const C=level(Math.min(2048,w1));best=refine(C,best,Math.ceil(C.k/B.k)+1,.02,.005,1500)}
+ return{crop,...toBase(best.x,best.y,best.tw,best.tw*th0/tw0),score:Math.sqrt(best.s)};
+}
+const OLD_LAYERS=['monke','banana','hat','bandana','badge','dog']; // designs saved before the headphones only list these (and before ✨ extras)
 let layerOrder=null;
 function layerOn(k){const hat=$('hat').value;
  if(k==='monke')return true;
@@ -2600,15 +2707,17 @@ function layerOn(k){const hat=$('hat').value;
  if(k==='badge')return $('fingerpainter').value!=='none';
  if(k==='dog')return $('dog').value!=='none';
  if(k==='headphones')return $('headphones').value!=='none';
+ if(k==='extras')return cosWorn().length>0;
  return k.startsWith('item:')&&items.some(i=>'item:'+i.id===k);
 }
 // The normal order: items set to "behind", (cat ears sit behind the head), monke, banana, hat, bandana, badge, dog, items.
 function defaultOrder(){const hat=$('hat').value,its=b=>items.filter(i=>!!i.behind===b).map(i=>'item:'+i.id);
- return [...its(true),...(hat==='catears'?['hat']:[]),'monke','headphones','banana',...(hat!=='catears'?['hat']:[]),'bandana','badge','dog',...its(false)]} // headphones under the banana and hats, so they don't hide them
+ return [...its(true),...(hat==='catears'?['hat']:[]),'monke','headphones','banana',...(hat!=='catears'?['hat']:[]),'extras','bandana','badge','dog',...its(false)]} // headphones under the banana and hats, so they don't hide them
 function fullOrder(){
  if(!layerOrder)return defaultOrder();
  const have=new Set(items.map(i=>'item:'+i.id)),o=layerOrder.filter(k=>BUILTIN_LAYERS.includes(k)||have.has(k));
  if(!o.includes('headphones')){const h=o.indexOf('monke');o.splice(h<0?o.length:h+1,0,'headphones')} // orders saved before the headphones: just in front of the monke
+ if(!o.includes('extras')){const h=o.indexOf('hat');o.splice(h<0?o.length:h+1,0,'extras')} // ✨ more cosmetics: just in front of the hat
  BUILTIN_LAYERS.forEach(k=>{if(!o.includes(k))o.push(k)});
  items.forEach(i=>{const k='item:'+i.id;if(!o.includes(k)){if(i.behind)o.unshift(k);else o.push(k)}}); // new items go on top
  return o;
@@ -2635,6 +2744,7 @@ function drawPart(c,k,m){
    if(badge==='creator')drawLayer(creatorImg,CREATOR_BOX,false,c);
    if(badge==='camera')drawLayer(cameraImg,CAMERA_BOX,false,c)}}
  else if(k==='headphones'){headFit(c);drawLayer(headphonesArt(),HEADPHONES_BOX,false,c)}
+ else if(k==='extras')cosWorn().forEach(cos=>drawCosmetic(c,cos));
  else if(k==='dog'){const dog=$('dog').value;if(dog==='right')drawLayer(dogImg,DOG_BOX_R,false,c);if(dog==='left')drawLayer(dogImg,DOG_BOX_L,true,c)}
  else{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(c,it)}
  c.restore();
@@ -2645,6 +2755,7 @@ function layerName(k){
  if(k==='monke')return '🐒 Monke';if(k==='banana')return isOrange()?'🍌 Banana peel':'🍌 Banana headband';
  if(k==='hat')return HAT_NAMES[$('hat').value]||'🎩 Hat';if(k==='bandana')return '🧣 Bandana';
  if(k==='badge')return BADGE_NAMES[$('fingerpainter').value]||'🏅 Badge';if(k==='dog')return '🐶 Dog';if(k==='headphones')return '🎧 Headphones';
+ if(k==='extras'){const w=cosWorn();return w.length===1?'✨ '+w[0].name:'✨ More cosmetics'}
  const n=items.findIndex(i=>'item:'+i.id===k);return '🧸 Item '+(n+1);
 }
 let layersKey='';
@@ -2673,7 +2784,7 @@ $('layerReset').onclick=()=>{layerOrder=null;layersKey='';draw()};
 // thickness, so changing any colour (fur, face, background or the outline itself) reuses it.
 const maskC=mk(1024),maskX=maskC.getContext('2d'),outC=mk(1024),outX=outC.getContext('2d');let maskKey='',outKey='';
 function outlineLayer(thickness){
- const shape=[segOnly?[...segOnly].join():'',customImg?customId:0,$('base').value,fullOrder().join(','),$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,$('headphones').value,thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
+ const shape=[segOnly?[...segOnly].join():'',customImg?customId:0,$('base').value,fullOrder().join(','),$('hat').value,$('banana').value,$('bandana').value,$('fingerpainter').value,$('dog').value,$('headphones').value,extras.join(),cosPending?cosPending.key:'',thickness,imgsLoaded,itemsKey()].join('|'),col=$('outlineColor').value;
  if(shape!==maskKey){maskKey=shape;outKey='';maskX.clearRect(0,0,1024,1024);const T=thickness*1.5;
   for(const rad of [T,T*.5]){const n=48;for(let i=0;i<n;i++){const an=i/n*Math.PI*2;maskX.drawImage(figC,Math.cos(an)*rad,Math.sin(an)*rad)}}}
  if(shape+col!==outKey){outKey=shape+col;outX.globalCompositeOperation='source-over';outX.clearRect(0,0,1024,1024);outX.drawImage(maskC,0,0);
@@ -3044,6 +3155,7 @@ document.addEventListener('keydown',e=>{
 function captureState(){const o={};STATE_IDS.forEach(id=>{const e=$(id);o[id]=e.type==='checkbox'?e.checked:e.value});o.bgStyle=bgStyle==='image'?'solid':bgStyle;
  if(layerOrder)o.layers=fullOrder().filter(k=>BUILTIN_LAYERS.includes(k)); // your own items aren't saved in designs
  if(customFace.on)o.face={...customFace}; // 🗣️ your own talking face position
+ if(extras.length)o.extras=extras.slice(); // ✨ more cosmetics you're wearing
  return o}
 function applyState(o){
  if(!o||typeof o!=='object')return;
@@ -3057,6 +3169,7 @@ function applyState(o){
   else if(e.tagName==='SELECT'){if([...e.options].some(op=>op.value===v))e.value=v}
   else if(typeof v==='string')e.value=v.slice(0,+e.maxLength>0?+e.maxLength:40)});
  bgStyle=BGS.some(b=>b.id===o.bgStyle)?o.bgStyle:'solid';
+ extras=Array.isArray(o.extras)?[...new Set(o.extras.filter(x=>typeof x==='string'&&COS_RE.test(x)))].slice(0,30):[];if(typeof renderCosList==='function')renderCosList();
  const L=o.layers;layerOrder=Array.isArray(L)&&L.every(k=>BUILTIN_LAYERS.includes(k))&&OLD_LAYERS.every(k=>L.includes(k))?L.slice():null;
  $('outlineVal').textContent=$('outline').value;$('glowVal').textContent=$('glow').value;
  customFace=faceSane(o.face&&typeof o.face==='object'?o.face:null);if(!customFace.on)faceEdit=false;if(typeof syncFaceUi==='function')syncFaceUi();
@@ -3502,6 +3615,7 @@ $('download').onclick=()=>{faceEditOff();drawNow();let a=document.createElement(
 // The gallery stays hidden until the two values below are filled in. The key is the "anon public" key: it's meant
 // to be public, and the database rules in setup.sql decide what each person is allowed to do.
 const GALLERY={url:'https://qdmudfyxknsluanhjwur.supabase.co',key:'sb_publishable_G0WaMySirJ0XGmtmwW8Hww_AioW5kCM'};
+loadCosmetics(); // ✨ more cosmetics, for everyone
 // Accounts use a username instead of an email. Supabase still needs an email-shaped login, so one is made from the
 // username with this made-up domain. No emails are ever sent to it.
 const ACCOUNT_DOMAIN='users.monke-icon-maker.app';
@@ -4142,6 +4256,54 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   $('sendTitleIn').value='Monke Icon Maker '+(v?v+' ':'')+'is here! 🎉';$('sendBody').value=li?li.textContent.replace(/\s+/g,' ').trim().slice(0,160):'';$('sendMsg').textContent='';$('sendPop').hidden=false;
  };
  $('sendCancel').onclick=()=>{$('sendPop').hidden=true};
+
+ // ── ➕ Admin: add a cosmetic for everyone from two pictures (on the monke, and by itself) ──
+ let cosPic1=null,cosPic2=null,cosFound=null;
+ const cosM=t=>{$('cosMsg').textContent=t};
+ function cosPreview(){if(!cosFound){cosPending=null;$('cosPrevWrap').hidden=true;drawNow();return}
+  cosPending={img:cosFound.crop,x:cosFound.x,y:cosFound.y,w:cosFound.w,h:cosFound.h,slot:$('cosSlot').value,name:$('cosName').value.trim()||'New cosmetic'};
+  cosPending.key=[cosPending.x,cosPending.y,cosPending.w,cosPending.h,cosPending.slot,cosFound.n].join();
+  drawNow();const pc=$('cosPrev'),x=pc.getContext('2d');x.clearRect(0,0,512,512);x.drawImage(canvas,0,0,512,512);$('cosPrevWrap').hidden=false}
+ function cosCheck(){$('cosSave').disabled=!(cosFound&&$('cosName').value.trim())}
+ const cosLoad=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('bad'))};im.src=u});
+ async function cosPick(n,inp){const f=inp.files&&inp.files[0];if(!f)return;
+  try{const im=await cosLoad(f);if(n===1)cosPic1=im;else cosPic2=im;inp.closest('label').classList.add('done');$(n===1?'cosF1Lbl':'cosF2Lbl').textContent=(n===1?'1️⃣ ':'2️⃣ ')+'✅ '+f.name.slice(0,30)}
+  catch(e){cosM("That picture couldn't be opened. Try a PNG.");return}
+  if(!cosPic1||!cosPic2){cosM(cosPic1?'Now add picture 2: the cosmetic by itself.':'Now add picture 1: the cosmetic on the monke.');return}
+  cosM('🔎 Lining it up…');await new Promise(r=>setTimeout(r,30));
+  const r=cosFind(cosPic1,cosPic2);
+  if(!r){cosFound=null;cosM("Couldn't find anything in picture 2. Is it blank?");cosPreview();cosCheck();return}
+  cosFound={...r,n:Date.now()};cosPreview();cosCheck();
+  cosM(r.score>45?"⚠️ It might not be lined up right. Check the preview and use the arrows to fix it.":'✅ Lined up. Check the preview, then save.')}
+ $('cosF1').onchange=e=>cosPick(1,e.target);$('cosF2').onchange=e=>cosPick(2,e.target);
+ $('cosName').oninput=cosCheck;$('cosSlot').onchange=cosPreview;
+ document.querySelectorAll('#cosPrevWrap [data-n]').forEach(b=>b.onclick=()=>{if(!cosFound)return;const n=b.dataset.n,f=cosFound;
+  if(n==='l')f.x-=4;if(n==='r')f.x+=4;if(n==='u')f.y-=4;if(n==='d')f.y+=4;
+  if(n==='+'||n==='-'){const k=n==='+'?1.02:1/1.02,cx=f.x+f.w/2,cy=f.y+f.h/2;f.w=Math.max(2,Math.round(f.w*k));f.h=Math.max(2,Math.round(f.h*k));f.x=Math.round(cx-f.w/2);f.y=Math.round(cy-f.h/2)}
+  f.n=Date.now();cosPreview()});
+ function cosReset(){cosPic1=cosPic2=cosFound=null;['cosF1','cosF2'].forEach(i=>{$(i).value='';$(i).closest('label').classList.remove('done')});
+  $('cosF1Lbl').innerHTML='1️⃣ The cosmetic <b>on the monke</b>';$('cosF2Lbl').innerHTML='2️⃣ The cosmetic <b>by itself</b>';$('cosName').value='';cosM('');cosPreview();cosCheck()}
+ function cosAdminList(){const L=$('cosAdminList');L.innerHTML='';if(!cosmetics.length){L.textContent='None yet.';return}
+  cosmetics.forEach(c=>{const row=el('div','cos-row'),im=el('img');im.alt='';im.crossOrigin='anonymous';im.src=cosUrl(c.image_path);const n=el('span');n.textContent=c.name;
+   const del=el('button','btn small');del.type='button';del.textContent='🗑️ Delete';del.onclick=async()=>{if(!confirm('Delete “'+c.name+'” for everyone? People wearing it will lose it.'))return;
+    del.disabled=true;const {error}=await sb.from('cosmetics').delete().eq('id',c.id);if(error){del.disabled=false;return alert(friendly(error))}
+    sb.storage.from('icons').remove([c.image_path]).catch(()=>{});extras=extras.filter(x=>x!==c.id);await loadCosmetics();cosAdminList()};
+   row.append(im,n,del);L.appendChild(row)})}
+ function cosClose(){$('cosPop').hidden=true;cosReset()}
+ $('cosAddBtn').onclick=()=>{$('setPop').hidden=true;cosReset();$('cosPop').hidden=false;cosAdminList();$('cosName').focus()};
+ $('cosClose').onclick=$('cosCancel').onclick=cosClose;
+ $('cosSave').onclick=async()=>{const name=$('cosName').value.trim(),f=cosFound,go=$('cosSave');if(!f||!name||!me)return;
+  go.disabled=true;cosM('Saving…');let path=null;
+  try{// stored at the size it's drawn (never bigger than you drew it), small enough for the 1MB limit
+   let k=Math.min(1,f.w/f.crop.width),blob=null;
+   for(let t=0;t<6;t++){const w=Math.max(1,Math.round(f.crop.width*k)),h=Math.max(1,Math.round(f.crop.height*k));blob=await toBlob(f.crop,w,h,'image/webp',.92);if(blob&&blob.size<950000)break;k*=.8}
+   if(!blob||blob.size>=950000)throw new Error('That picture is too big. Try a smaller one.');
+   path=me.id+'/cosmetics/'+Date.now().toString(36)+'.webp';
+   const up=await sb.storage.from('icons').upload(path,blob,{contentType:'image/webp',upsert:false});if(up.error)throw up.error;
+   const {error}=await sb.from('cosmetics').insert({name,slot:$('cosSlot').value,image_path:path,x:f.x,y:f.y,w:f.w,h:f.h});
+   if(error){sb.storage.from('icons').remove([path]).catch(()=>{});throw /relation|does not exist|schema cache/i.test(error.message)?new Error('Run supabase/update-24-cosmetics.sql in Supabase first.'):error}
+   await loadCosmetics();cosReset();cosAdminList();cosM('🎉 “'+name+'” is out! It\'s in 🎩 Accessories → ✨ More cosmetics.');
+  }catch(e){cosM(e.message&&!e.code&&!e.status?e.message:friendly(e));go.disabled=false}};
  $('sendGo').onclick=async()=>{
   const title=$('sendTitleIn').value.trim(),body=$('sendBody').value.trim(),m=$('sendMsg'),go=$('sendGo');if(!title){m.textContent='Add a title.';return}
   go.disabled=true;m.textContent='Sending…';
