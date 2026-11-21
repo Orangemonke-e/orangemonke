@@ -160,6 +160,11 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .cos-admin{display:flex;flex-direction:column;gap:6px}
 .cos-row{display:flex;align-items:center;gap:8px;font-size:13px}.cos-row img{width:36px;height:36px;object-fit:contain;background:var(--panel2);border-radius:8px}.cos-row span{flex:1}
 .preset-io{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.preset-io label{cursor:pointer}
+.rec-bar{position:fixed;z-index:86;left:16px;bottom:16px;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 30px #0005}.rec-bar[hidden]{display:none}
+.rec-dot{width:12px;height:12px;border-radius:50%;background:#e53935;animation:recBlink 1s steps(2) infinite}.rec-bar.paused .rec-dot{animation:none;background:#999}
+@keyframes recBlink{50%{opacity:.25}}
+#recPrev{display:block;width:100%;height:auto;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#000}
+.rec-done{margin-top:12px}#recSave{text-decoration:none;text-align:center}#recBox.done #recPrev,#recBox.done #recGo{display:none}.rec-done[hidden]{display:none}.rec-done video{display:block;width:100%;border-radius:12px;background:#000}
 .req-tag{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px;white-space:nowrap}
 .om-req{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;margin-top:4px}
 .om-reqbox{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;cursor:pointer}.om-reqbox input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent)}
@@ -508,6 +513,22 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <button type="button" class="btn primary" id="bannerDl" style="width:100%;margin-top:12px;padding:12px">⬇ Download channel banner (PNG)</button>
  </div>
  <button type="button" class="btn" id="liveOpenBtn" style="width:100%;margin-top:8px;padding:12px" title="Your monke moves its mouth when you talk into your mic. Great for OBS!">🎙️ Live PNGtuber (talks with your mic)</button>
+ <button type="button" class="btn" id="recOpenBtn" style="width:100%;margin-top:8px;padding:12px" title="Record a video of you making your icon. Only the icon is recorded, not your screen.">🎥 Record a video of making your icon</button>
+ <div class="banner-box" id="recBox" hidden>
+  <div class="setup-head"><strong>🎥 Record making your icon</strong><button type="button" class="btn small" id="recClose">Close</button></div>
+  <p class="hint">Press Record, then make your icon as normal. Only the maker is recorded: your icon, with a caption for each change you make (like “🎩 Head accessory: Crown”). Nothing else on your screen is recorded.</p>
+  <div class="row">
+   <div class="field"><label for="recShape">Video shape</label><select id="recShape"><option value="wide" selected>Wide 16:9 (YouTube videos)</option><option value="tall">Tall 9:16 (Shorts, TikTok)</option><option value="square">Square 1:1</option></select></div>
+   <div class="field"><label for="recTitle">Title on the video (optional)</label><input id="recTitle" type="text" maxlength="40" placeholder="e.g. Making my monke icon"></div>
+  </div>
+  <label class="toggle" style="margin-top:10px"><input type="checkbox" id="recMic"> 🎙️ Record my voice too (asks to use your mic)</label>
+  <label class="toggle"><input type="checkbox" id="recCaps" checked> 💬 Show a caption for each change</label>
+  <canvas id="recPrev" width="1280" height="720"></canvas>
+  <div class="install-btns" style="margin-top:10px"><button type="button" class="btn primary" id="recGo">⏺️ Start recording</button></div>
+  <div class="rec-done" id="recDone" hidden><video id="recVideo" controls playsinline></video>
+   <div class="install-btns"><button type="button" class="btn" id="recAgain">🔁 Record again</button><a class="btn primary" id="recSave" download>⬇️ Download video</a></div>
+   <div class="note" id="recNote"></div></div>
+ </div>
  <button type="button" class="btn" id="talkOpenBtn" style="width:100%;margin-top:8px;padding:12px">🗣️ Make a talking GIF (PNGtuber)</button>
  <div class="banner-box" id="talkBox" hidden>
   <div class="setup-head"><strong>🗣️ Talking GIF</strong><button type="button" class="btn small" id="talkClose">Close</button></div>
@@ -636,6 +657,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="omBody"></div>
  </div>
 </div>
+<div class="rec-bar" id="recBar" hidden role="status"><span class="rec-dot"></span><b id="recTime">0:00</b><button type="button" class="btn small" id="recPause">⏸️ Pause</button><button type="button" class="btn small primary" id="recStop">⏹️ Stop</button></div>
 <div class="upd-bar" id="updBar" hidden role="status"><span id="updText">🆕 A new update is out!</span><button type="button" class="btn small primary" id="updGo">Reload</button><button type="button" class="btn small" id="updNo" aria-label="Not now">✕</button></div>
 <div class="tour-invite" id="tourInvite" hidden role="dialog" aria-labelledby="tourInviteTitle"><b id="tourInviteTitle">👋 New here?</b><p>Take a 1-minute tour of everything you can make.</p><div><button type="button" class="btn small primary" id="tourYes">🎓 Show me around</button><button type="button" class="btn small" id="tourNo">No thanks</button></div></div>
 <div class="install-backdrop" id="setPop" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
@@ -649,7 +671,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
    <div class="set-checks" id="setShow">
     <label><input type="checkbox" data-hide="describe" checked> ✨ Describe your icon</label>
     <label><input type="checkbox" data-hide="ytprev" checked> ⭕ How it looks on YouTube</label>
-    <label><input type="checkbox" data-hide="makers" checked> 📺 Banner, 🎬 thumbnail, 🗣️ talking GIF and 🎙️ live makers</label>
+    <label><input type="checkbox" data-hide="makers" checked> 📺 Banner, 🎬 thumbnail, 🗣️ talking GIF, 🎙️ live and 🎥 video makers</label>
     <label><input type="checkbox" data-hide="trailer" checked> 🎬 Trailer button</label>
     <label><input type="checkbox" data-hide="notes" checked> 📝 Update notes</label>
    </div></div>
@@ -674,7 +696,14 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v121 <span class="tag new">New</span><span class="date" data-time="2026-11-21T13:55:45Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v122 <span class="tag new">New</span><span class="date" data-time="2026-11-21T15:46:41Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎥 Record a video of making your icon: press Record, make your icon, then download the video. Only the maker is recorded, never the rest of your screen. Each change gets a caption, like “🎩 Head accessory: Crown”.</li>
+   <li>Pick wide 16:9 for YouTube, tall 9:16 for Shorts, or square, add a title, and record your voice too if you like. You can pause in the middle.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v121<span class="date" data-time="2026-11-21T13:55:45Z">21 Nov 2026</span></summary>
   <h3>Changed</h3>
   <ul>
    <li>↺ Reset design now also takes off ✨ More cosmetics and turns ⚫ Plain eyes off. Undo brings them back.</li>
@@ -3367,6 +3396,85 @@ $('presetSave').onclick=async()=>{
  else{if(entry.files)PDB.del(entry.id);presetMsg('Could not save. The browser storage may be full or blocked.')}
 };
 $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave').click()});
+// 🎥 Record making your icon: a video drawn by the site itself (no screen recording), showing your icon as it changes,
+// with a caption for each change. Uses the browser's own video recorder, so it works offline and asks for nothing
+// unless you turn on your voice.
+(()=>{if(LIVE||!$('recGo'))return;
+ const SHAPES={wide:[1280,720],tall:[720,1280],square:[1080,1080]},MAX_MS=15*60*1000;
+ const pv=$('recPrev'),out=mk(1280,720),ox=out.getContext('2d');
+ let nameSaid='',rec=null,chunks=[],mic=null,tick=0,started=0,pausedAt=0,pausedFor=0,last=null,caps=[],lastUrl=null;
+ const mime=()=>{if(!window.MediaRecorder)return null;for(const m of ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'])if(MediaRecorder.isTypeSupported(m))return m;return ''};
+ // what each setting is called, taken from its label on the page
+ const label=id=>{const l=document.querySelector('label[for="'+id+'"]');return l?(l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent:l.textContent).trim():id};
+ const ICON={base:'🐒',fur:'🎨',face:'🎨',eyes:'👀',plainEyes:'⚫',background:'🖼️',transparent:'🖼️',hat:'🎩',hatColor:'🎨',banana:'🍌',bandana:'🧣',fingerpainter:'🏅',dog:'🐶',headphones:'🎧',haloColor:'😇',glowColor:'😇',glow:'😇',outline:'✏️',outlineColor:'✏️',name:'🏷️'};
+ const snap=()=>({st:captureState(),bg:bgStyle,it:items.length,ik:itemsKey(),bgi:bgImg?bgImgId:0,cu:customImg?customId:0,lo:layerOrder?fullOrder().join():''});
+ function say(text,col){caps.push({text,col,t:performance.now()});if(caps.length>3)caps.shift()}
+ function diff(a,b){
+  for(const id of STATE_IDS){const x=a.st[id],y=b.st[id];if(String(x)===String(y))continue;const e=$(id),ic=ICON[id]||'✨',name=id==='plainEyes'?'Plain eyes':id==='transparent'?'Transparent background':label(id);
+   if(e.type==='color')say(ic+' '+name,y);else if(e.type==='checkbox')say(ic+' '+name+': '+(y?'on':'off'));else if(e.tagName==='SELECT'){const o=[...e.options].find(o=>o.value===y);say(ic+' '+name+': '+(o?o.textContent.replace(/\s*\(.*\)$/,''):y))}
+   else if(id==='name')continue;else say(ic+' '+name+': '+y)}
+  const nm=String(b.st.name||'');if(!recTyping&&nm!==nameSaid){nameSaid=nm;say('🏷️ Name tag: '+(nm||'none'))} // once you've finished typing
+  const ea=a.st.extras||[],eb=b.st.extras||[];eb.filter(x=>!ea.includes(x)).forEach(x=>{const c=cosmetics.find(c=>c.id===x);if(c)say('✨ Wearing '+c.name)});ea.filter(x=>!eb.includes(x)).forEach(x=>{const c=cosmetics.find(c=>c.id===x);if(c)say('✨ Took off '+c.name)});
+  if(a.bg!==b.bg||a.bgi!==b.bgi){const g=BGS.find(g=>g.id===b.bg);say('🖼️ Background: '+(b.bg==='image'?'my own picture':g?g.name:b.bg))}
+  if(a.it!==b.it)say(b.it>a.it?'🧸 Added an item':'🧸 Removed an item');else if(a.ik!==b.ik&&!caps.some(c=>c.text==='🧸 Moving an item'&&performance.now()-c.t<2500))say('🧸 Moving an item');
+  if(a.cu!==b.cu)say(b.cu?'🐒 Uploaded my own monke':'🐒 Back to the normal monke');
+  if(a.lo!==b.lo&&a.it===b.it)say('🗂️ Changed the layers');
+  if(JSON.stringify(a.st.face||0)!==JSON.stringify(b.st.face||0))say('🗣️ Moved the talking face');
+ }
+ let recTyping=false;$('name').addEventListener('focus',()=>{recTyping=true});$('name').addEventListener('blur',()=>{recTyping=false});
+ const rr=(c,x,y,w,h,r)=>{c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()};
+ function paint(c,W,H,live){
+  const g=c.createLinearGradient(0,0,W,H);g.addColorStop(0,'#141722');g.addColorStop(1,'#262036');c.fillStyle=g;c.fillRect(0,0,W,H);
+  const title=$('recTitle').value.trim(),tall=H>W,sq=W===H;
+  const top=title?(tall?150:sq?110:90):(tall?110:40),capH=$('recCaps').checked?(tall?250:sq?170:140):40;
+  const S=Math.min(W-(tall?60:80),H-top-capH),x=(W-S)/2,dy=Math.max(0,(H-top-S-capH)/2),y=top+dy; // centred up and down (tall videos have room to spare)
+  if(title){c.fillStyle='#fff';c.font='800 '+(tall?52:sq?50:44)+'px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(title,W/2,dy+top/2+(tall?20:4),W-60)}
+  c.save();rr(c,x,y,S,S,S*.06);c.clip();
+  if($('transparent').checked){const n=16,k=S/n;for(let i=0;i<n;i++)for(let j=0;j<n;j++){c.fillStyle=(i+j)%2?'#2a2d38':'#343846';c.fillRect(x+i*k,y+j*k,k+1,k+1)}}
+  c.drawImage(canvas,x,y,S,S);c.restore();
+  // captions: newest at the bottom, fading out after a few seconds
+  if($('recCaps').checked){const now=performance.now(),fs=tall?40:sq?38:32;c.font='700 '+fs+'px system-ui,sans-serif';c.textAlign='center';c.textBaseline='middle';
+   let yy=Math.min(H-fs*1.2,y+S+capH*.62);const vis=caps.filter(o=>now-o.t<3500).slice(-(tall?3:2)).reverse();
+   for(const o of vis){const a=Math.min(1,(3500-(now-o.t))/600,(now-o.t)/150);c.globalAlpha=Math.max(0,a);
+    const tw=Math.min(W-60,c.measureText(o.text).width+(o.col?fs*1.6:0)+fs*1.4),bx=W/2-tw/2,bh=fs*1.6;
+    c.fillStyle='#000000b0';rr(c,bx,yy-bh/2,tw,bh,bh/2);c.fill();
+    if(o.col){c.fillStyle=o.col;c.beginPath();c.arc(bx+fs*.95,yy,fs*.42,0,Math.PI*2);c.fill();c.strokeStyle='#fff';c.lineWidth=3;c.stroke()}
+    c.fillStyle='#fff';c.fillText(o.text,W/2+(o.col?fs*.6:0),yy+1,tw-fs);yy-=bh*1.15}
+   c.globalAlpha=1}
+  c.font='600 '+(tall?24:20)+'px system-ui,sans-serif';c.textAlign='right';c.textBaseline='alphabetic';c.fillStyle='#ffffff70';c.fillText('Made with Monke Icon Maker',W-20,H-16);
+ }
+ function size(){const [W,H]=SHAPES[$('recShape').value]||SHAPES.wide;pv.width=out.width=W;pv.height=out.height=H}
+ function frame(){if(rec&&rec.state==='recording'){const s=snap();if(last)diff(last,s);last=s;const t=Date.now()-started-pausedFor;$('recTime').textContent=Math.floor(t/60000)+':'+String(Math.floor(t/1000)%60).padStart(2,'0');if(t>MAX_MS)stop()}
+  paint(ox,out.width,out.height,true);if(!$('recBox').hidden)pv.getContext('2d').drawImage(out,0,0)}
+ function preview(){size();paint(pv.getContext('2d'),pv.width,pv.height)}
+ ['recShape','recTitle','recCaps'].forEach(id=>$(id).addEventListener('input',()=>{if(!rec)preview()}));
+ $('recOpenBtn').onclick=()=>{$('recBox').hidden=false;$('recOpenBtn').hidden=true;preview();
+  if(mime()===null){$('recGo').disabled=true;$('recNote').textContent='';$('recGo').textContent="This browser can't record video"}};
+ $('recClose').onclick=()=>{if(rec)return toast('Stop the recording first.');$('recBox').hidden=true;$('recOpenBtn').hidden=false};
+ $('recGo').onclick=async()=>{const m=mime();if(m===null)return;size();chunks=[];caps=[];last=snap();
+  const stream=out.captureStream(30);
+  if($('recMic').checked){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});mic.getAudioTracks().forEach(t=>stream.addTrack(t))}
+   catch(e){mic=null;toast("🎙️ Couldn't use your mic, so the video has no sound.")}}
+  try{rec=new MediaRecorder(stream,m?{mimeType:m,videoBitsPerSecond:3e6}:{videoBitsPerSecond:3e6})}catch(e){rec=new MediaRecorder(stream)}
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};rec.onstop=done;
+  nameSaid=String($('name').value.trim()?captureState().name:'');started=Date.now();pausedFor=0;rec.start(1000);say('🎬 Let\'s make a monke!');
+  tick=setInterval(frame,1000/30);frame();
+  $('recBar').hidden=false;$('recBar').classList.remove('paused');$('recPause').textContent='⏸️ Pause';$('recGo').disabled=true;$('recDone').hidden=true;
+  ['recShape','recTitle','recMic','recCaps'].forEach(id=>$(id).disabled=true);toast('⏺️ Recording! Make your icon, then press Stop.')};
+ $('recPause').onclick=()=>{if(!rec)return;if(rec.state==='recording'){rec.pause();pausedAt=Date.now();$('recBar').classList.add('paused');$('recPause').textContent='▶️ Resume'}
+  else if(rec.state==='paused'){pausedFor+=Date.now()-pausedAt;last=snap();rec.resume();$('recBar').classList.remove('paused');$('recPause').textContent='⏸️ Pause'}};
+ function stop(){if(!rec||rec.state==='inactive')return;if(rec.state==='paused')pausedFor+=Date.now()-pausedAt;say('✅ Done!');frame();setTimeout(()=>{try{rec.stop()}catch(e){}},700)}
+ $('recStop').onclick=stop;
+ function done(){clearInterval(tick);tick=0;if(mic){mic.getTracks().forEach(t=>t.stop());mic=null}
+  const type=(rec.mimeType||'video/webm').split(';')[0],ext=type.includes('mp4')?'mp4':'webm',blob=new Blob(chunks,{type});rec=null;chunks=[];
+  if(lastUrl)URL.revokeObjectURL(lastUrl);lastUrl=URL.createObjectURL(blob);
+  $('recVideo').src=lastUrl;$('recSave').href=lastUrl;$('recSave').download=(fileName().replace(/\.png$/,'')||'my-monke')+'-making-of.'+ext;
+  $('recNote').textContent=(ext==='webm'?'Saved as a WebM video. YouTube, CapCut and most editors open it. ':'')+'The video stays on your device until you download it.';
+  $('recBar').hidden=true;$('recGo').disabled=false;['recShape','recTitle','recMic','recCaps'].forEach(id=>$(id).disabled=false);
+  $('recBox').hidden=false;$('recOpenBtn').hidden=true;$('recDone').hidden=false;$('recBox').classList.add('done');$('recDone').scrollIntoView({behavior:'smooth',block:'center'})}
+ $('recAgain').onclick=()=>{$('recDone').hidden=true;$('recBox').classList.remove('done');preview();$('recGo').scrollIntoView({behavior:'smooth',block:'center'})};
+ window.addEventListener('beforeunload',e=>{if(rec){e.preventDefault();e.returnValue=''}});
+})();
 // 📤📥 Export / import presets: one file with every preset and its pictures, so they can move to another browser,
 // device or web address (each address keeps its own saved data), or be kept as a backup.
 const blobUrl=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r(null);fr.readAsDataURL(b)});
@@ -4800,10 +4908,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
 })();
 // 🏠 Homepage settings: hide sections you don't use (remembered on this device), and only the 3 newest update notes by default.
 (function(){
- const KEY='mim_hidden_v1',PARTS={describe:['describeSec'],ytprev:['ytPrevBox'],makers:['bannerOpen','thumbOpen','bannerBox','thumbBox','talkOpenBtn','talkBox','liveOpenBtn'],trailer:['trailerBtn'],notes:['update-notes']};
+ const KEY='mim_hidden_v1',PARTS={describe:['describeSec'],ytprev:['ytPrevBox'],makers:['bannerOpen','thumbOpen','bannerBox','thumbBox','talkOpenBtn','talkBox','liveOpenBtn','recOpenBtn','recBox'],trailer:['trailerBtn'],notes:['update-notes']};
  let hidden=[];try{hidden=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
  function apply(){for(const k in PARTS)PARTS[k].forEach(id=>{const e=$(id);if(e)e.classList.toggle('user-hidden',hidden.includes(k))});
-  if(hidden.includes('makers'))['bannerBox','thumbBox','talkBox'].forEach(id=>{if(!$(id).hidden)$(id.replace('Box','Close')).click()});
+  if(hidden.includes('makers'))['bannerBox','thumbBox','talkBox','recBox'].forEach(id=>{if(!$(id).hidden)$(id.replace('Box','Close')).click()});
   document.querySelectorAll('#setShow input').forEach(c=>c.checked=!hidden.includes(c.dataset.hide))}
  document.querySelectorAll('#setShow input').forEach(c=>c.onchange=()=>{const k=c.dataset.hide;hidden=hidden.filter(x=>x!==k);if(!c.checked)hidden.push(k);
   try{localStorage.setItem(KEY,JSON.stringify(hidden))}catch(e){}apply()});
