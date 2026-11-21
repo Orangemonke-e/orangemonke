@@ -582,7 +582,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div class="set-top"><h2 id="cosTitle">➕ Add a cosmetic</h2><button type="button" class="btn small" id="cosClose" aria-label="Close">✕</button></div>
   <div class="set-sec"><p class="hint" style="margin:0 0 12px">It appears for everyone in 🎩 Accessories → ✨ More cosmetics.</p>
   <label class="field cos-f"><span>Name</span><input id="cosName" type="text" maxlength="40" placeholder="e.g. Pirate hat" autocomplete="off"></label>
-  <label class="field cos-f"><span>Where it goes</span><select id="cosSlot"><option value="head">On the head</option><option value="body">On the body</option><option value="other">Somewhere else</option></select></label>
+  <label class="field cos-f"><span>Where it goes</span><select id="cosSlot"><option value="head">On the head</option><option value="body">On the body</option><option value="other">Somewhere else (stays still when the monke talks)</option></select></label>
   <div class="cos-files">
    <label class="upload cos-up"><span id="cosF1Lbl">1️⃣ The cosmetic <b>on the monke</b></span><input id="cosF1" type="file" accept="image/png,image/webp,image/jpeg"></label>
    <label class="upload cos-up"><span id="cosF2Lbl">2️⃣ The cosmetic <b>by itself</b></span><input id="cosF2" type="file" accept="image/png,image/webp,image/jpeg"></label>
@@ -671,7 +671,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v117 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:33:41Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v118 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:35:14Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing new to add in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>✨ More cosmetics that go “somewhere else” (like Orangemonke Jr.) now stay still in 🗣️ talking GIFs and the 🎙️ Live PNGtuber, instead of shaking with the monke. Ones on the head or body still move with it.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v117<span class="date" data-time="2026-11-21T11:33:41Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing new to add in this update.</li>
@@ -2694,7 +2708,8 @@ const BUILTIN_LAYERS=['monke','headphones','banana','hat','extras','bandana','ba
 // ✨ More cosmetics: drawn by Orangemonke and added from the website (⚙️ Settings → 🛡️ Admin). Everyone can wear them.
 // Each one is a picture placed at x/y/w/h in the base art's 2048×1152 coordinates, like the built-in accessories.
 const COS_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,LS_COS='mim_cosmetics_v1';
-let cosmetics=[],extras=[],cosPending=null,cosEditing=null; // cosEditing: the id being edited (hidden while you move it) // cosPending: the one being added, shown on the preview only
+let cosmetics=[],extras=[],cosPending=null,cosEditing=null,cosNoStill=false; // cosNoStill: leave out the "somewhere else" ones (they're their own still slice when talking)
+ // cosEditing: the id being edited (hidden while you move it) // cosPending: the one being added, shown on the preview only
 const cosUrl=path=>GALLERY.url+'/storage/v1/object/public/icons/'+path.split('/').map(encodeURIComponent).join('/');
 function cosSane(r){return r&&COS_RE.test(r.id)&&typeof r.name==='string'&&typeof r.image_path==='string'&&['head','body','other'].includes(r.slot)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)}
 function setCosmetics(rows){const old=new Map(cosmetics.map(c=>[c.id,c]));
@@ -2800,7 +2815,7 @@ function drawPart(c,k,m){
    if(badge==='creator')drawLayer(creatorImg,CREATOR_BOX,false,c);
    if(badge==='camera')drawLayer(cameraImg,CAMERA_BOX,false,c)}}
  else if(k==='headphones'){headFit(c);drawLayer(headphonesArt(),HEADPHONES_BOX,false,c)}
- else if(k==='extras')cosWorn().forEach(cos=>drawCosmetic(c,cos));
+ else if(k==='extras')cosWorn().forEach(cos=>{if(!(cosNoStill&&cos.slot==='other'))drawCosmetic(c,cos)});
  else if(k==='dog'){const dog=$('dog').value;if(dog==='right')drawLayer(dogImg,DOG_BOX_R,false,c);if(dog==='left')drawLayer(dogImg,DOG_BOX_L,true,c)}
  else{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(c,it)}
  c.restore();
@@ -3527,16 +3542,19 @@ document.getElementById('undoBtn').onclick=undo;document.getElementById('redoBtn
   // 📌 Slices in the exact layer order: runs of parts that move (monke, accessories, items) and runs of items that stay still.
   // A moving slice has a closed, open and scream version (only the one with the monke actually changes).
   const order=fullOrder().filter(k=>layerOn(k)),segs=[];let hasStill=false;
-  for(const k of order){const it=k.startsWith('item:')&&items.find(i=>'item:'+i.id===k),still=!!(it&&it.still);if(still)hasStill=true;
+  // ✨ cosmetics set to "somewhere else" stay still too, like a 📌 item (head and body ones move with the monke)
+  const worn=cosWorn(),flat=[];for(const k of order){if(k!=='extras'){flat.push(k);continue}
+   if(worn.some(c=>c.slot!=='other'))flat.push('extras');if(worn.some(c=>c.slot==='other'))flat.push('extras:still')}
+  for(const k of flat){const it=k.startsWith('item:')&&items.find(i=>'item:'+i.id===k),still=!!(it&&it.still)||k==='extras:still';if(still)hasStill=true;
    const last=segs[segs.length-1];if(last&&last.still===still)last.keys.push(k);else segs.push({still,keys:[k]})}
   if(!segs.some(g=>!g.still))segs.push({still:false,keys:['monke']});
-  tr.checked=true;hideStill=true;
+  tr.checked=true;hideStill=true;cosNoStill=true;
   for(const g of segs){
-   if(g.still){const c=mk(1024),x=c.getContext('2d');g.keys.forEach(k=>{const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(x,it)});g.c=c;continue}
+   if(g.still){const c=mk(1024),x=c.getContext('2d');g.keys.forEach(k=>{if(k==='extras:still'){worn.filter(o=>o.slot==='other').forEach(o=>drawCosmetic(x,o));return}const it=items.find(i=>'item:'+i.id===k);if(it)drawItem(x,it)});g.c=c;continue}
    segOnly=new Set(g.keys);talkOpen=false;talkScream=false;talkMax=false;drawNow();g.c=grab();g.o=g.s=g.x=g.c;
    if(can&&!own&&g.keys.includes('monke')){talkOpen=true;drawNow();g.o=grab();talkOpen=false;if(screamImg.naturalWidth||customImg){talkScream=true;drawNow();g.s=grab();talkScream=false}else g.s=g.o;
     if(maxImg.naturalWidth&&!customImg){talkMax=true;drawNow();g.x=grab();talkMax=false}else g.x=g.s}}
-  segOnly=null;hideStill=false;tr.checked=was;drawNow();
+  segOnly=null;hideStill=false;cosNoStill=false;tr.checked=was;drawNow();
   // your own mouth and eyes: their own moving layer, on top of everything
   if(own){const e=mk(1024),o=mk(1024),sc=mk(1024),mx=mk(1024);drawFace(o.getContext('2d'),'open');drawFace(sc.getContext('2d'),'scream');drawFace(mx.getContext('2d'),'max');segs.push({still:false,keys:[],c:e,o,s:sc,x:mx})}
   const bg=mk(1024);bg.getContext('2d').drawImage(bgLayer(),0,0);
