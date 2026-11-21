@@ -164,7 +164,10 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .rec-dot{width:12px;height:12px;border-radius:50%;background:#e53935;animation:recBlink 1s steps(2) infinite}.rec-bar.paused .rec-dot{animation:none;background:#999}
 @keyframes recBlink{50%{opacity:.25}}
 #recPrev{display:block;width:100%;height:auto;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#000}
-.rec-done{margin-top:12px}#recSave{text-decoration:none;text-align:center}#recBox.done #recPrev,#recBox.done #recGo{display:none}.rec-done[hidden]{display:none}.rec-done video{display:block;width:100%;border-radius:12px;background:#000}
+.share-vid{display:flex;align-items:center;gap:10px;margin-top:8px;padding:6px 8px;border:1px solid var(--accent);border-radius:12px;font-size:13px}.share-vid[hidden]{display:none}.share-vid video{width:72px;height:auto;border-radius:8px;background:#000}.share-vid span{flex:1}
+.pvid{width:100%;margin-bottom:6px}
+.vid-card{max-width:760px}.vid-card video{display:block;width:100%;max-height:70vh;border-radius:12px;background:#000}
+.rec-done{margin-top:12px}#recBox.done #recPrev,#recBox.done #recGo{display:none}.rec-done[hidden]{display:none}.rec-done video{display:block;width:100%;border-radius:12px;background:#000}
 .req-tag{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px;white-space:nowrap}
 .om-req{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;margin-top:4px}
 .om-reqbox{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;cursor:pointer}.om-reqbox input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent)}
@@ -516,7 +519,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  <button type="button" class="btn" id="recOpenBtn" style="width:100%;margin-top:8px;padding:12px" title="Record a video of you making your icon. Only the icon is recorded, not your screen.">🎥 Record a video of making your icon</button>
  <div class="banner-box" id="recBox" hidden>
   <div class="setup-head"><strong>🎥 Record making your icon</strong><button type="button" class="btn small" id="recClose">Close</button></div>
-  <p class="hint">Press Record, then make your icon as normal. Only the maker is recorded: your icon, with a caption for each change you make (like “🎩 Head accessory: Crown”). Nothing else on your screen is recorded.</p>
+  <p class="hint">Press Record, then make your icon as normal. Only the maker is recorded: your icon, with a caption for each change you make (like “🎩 Head accessory: Crown”). Nothing else on your screen is recorded. When you're done, watch it back and post it with your icon, so people can tap ▶️ in the gallery to see how you made it. Up to 2 minutes.</p>
   <div class="row">
    <div class="field"><label for="recShape">Video shape</label><select id="recShape"><option value="wide" selected>Wide 16:9 (YouTube videos)</option><option value="tall">Tall 9:16 (Shorts, TikTok)</option><option value="square">Square 1:1</option></select></div>
    <div class="field"><label for="recTitle">Title on the video (optional)</label><input id="recTitle" type="text" maxlength="40" placeholder="e.g. Making my monke icon"></div>
@@ -526,7 +529,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <canvas id="recPrev" width="1280" height="720"></canvas>
   <div class="install-btns" style="margin-top:10px"><button type="button" class="btn primary" id="recGo">⏺️ Start recording</button></div>
   <div class="rec-done" id="recDone" hidden><video id="recVideo" controls playsinline></video>
-   <div class="install-btns"><button type="button" class="btn" id="recAgain">🔁 Record again</button><a class="btn primary" id="recSave" download>⬇️ Download video</a></div>
+   <div class="install-btns"><button type="button" class="btn" id="recAgain">🔁 Record again</button><button type="button" class="btn primary" id="recPost">📤 Post it with my icon</button></div>
    <div class="note" id="recNote"></div></div>
  </div>
  <button type="button" class="btn" id="talkOpenBtn" style="width:100%;margin-top:8px;padding:12px">🗣️ Make a talking GIF (PNGtuber)</button>
@@ -580,6 +583,7 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
    <div class="preset-save"><input id="shareTitle" type="text" maxlength="40" placeholder="Give it a title (optional)"><button type="button" class="btn small primary" id="shareGo">🌍 Share</button></div>
    <label class="share-chal" id="shareChalRow" hidden><input type="checkbox" id="shareChal"> <span id="shareChalText">🏆 Enter this week's challenge</span></label>
    <label class="share-topic" id="shareTopicRow">Where should it go?<select id="shareTopic"><option value="monke">🐒 Monke icons (Gorilla Tag monkes)</option><option value="off">🎲 Off topic (anything else, like a noob)</option></select></label>
+   <div class="share-vid" id="shareVid" hidden><video id="shareVidV" muted playsinline loop></video><span id="shareVidT">🎥 Making-of video attached</span><button type="button" class="btn small" id="shareVidX" aria-label="Remove the video">✕</button></div>
    <div class="note" id="shareMsg">Everyone can see what you share. Don't include personal info like your real name or address.</div></div>
  </div>
  <div class="chal" id="chal" hidden>
@@ -599,6 +603,12 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
  <div class="install-card">
   <div class="install-top"><img src="icon-192.png" alt=""><div><h2 id="notifyTitle">🔔 Never miss an update</h2><p>Get a notification when Monke Icon Maker gets new features, and when someone comments on your icons.</p></div></div>
   <div class="install-btns"><button type="button" class="btn" id="notifyNo">Not now</button><button type="button" class="btn primary" id="notifyYes">Turn on</button></div>
+ </div>
+</div>
+<div class="install-backdrop cm-pop" id="vidPop" hidden role="dialog" aria-modal="true" aria-labelledby="vidTitle">
+ <div class="install-card set-card vid-card">
+  <div class="set-top"><h2 id="vidTitle">🎥 How it was made</h2><button type="button" class="btn small" id="vidClose" aria-label="Close">✕</button></div>
+  <div class="set-sec"><video id="vidV" controls playsinline controlslist="nodownload" disablepictureinpicture></video><div class="note" id="vidBy" style="margin-top:8px"></div></div>
  </div>
 </div>
 <div class="install-backdrop cm-pop" id="cosPop" hidden role="dialog" aria-modal="true" aria-labelledby="cosTitle">
@@ -696,7 +706,17 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v122 <span class="tag new">New</span><span class="date" data-time="2026-11-21T15:46:41Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v123 <span class="tag new">New</span><span class="date" data-time="2026-11-21T15:52:03Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🎥 Making-of videos in the gallery: after recording, watch it back, then post it with your icon. Anyone can tap ▶️ Watch how it was made on your icon to see how you made it.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>Videos are watched on the site instead of downloaded, and can be up to 2 minutes long.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v122<span class="date" data-time="2026-11-21T15:46:41Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎥 Record a video of making your icon: press Record, make your icon, then download the video. Only the maker is recorded, never the rest of your screen. Each change gets a caption, like “🎩 Head accessory: Crown”.</li>
@@ -3400,9 +3420,9 @@ $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave'
 // with a caption for each change. Uses the browser's own video recorder, so it works offline and asks for nothing
 // unless you turn on your voice.
 (()=>{if(LIVE||!$('recGo'))return;
- const SHAPES={wide:[1280,720],tall:[720,1280],square:[1080,1080]},MAX_MS=15*60*1000;
+ const SHAPES={wide:[1280,720],tall:[720,1280],square:[1080,1080]},MAX_MS=2*60*1000; // 2 minutes fits the 20 MB limit for posting
  const pv=$('recPrev'),out=mk(1280,720),ox=out.getContext('2d');
- let nameSaid='',rec=null,chunks=[],mic=null,tick=0,started=0,pausedAt=0,pausedFor=0,last=null,caps=[],lastUrl=null;
+ let recVid=null,nameSaid='',rec=null,chunks=[],mic=null,tick=0,started=0,pausedAt=0,pausedFor=0,last=null,caps=[],lastUrl=null;
  const mime=()=>{if(!window.MediaRecorder)return null;for(const m of ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'])if(MediaRecorder.isTypeSupported(m))return m;return ''};
  // what each setting is called, taken from its label on the page
  const label=id=>{const l=document.querySelector('label[for="'+id+'"]');return l?(l.firstChild&&l.firstChild.nodeType===3?l.firstChild.textContent:l.textContent).trim():id};
@@ -3455,7 +3475,7 @@ $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave'
   const stream=out.captureStream(30);
   if($('recMic').checked){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});mic.getAudioTracks().forEach(t=>stream.addTrack(t))}
    catch(e){mic=null;toast("🎙️ Couldn't use your mic, so the video has no sound.")}}
-  try{rec=new MediaRecorder(stream,m?{mimeType:m,videoBitsPerSecond:3e6}:{videoBitsPerSecond:3e6})}catch(e){rec=new MediaRecorder(stream)}
+  try{rec=new MediaRecorder(stream,m?{mimeType:m,videoBitsPerSecond:1.2e6}:{videoBitsPerSecond:1.2e6})}catch(e){rec=new MediaRecorder(stream)}
   rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};rec.onstop=done;
   nameSaid=String($('name').value.trim()?captureState().name:'');started=Date.now();pausedFor=0;rec.start(1000);say('🎬 Let\'s make a monke!');
   tick=setInterval(frame,1000/30);frame();
@@ -3468,10 +3488,11 @@ $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave'
  function done(){clearInterval(tick);tick=0;if(mic){mic.getTracks().forEach(t=>t.stop());mic=null}
   const type=(rec.mimeType||'video/webm').split(';')[0],ext=type.includes('mp4')?'mp4':'webm',blob=new Blob(chunks,{type});rec=null;chunks=[];
   if(lastUrl)URL.revokeObjectURL(lastUrl);lastUrl=URL.createObjectURL(blob);
-  $('recVideo').src=lastUrl;$('recSave').href=lastUrl;$('recSave').download=(fileName().replace(/\.png$/,'')||'my-monke')+'-making-of.'+ext;
-  $('recNote').textContent=(ext==='webm'?'Saved as a WebM video. YouTube, CapCut and most editors open it. ':'')+'The video stays on your device until you download it.';
+  $('recVideo').src=lastUrl;recVid={blob,ext,secs:Math.round((Date.now()-started-pausedFor)/1000)};
+  $('recNote').textContent=blob.size>20e6?'This video is too long to post (over 20 MB). Record a shorter one.':'Watch it back first. Nothing is posted until you press 📤 Post it with my icon and then 🌍 Share.';$('recPost').disabled=blob.size>20e6;
   $('recBar').hidden=true;$('recGo').disabled=false;['recShape','recTitle','recMic','recCaps'].forEach(id=>$(id).disabled=false);
   $('recBox').hidden=false;$('recOpenBtn').hidden=true;$('recDone').hidden=false;$('recBox').classList.add('done');$('recDone').scrollIntoView({behavior:'smooth',block:'center'})}
+ $('recPost').onclick=()=>{if(!recVid)return;window.attachShareVideo&&window.attachShareVideo(recVid,$('recTitle').value.trim())};
  $('recAgain').onclick=()=>{$('recDone').hidden=true;$('recBox').classList.remove('done');preview();$('recGo').scrollIntoView({behavior:'smooth',block:'center'})};
  window.addEventListener('beforeunload',e=>{if(rec){e.preventDefault();e.returnValue=''}});
 })();
@@ -3883,9 +3904,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  }
  const noOffTopicYet=e=>e&&/off_topic|set_post_topic/i.test(e.message||'')&&(offTopicOn=false,true);
  let remixOn=true,remixSource=null;
+ let videoOn=true;const noVideoYet=e=>e&&/video_path/i.test(e.message||'')&&(videoOn=false,true); // before update-26
  const noRemixYet=e=>e&&/design|remix|relationship/i.test(e.message||'')&&(remixOn=false,true); // if anything about Remix isn't ready, carry on without it
  const postFields=()=>'id,image_path,title,created_at,report_count,hidden,user_id,'+(offTopicOn?'off_topic,':'')+'profiles!posts_user_id_fkey(username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned)'
-  +(likesOn?',like_count':'')+(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
+  +(likesOn?',like_count':'')+(videoOn?',video_path':'')+(remixOn?',design,remix_of,remix:remix_of(title,profiles!posts_user_id_fkey(username))':''); // the original, found through the remix_of column
  const profileFields=()=>'username,display_name,'+(pics?'avatar_path,':'')+'is_admin,banned';
  const PAGE=24,DEFAULT_AVATAR='default-avatar.webp',USER_RE=/^[a-z0-9_]{3,20}$/;
  let sb=null,loading=null,me=null,profile=null,tab='all',page=0,reported=new Set();
@@ -4230,6 +4252,14 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  function updateShareThumb(){const t=$('shareThumb').getContext('2d');t.clearRect(0,0,96,96);t.drawImage(canvas,0,0,96,96)}
  $('shareJump').onclick=()=>{gal.scrollIntoView({behavior:'smooth',block:'start'});if(!me)client().then(()=>{if(!me)openAcct('in')});else updateShareThumb()};
  canvas.addEventListener('mouseenter',()=>{if(me)updateShareThumb()});
+ // 🎥 a making-of video from the recorder, posted with the icon
+ let shareVideo=null;
+ window.attachShareVideo=(v,title)=>{shareVideo=v;const sv=$('shareVidV');sv.src=URL.createObjectURL(v.blob);sv.play().catch(()=>{});
+  $('shareVidT').textContent='🎥 Making-of video attached ('+Math.floor(v.secs/60)+':'+String(v.secs%60).padStart(2,'0')+')';$('shareVid').hidden=false;
+  if(title&&!$('shareTitle').value.trim())$('shareTitle').value=title.slice(0,40);
+  gal.scrollIntoView({behavior:'smooth',block:'start'});$('shareMsg').textContent='Check your title, then press 🌍 Share to post your icon with its video.';if(!me)client().then(()=>{if(!me)openAcct('in')});else updateShareThumb()};
+ const dropShareVideo=()=>{shareVideo=null;$('shareVid').hidden=true;const sv=$('shareVidV');sv.pause();sv.removeAttribute('src')};
+ $('shareVidX').onclick=dropShareVideo;
  $('shareGo').onclick=async()=>{faceEditOff();
   if(!me)return openAcct('in');const msg=$('shareMsg'),btn=$('shareGo');btn.disabled=true;msg.textContent='Sharing…';
   try{
@@ -4256,17 +4286,24 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
      const u=await sb.storage.from('icons').upload(bp,bb,{contentType:'image/webp',upsert:false});if(u.error){await sb.storage.from('icons').remove([path,...itemPaths]);throw u.error}
      itemPaths.push(bp);design.bgp=bp}
     msg.textContent='Sharing…'}
+   let vidPath=null;
+   if(shareVideo&&videoOn){msg.textContent='Uploading your video…';vidPath=me.id+'/'+Date.now().toString(36)+'.'+shareVideo.ext;
+    const u=await sb.storage.from('videos').upload(vidPath,shareVideo.blob,{contentType:shareVideo.ext==='mp4'?'video/mp4':'video/webm',upsert:false});
+    if(u.error){vidPath=null;if(!confirm("Your video couldn't be uploaded ("+friendly(u.error)+"). Share the icon without it?")){await sb.storage.from('icons').remove([path,...itemPaths]);msg.textContent='Not shared.';return}}
+    msg.textContent='Sharing…'}
    const inChal=remixOn&&$('shareChal').checked;if(inChal)design.challenge=chalWeek(0).key;
-   const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}
+   const row={image_path:path,title};if(remixOn){row.design=design;if(remixSource)row.remix_of=remixSource.id}if(vidPath)row.video_path=vidPath;
    const off=offTopicOn&&$('shareTopic').value==='off';if(off)row.off_topic=true;
    let {data,error}=await sb.from('posts').insert(row).select(postFields()).single();
    if(noOffTopicYet(error)){delete row.off_topic;({data,error}=await sb.from('posts').insert(row).select(postFields()).single())}
+   if(noVideoYet(error)){delete row.video_path;if(vidPath)sb.storage.from('videos').remove([vidPath]).catch(()=>{});vidPath=null;({data,error}=await sb.from('posts').insert(row).select(postFields()).single())}
    if(noRemixYet(error)){if(itemPaths.length)await sb.storage.from('icons').remove(itemPaths);itemPaths.length=0;({data,error}=await sb.from('posts').insert({image_path:path,title}).select(postFields()).single())}
-   if(error){await sb.storage.from('icons').remove([path,...itemPaths]);throw error}
-   remixSource=null;
+   if(error){await sb.storage.from('icons').remove([path,...itemPaths]);if(vidPath)sb.storage.from('videos').remove([vidPath]).catch(()=>{});throw error}
+   const vidLost=!!(shareVideo&&!vidPath);remixSource=null;if(vidPath)dropShareVideo();
    if(inChal){$('shareChal').checked=false;renderChallenge()}
    setTimeout(checkMyBadges,1500);
    $('shareTitle').value='';msg.textContent=inChal?'🏆 Entered into this week\'s challenge! Ask your friends to like it.':off&&offTopicOn?'Shared in 🎲 Off topic! Thanks for posting.':'Shared! Thanks for posting your monke.';
+   if(vidLost)msg.append(" The video wasn't posted, because the videos update (update-26) hasn't been run in Supabase yet.");
    {const lk=el('button','btn small','🔗 Copy link to send to friends');lk.type='button';lk.style.marginLeft='8px';lk.onclick=()=>shareIcon(data);msg.append(' ',lk)}
    if(tab==='all'&&!searchText()&&!chalView&&(!offTopicOn||!!data.off_topic===(topic==='off'))){grid.prepend(postCard(data));status.textContent=''}
   }catch(x){msg.textContent=friendly(x)}finally{btn.disabled=!!(profile&&profile.banned);updateShareThumb()}
@@ -4362,7 +4399,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    q=q.in('user_id',ids);
   }
   let {data,error}=await q.range(page*PAGE,page*PAGE+PAGE-1);if(id!==loadId)return;
-  if(noPicsYet(error)||noOffTopicYet(error)||noRemixYet(error)||noLikesYet(error))return loadPosts(reset);
+  if(noPicsYet(error)||noOffTopicYet(error)||noRemixYet(error)||noLikesYet(error)||noVideoYet(error))return loadPosts(reset);
   if(error){status.textContent=friendly(error);return}
   await loadReactions(data.map(p=>p.id));await loadCommentCounts(data.map(p=>p.id));await loadMyLikes(data.map(p=>p.id));await loadLocks(data.map(p=>p.id));if(id!==loadId)return;
   $('galSort').hidden=!likesOn||tab!=='all';$('galTopic').hidden=!offTopicOn||tab==='reported';$('shareTopicRow').hidden=!offTopicOn;
@@ -4769,11 +4806,19 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   const d=reactDraws.get(r.post_id);if(d)d();
  }
  function liveFollow(e){const r=e.eventType==='DELETE'?e.old:e.new;if(r&&pfUser&&(r.followee_id===pfUser||r.follower_id===pfUser))renderPfStats(pfUser)}
+ // 🎥 making-of videos: only a file in the poster's own folder counts
+ const postVideo=p=>typeof p.video_path==='string'&&new RegExp('^'+String(p.user_id).replace(/[^0-9a-f-]/gi,'')+'/[a-z0-9]{1,20}\\.(mp4|webm)$').test(p.video_path)?p.video_path:null;
+ function openVideo(p,pr){const v=$('vidV');v.src=sb.storage.from('videos').getPublicUrl(postVideo(p)).data.publicUrl;$('vidBy').textContent=(p.title?'“'+p.title+'” ':'')+'by '+pr.display_name+' (@'+pr.username+')';$('vidPop').hidden=false;$('vidClose').focus();v.play().catch(()=>{})}
+ $('vidClose').onclick=()=>{const v=$('vidV');v.pause();v.removeAttribute('src');v.load();$('vidPop').hidden=true};
+ $('vidPop').addEventListener('click',e=>{if(e.target===$('vidPop'))$('vidClose').click()});
+ $('vidV').addEventListener('contextmenu',e=>e.preventDefault());
  function postCard(p){
   const pr=p.profiles||{username:'unknown',display_name:'Unknown'},mine=me&&p.user_id===me.id,admin=profile&&profile.is_admin;
   const card=el('article','post'+(p.hidden?' is-hidden':''));cardRefs.set(p.id,{card,p});
   const img=el('img');img.loading='lazy';img.alt=(p.title||'Monke icon')+' by '+pr.display_name;img.src=sb.storage.from('icons').getPublicUrl(p.image_path).data.publicUrl;card.appendChild(img);
-  const body=el('div','pbody');if(p.title)body.appendChild(el('div','ptitle',p.title));
+  const body=el('div','pbody');
+  if(postVideo(p)){const vb=el('button','btn small pvid','▶️ Watch how it was made');vb.type='button';vb.onclick=()=>openVideo(p,pr);body.appendChild(vb)}
+  if(p.title)body.appendChild(el('div','ptitle',p.title));
   const by=el('div','pby linkish');by.title='See '+pr.display_name+'\'s profile';by.onclick=()=>openProfile(p.user_id);by.appendChild(avatarImg(pr.avatar_path));const nm=el('span',null,pr.display_name);nm.appendChild(el('small',null,'@'+pr.username));by.appendChild(nm);body.appendChild(by);
   body.appendChild(el('div','pmeta',ago(p.created_at)));
   if(p.off_topic&&tab==='reported')body.appendChild(el('div','premix','🎲 Off topic'));
@@ -4810,7 +4855,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
    }
   }
   if(mine||admin)btn('🗑 Delete',async()=>{if(!confirm('Delete this icon from the gallery?'))return;
-   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p),...(postBg(p)?[postBg(p)]:[])]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
+   const {error}=await sb.from('posts').delete().eq('id',p.id);if(error)return alert(friendly(error));if(postVideo(p))sb.storage.from('videos').remove([postVideo(p)]).catch(()=>{});await sb.storage.from('icons').remove([p.image_path,...postItems(p).map(i=>i.p),...(postBg(p)?[postBg(p)]:[])]);card.remove();if(!grid.children.length)status.textContent=tab==='reported'?'No reported icons. 🎉':''+(offTopicOn&&topic==='off'?'No off-topic icons yet.':'No icons shared yet. Be the first!')+''});
   if(me&&!mine){const done=reported.has(p.id),rb=btn(done?'Reported':'🚩 Report',async()=>{
     if(!confirm('Report this icon as mean or inappropriate?'))return;rb.disabled=true;
     const {error}=await sb.from('reports').insert({post_id:p.id});

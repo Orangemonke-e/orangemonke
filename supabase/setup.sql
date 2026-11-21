@@ -1133,6 +1133,25 @@ create policy "Admins edit cosmetics" on public.cosmetics for update to authenti
   with check (public.is_admin() and image_path like (auth.uid()::text || '/cosmetics/%'));
 grant update (name, slot, image_path, x, y, w, h) on public.cosmetics to authenticated;
 
+-- ───────────────────────── 🎥 Making-of videos (update-26) ─────────────────────────
+alter table public.posts add column if not exists video_path text;
+alter table public.posts drop constraint if exists posts_video_path_check;
+alter table public.posts add constraint posts_video_path_check check (
+  video_path is null or video_path ~ ('^' || user_id::text || '/[a-z0-9]{1,20}\.(mp4|webm)$'));
+grant insert (image_path, title, design, remix_of, off_topic, video_path) on public.posts to authenticated;
+
+-- Public bucket for the videos: MP4/WebM only, up to 20 MB each.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('videos', 'videos', true, 20971520, array['video/mp4', 'video/webm'])
+on conflict (id) do update set public = true, file_size_limit = 20971520, allowed_mime_types = array['video/mp4', 'video/webm'];
+
+drop policy if exists "Upload videos to your own folder" on storage.objects;
+create policy "Upload videos to your own folder" on storage.objects for insert to authenticated
+  with check (bucket_id = 'videos' and (storage.foldername(name))[1] = auth.uid()::text and not public.is_banned());
+drop policy if exists "Delete your own videos, or any as admin" on storage.objects;
+create policy "Delete your own videos, or any as admin" on storage.objects for delete to authenticated
+  using (bucket_id = 'videos' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
+
 -- ───────────────────────── Make yourself admin ─────────────────────────
 -- After you've created your own account on the site, run this line once (with your username):
 --   update public.profiles set is_admin = true where username = 'your_username';
