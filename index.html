@@ -674,7 +674,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v120 <span class="tag new">New</span><span class="date" data-time="2026-11-21T12:20:06Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v121 <span class="tag new">New</span><span class="date" data-time="2026-11-21T13:55:45Z">21 Nov 2026</span></summary>
+  <h3>Changed</h3>
+  <ul>
+   <li>↺ Reset design now also takes off ✨ More cosmetics and turns ⚫ Plain eyes off. Undo brings them back.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v120<span class="date" data-time="2026-11-21T12:20:06Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>📤 Export presets and 📥 Import presets in 💾 Presets: save all your presets, with their items, backgrounds and monke bases, to one file. Load it on another browser or device, or keep it as a backup in case your browser data gets cleared.</li>
@@ -3469,7 +3475,7 @@ if(document.fonts&&document.fonts.load)document.fonts.load('18px "Press Start 2P
  };
 })();
 $('upload').addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{customImg=im;customId++;setupCustom();draw();URL.revokeObjectURL(u)};im.src=u});
-$('reset').onclick=()=>{clearCustom();clearItems();layerOrder=null;$('base').value='classic';$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('fingerpainter').value='none';$('dog').value='none';$('headphones').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';draw()};
+$('reset').onclick=()=>{clearCustom();clearItems();layerOrder=null;$('base').value='classic';$('fur').value='#808080';$('face').value='#e5e5e5';$('eyes').value=EYE_DEFAULT;$('background').value='#171923';$('transparent').checked=false;$('hat').value='none';$('hatColor').value='#ffd52a';$('banana').value='none';$('bandana').value='none';$('fingerpainter').value='none';$('dog').value='none';$('headphones').value='none';$('haloColor').value='#ffff00';$('glowColor').value='#ffff00';$('glow').value=60;$('glowVal').textContent='60';$('outline').value=0;$('outlineVal').textContent='0';$('outlineColor').value='#ffffff';bgStyle='solid';bgImg=null;$('bgUpload').value='';buildBgGrid();$('name').value='';$('upload').value='';$('plainEyes').checked=false;extras=[];renderCosList();draw()};
 // The download uses the name you typed, or the default name if the box is empty.
 const DEFAULT_FILE='my-monke-youtube-icon';
 function fileName(){
