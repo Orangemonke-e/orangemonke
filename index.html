@@ -671,7 +671,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v118 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:35:14Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v119 <span class="tag new">New</span><span class="date" data-time="2026-11-21T12:13:26Z">21 Nov 2026</span></summary>
+  <h3>Changed</h3>
+  <ul>
+   <li>📝 Update notes are shorter: an Added, Changed or Removed section is hidden when there's nothing in it.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v118<span class="date" data-time="2026-11-21T11:35:14Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>Nothing new to add in this update.</li>
@@ -4326,7 +4332,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  });
  // ── 📣 Admin: send an update notification to everyone who turned them on (through the notify-update function) ──
  $('notifyAll').onclick=()=>{$('setPop').hidden=true;
-  const rel=document.querySelector('#update-notes .release'),v=rel?rel.querySelector('summary').firstChild.textContent.trim():'',li=rel?rel.querySelector('li'):null;
+  const rel=document.querySelector('#update-notes .release'),v=rel?rel.querySelector('summary').firstChild.textContent.trim():'',li=rel?[...rel.querySelectorAll('li')].find(l=>!/^Nothing\b/.test(l.textContent.trim())):null;
   $('sendTitleIn').value='Monke Icon Maker '+(v?v+' ':'')+'is here! 🎉';$('sendBody').value=li?li.textContent.replace(/\s+/g,' ').trim().slice(0,160):'';$('sendMsg').textContent='';$('sendPop').hidden=false;
  };
  $('sendCancel').onclick=()=>{$('sendPop').hidden=true};
@@ -4752,6 +4758,9 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  window.showNotes=()=>{$('update-notes').classList.remove('user-hidden')}; // the bell's update row still works when they're hidden
  apply();
  const rels=[...document.querySelectorAll('#update-notes .release')],old=rels.slice(3);
+ // A heading whose only line is "Nothing … in this update" is hidden, so small updates stay short.
+ const blank=ul=>ul&&ul.tagName==='UL'&&ul.children.length===1&&/^Nothing\b/.test(ul.textContent.trim());
+ rels.forEach(r=>r.querySelectorAll('h3').forEach(h=>{const ul=h.nextElementSibling;if(blank(ul)){h.hidden=true;ul.hidden=true}}));
  if(old.length){old.forEach(r=>r.hidden=true);const b=document.createElement('button');b.className='btn small notes-older';b.textContent='Show '+old.length+' older updates';b.type='button';
   b.onclick=()=>{const show=old[0].hidden;old.forEach(r=>r.hidden=!show);b.textContent=show?'Hide older updates':'Show '+old.length+' older updates'};rels[rels.length-1].after(b)}
 })();
