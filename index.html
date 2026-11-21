@@ -671,7 +671,21 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v116 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:12:23Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v117 <span class="tag new">New</span><span class="date" data-time="2026-11-21T11:33:41Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>Nothing new to add in this update.</li>
+  </ul>
+  <h3>Changed</h3>
+  <ul>
+   <li>✨ More cosmetics can now be moved, resized, renamed or redrawn after they come out. If you're wearing one, it stays on and updates by itself.</li>
+  </ul>
+  <h3>Removed</h3>
+  <ul>
+   <li>Nothing removed in this update.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v116<span class="date" data-time="2026-11-21T11:12:23Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>⚫ Plain eyes: a new switch under the colours that turns off the white eye shine and the eye shading, for plain black eyes. Works on the Classic and Orangemonke bases, in talking GIFs and in the 🎙️ Live PNGtuber.</li>
@@ -2680,13 +2694,14 @@ const BUILTIN_LAYERS=['monke','headphones','banana','hat','extras','bandana','ba
 // ✨ More cosmetics: drawn by Orangemonke and added from the website (⚙️ Settings → 🛡️ Admin). Everyone can wear them.
 // Each one is a picture placed at x/y/w/h in the base art's 2048×1152 coordinates, like the built-in accessories.
 const COS_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,LS_COS='mim_cosmetics_v1';
-let cosmetics=[],extras=[],cosPending=null; // cosPending: the one being added, shown on the preview only
+let cosmetics=[],extras=[],cosPending=null,cosEditing=null; // cosEditing: the id being edited (hidden while you move it) // cosPending: the one being added, shown on the preview only
 const cosUrl=path=>GALLERY.url+'/storage/v1/object/public/icons/'+path.split('/').map(encodeURIComponent).join('/');
 function cosSane(r){return r&&COS_RE.test(r.id)&&typeof r.name==='string'&&typeof r.image_path==='string'&&['head','body','other'].includes(r.slot)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)}
 function setCosmetics(rows){const old=new Map(cosmetics.map(c=>[c.id,c]));
- cosmetics=(Array.isArray(rows)?rows:[]).filter(cosSane).map(r=>{const o=old.get(r.id);if(o&&o.image_path===r.image_path)return o;
-  const img=new Image();img.crossOrigin='anonymous';img.onload=()=>{imgsLoaded++;draw()};img.src=cosUrl(r.image_path);
+ cosmetics=(Array.isArray(rows)?rows:[]).filter(cosSane).map(r=>{const o=old.get(r.id);let img;if(o&&o.image_path===r.image_path)img=o.img; // same picture: keep it, but take the new name and place
+  else{img=new Image();img.crossOrigin='anonymous';img.onload=()=>{imgsLoaded++;draw()};img.src=cosUrl(r.image_path)}
   return{id:r.id,name:r.name.slice(0,40),slot:r.slot,image_path:r.image_path,x:r.x,y:r.y,w:r.w,h:r.h,img}});
+ imgsLoaded++; // so the outline and talking slices are redrawn with the new places
  if(typeof renderCosList==='function')renderCosList();draw()}
 async function loadCosmetics(){
  try{const c=lsGet(LS_COS);if(Array.isArray(c))setCosmetics(c)}catch(e){}
@@ -2694,7 +2709,7 @@ async function loadCosmetics(){
   if(!r.ok)return;const rows=await r.json();setCosmetics(rows);try{localStorage.setItem(LS_COS,JSON.stringify(rows))}catch(e){}}catch(e){}
 }
 const cosReady=c=>c.img.complete&&c.img.naturalWidth>0;
-function cosWorn(){const on=cosmetics.filter(c=>extras.includes(c.id)&&cosReady(c));if(cosPending&&cosPending.img.width)on.push(cosPending);return on}
+function cosWorn(){const on=cosmetics.filter(c=>extras.includes(c.id)&&cosReady(c)&&c.id!==cosEditing);if(cosPending&&cosPending.img.width)on.push(cosPending);return on}
 function drawCosmetic(c,cos){c.save();if(cos.slot==='head')headFit(c);else if(cos.slot==='body'&&isOrange())c.translate(ORANGE_BODY_DX,0);
  drawLayer(cos.img,[cos.x,cos.y,cos.w,cos.h],false,c);c.restore()}
 // The ✨ More cosmetics list in 🎩 Accessories: tap to wear or take off.
@@ -4314,7 +4329,7 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   cosM('🔎 Lining it up…');await new Promise(r=>setTimeout(r,30));
   const r=cosFind(cosPic1,cosPic2);
   if(!r){cosFound=null;cosM("Couldn't find anything in picture 2. Is it blank?");cosPreview();cosCheck();return}
-  cosFound={...r,n:Date.now()};cosPreview();cosCheck();
+  cosFound={...r,n:Date.now(),fresh:true};cosPreview();cosCheck();
   cosM(r.score>45?"⚠️ It might not be lined up right. Check the preview and use the arrows to fix it.":'✅ Lined up. Check the preview, then save.')}
  $('cosF1').onchange=e=>cosPick(1,e.target);$('cosF2').onchange=e=>cosPick(2,e.target);
  $('cosName').oninput=cosCheck;$('cosSlot').onchange=cosPreview;
@@ -4323,22 +4338,42 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(n==='+'||n==='-'){const k=n==='+'?1.02:1/1.02,cx=f.x+f.w/2,cy=f.y+f.h/2;f.w=Math.max(2,Math.round(f.w*k));f.h=Math.max(2,Math.round(f.h*k));f.x=Math.round(cx-f.w/2);f.y=Math.round(cy-f.h/2)}
   f.n=Date.now();cosPreview()});
  function cosReset(){cosPic1=cosPic2=cosFound=null;['cosF1','cosF2'].forEach(i=>{$(i).value='';$(i).closest('label').classList.remove('done')});
+  cosEditing=null;$('cosTitle').textContent='➕ Add a cosmetic';$('cosSave').textContent='💾 Save for everyone';$('cosSlot').value='head';
   $('cosF1Lbl').innerHTML='1️⃣ The cosmetic <b>on the monke</b>';$('cosF2Lbl').innerHTML='2️⃣ The cosmetic <b>by itself</b>';$('cosName').value='';cosM('');cosPreview();cosCheck()}
+ // ✏️ Edit: loads a cosmetic back in so you can move, resize or rename it (or swap its pictures). People wearing it keep it.
+ function cosEdit(c){cosReset();cosEditing=c.id;$('cosTitle').textContent='✏️ Edit “'+c.name+'”';$('cosSave').textContent='💾 Save changes';
+  $('cosName').value=c.name;$('cosSlot').value=c.slot;
+  $('cosF1Lbl').innerHTML='1️⃣ New picture <b>on the monke</b> (optional)';$('cosF2Lbl').innerHTML='2️⃣ New picture <b>by itself</b> (optional)';
+  cosFound={crop:c.img,x:c.x,y:c.y,w:c.w,h:c.h,n:Date.now(),fresh:false};cosPreview();cosCheck();
+  cosM('Move or resize it with the arrows, change the name, or add two new pictures to swap them.');$('cosPop').querySelector('.set-card').scrollTop=0}
  function cosAdminList(){const L=$('cosAdminList');L.innerHTML='';if(!cosmetics.length){L.textContent='None yet.';return}
   cosmetics.forEach(c=>{const row=el('div','cos-row'),im=el('img');im.alt='';im.crossOrigin='anonymous';im.src=cosUrl(c.image_path);const n=el('span');n.textContent=c.name;
+   const ed=el('button','btn small');ed.type='button';ed.textContent='✏️ Edit';ed.onclick=()=>{if(!cosReady(c))return alert("That cosmetic's picture hasn't loaded yet. Try again in a moment.");cosEdit(c)};
    const del=el('button','btn small');del.type='button';del.textContent='🗑️ Delete';del.onclick=async()=>{if(!confirm('Delete “'+c.name+'” for everyone? People wearing it will lose it.'))return;
     del.disabled=true;const {error}=await sb.from('cosmetics').delete().eq('id',c.id);if(error){del.disabled=false;return alert(friendly(error))}
-    sb.storage.from('icons').remove([c.image_path]).catch(()=>{});extras=extras.filter(x=>x!==c.id);await loadCosmetics();cosAdminList()};
-   row.append(im,n,del);L.appendChild(row)})}
+    sb.storage.from('icons').remove([c.image_path]).catch(()=>{});extras=extras.filter(x=>x!==c.id);if(cosEditing===c.id)cosReset();await loadCosmetics();cosAdminList()};
+   row.append(im,n,ed,del);L.appendChild(row)})}
  function cosClose(){$('cosPop').hidden=true;cosReset()}
  $('cosAddBtn').onclick=()=>{$('setPop').hidden=true;cosReset();$('cosPop').hidden=false;cosAdminList();$('cosName').focus()};
  $('cosClose').onclick=$('cosCancel').onclick=cosClose;
+ async function cosBlob(f){let k=Math.min(1,f.w/f.crop.width),blob=null;
+  for(let t=0;t<6;t++){const w=Math.max(1,Math.round(f.crop.width*k)),h=Math.max(1,Math.round(f.crop.height*k));blob=await toBlob(f.crop,w,h,'image/webp',.92);if(blob&&blob.size<950000)break;k*=.8}
+  if(!blob||blob.size>=950000)throw new Error('That picture is too big. Try a smaller one.');return blob}
  $('cosSave').onclick=async()=>{const name=$('cosName').value.trim(),f=cosFound,go=$('cosSave');if(!f||!name||!me)return;
   go.disabled=true;cosM('Saving…');let path=null;
+  if(cosEditing){const id=cosEditing,old=cosmetics.find(c=>c.id===id);
+   try{const row={name,slot:$('cosSlot').value,x:f.x,y:f.y,w:f.w,h:f.h};
+    if(f.fresh){const blob=await cosBlob(f);path=me.id+'/cosmetics/'+Date.now().toString(36)+'.webp';
+     const up=await sb.storage.from('icons').upload(path,blob,{contentType:'image/webp',upsert:false});if(up.error)throw up.error;row.image_path=path}
+    const {data,error}=await sb.from('cosmetics').update(row).eq('id',id).select('id');
+    if(error||!data||!data.length){if(path)sb.storage.from('icons').remove([path]).catch(()=>{});
+     throw error&&!/permission|policy/i.test(error.message)?error:new Error("Couldn't save the changes. Run supabase/update-25-edit-cosmetics.sql in Supabase first.")}
+    if(path&&old)sb.storage.from('icons').remove([old.image_path]).catch(()=>{});
+    await loadCosmetics();cosReset();cosAdminList();cosM('✅ Saved “'+name+'”. Everyone sees the change straight away.');
+   }catch(e){cosM(e.message&&!e.code&&!e.status?e.message:friendly(e));go.disabled=false}
+   return}
   try{// stored at the size it's drawn (never bigger than you drew it), small enough for the 1MB limit
-   let k=Math.min(1,f.w/f.crop.width),blob=null;
-   for(let t=0;t<6;t++){const w=Math.max(1,Math.round(f.crop.width*k)),h=Math.max(1,Math.round(f.crop.height*k));blob=await toBlob(f.crop,w,h,'image/webp',.92);if(blob&&blob.size<950000)break;k*=.8}
-   if(!blob||blob.size>=950000)throw new Error('That picture is too big. Try a smaller one.');
+   const blob=await cosBlob(f);
    path=me.id+'/cosmetics/'+Date.now().toString(36)+'.webp';
    const up=await sb.storage.from('icons').upload(path,blob,{contentType:'image/webp',upsert:false});if(up.error)throw up.error;
    const {error}=await sb.from('cosmetics').insert({name,slot:$('cosSlot').value,image_path:path,x:f.x,y:f.y,w:f.w,h:f.h});

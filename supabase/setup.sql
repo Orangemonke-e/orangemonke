@@ -1127,6 +1127,11 @@ revoke all on public.cosmetics from anon, authenticated;
 grant select on public.cosmetics to anon, authenticated;
 grant insert (name, slot, image_path, x, y, w, h) on public.cosmetics to authenticated;
 grant delete on public.cosmetics to authenticated;
+drop policy if exists "Admins edit cosmetics" on public.cosmetics;
+create policy "Admins edit cosmetics" on public.cosmetics for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin() and image_path like (auth.uid()::text || '/cosmetics/%'));
+grant update (name, slot, image_path, x, y, w, h) on public.cosmetics to authenticated;
 
 -- ───────────────────────── Make yourself admin ─────────────────────────
 -- After you've created your own account on the site, run this line once (with your username):
