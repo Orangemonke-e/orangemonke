@@ -159,6 +159,7 @@ canvas#art.picking{cursor:crosshair;outline:3px solid var(--accent);outline-offs
 .cos-nudge{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;margin-top:6px}
 .cos-admin{display:flex;flex-direction:column;gap:6px}
 .cos-row{display:flex;align-items:center;gap:8px;font-size:13px}.cos-row img{width:36px;height:36px;object-fit:contain;background:var(--panel2);border-radius:8px}.cos-row span{flex:1}
+.preset-io{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.preset-io label{cursor:pointer}
 .req-tag{font-size:11px;font-weight:700;color:var(--accent);margin-left:4px;white-space:nowrap}
 .om-req{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:999px;padding:2px 8px;margin-top:4px}
 .om-reqbox{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px;font-size:13px;font-weight:600;cursor:pointer}.om-reqbox input{margin-top:2px;width:16px;height:16px;accent-color:var(--accent)}
@@ -366,6 +367,8 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
   <div id="presetMsg"></div>
   <div id="presetList"></div>
   <div class="note">Presets live in this browser, including your own items, an uploaded background and an uploaded monke base.</div>
+  <div class="preset-io"><button type="button" class="btn small" id="presetExport">📤 Export presets</button><label class="btn small" id="presetImportLbl">📥 Import presets<input id="presetImport" type="file" accept=".json,application/json" hidden></label></div>
+  <div class="note" style="margin-top:6px">Export saves all your presets to a file, as a backup or to move them to another browser or device. Import loads them back.</div>
  </div>
  <div class="section"><h2>🎨 Colours</h2>
   <div class="field" style="margin-bottom:12px"><label for="base">Monke base</label><select id="base"><option value="classic" selected>Classic monke</option><option value="orange">Orangemonke (with its own banana peel and Stump background)</option></select></div>
@@ -671,7 +674,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v119 <span class="tag new">New</span><span class="date" data-time="2026-11-21T12:13:26Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v120 <span class="tag new">New</span><span class="date" data-time="2026-11-21T12:20:06Z">21 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>📤 Export presets and 📥 Import presets in 💾 Presets: save all your presets, with their items, backgrounds and monke bases, to one file. Load it on another browser or device, or keep it as a backup in case your browser data gets cleared.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v119<span class="date" data-time="2026-11-21T12:13:26Z">21 Nov 2026</span></summary>
   <h3>Changed</h3>
   <ul>
    <li>📝 Update notes are shorter: an Added, Changed or Removed section is hidden when there's nothing in it.</li>
@@ -3352,6 +3361,43 @@ $('presetSave').onclick=async()=>{
  else{if(entry.files)PDB.del(entry.id);presetMsg('Could not save. The browser storage may be full or blocked.')}
 };
 $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave').click()});
+// 📤📥 Export / import presets: one file with every preset and its pictures, so they can move to another browser,
+// device or web address (each address keeps its own saved data), or be kept as a backup.
+const blobUrl=b=>new Promise(r=>{if(!(b instanceof Blob))return r(null);const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r(null);fr.readAsDataURL(b)});
+const urlBlob=u=>{if(typeof u!=='string'||!/^data:image\/(png|webp|jpeg);base64,[A-Za-z0-9+/=]+$/.test(u))return null;const [h,b64]=u.split(','),bin=atob(b64),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:h.slice(5,h.indexOf(';'))})};
+$('presetExport').onclick=async()=>{
+ const ps=lsGet(LS_PRESETS),arr=Array.isArray(ps)?ps:[];if(!arr.length){presetMsg('No presets to export yet.');return}
+ presetMsg('Exporting…');const out=[];
+ for(const p of arr){const e={name:p.name,saved:p.saved,data:p.data,thumb:p.thumb};
+  if(p.files&&Object.keys(p.files).length){let f=null;try{f=await PDB.get(p.id)}catch(err){}
+   if(f){const g={order:f.order,bgOn:f.bgOn,face:f.face,roles:f.roles,match:f.match};
+    if(f.items)g.items=await Promise.all(f.items.map(async it=>({...it,blob:await blobUrl(it.blob)})));
+    if(f.bg)g.bg=await blobUrl(f.bg);if(f.base)g.base=await blobUrl(f.base);e.files=g}}
+  out.push(e)}
+ const file=new Blob([JSON.stringify({app:'monke-icon-maker',kind:'presets',version:1,exported:Date.now(),presets:out})],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download='monke-presets-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ presetMsg('📤 Exported '+out.length+' preset'+(out.length===1?'':'s')+'. Keep the file somewhere safe.')};
+$('presetImport').onchange=async e=>{const file=e.target.files&&e.target.files[0];e.target.value='';if(!file)return;
+ let j=null;try{j=JSON.parse(await file.text())}catch(err){}
+ if(!j||j.app!=='monke-icon-maker'||j.kind!=='presets'||!Array.isArray(j.presets)){presetMsg("That isn't a Monke Icon Maker presets file.");return}
+ presetMsg('Importing…');const stored=lsGet(LS_PRESETS),ps=Array.isArray(stored)?stored:[];let added=0,same=0,full=0;
+ const num=(v,d)=>Number.isFinite(+v)?+v:d;
+ for(const q of j.presets){if(!q||typeof q!=='object'||!q.data||typeof q.data!=='object')continue;
+  let name=String(q.name||'Imported monke').slice(0,30),saved=num(q.saved,Date.now());
+  if(ps.some(p=>p.name===name&&p.saved===saved)){same++;continue} // already have this exact one
+  if(ps.length>=MAX_PRESETS){full++;continue}
+  if(ps.some(p=>String(p.name).toLowerCase()===name.toLowerCase()))name=(name.slice(0,25)+' (2)');
+  const entry={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,saved,data:q.data,thumb:typeof q.thumb==='string'&&/^data:image\//.test(q.thumb)?q.thumb:'',files:{}};
+  const g=q.files;if(g&&typeof g==='object'){const f={};
+   if(Array.isArray(g.items))f.items=g.items.slice(0,40).map(it=>it&&{blob:urlBlob(it.blob),x:num(it.x,512),y:num(it.y,512),s:num(it.s,300),h:num(it.h,1),r:num(it.r,0),f:it.f?1:0,b:it.b?1:0,st:it.st?1:0}).filter(it=>it&&it.blob);
+   if(Array.isArray(g.order))f.order=g.order.filter(k=>typeof k==='string'&&k.length<20);
+   const bg=urlBlob(g.bg),base=urlBlob(g.base);if(bg){f.bg=bg;f.bgOn=!!g.bgOn}
+   if(base){f.base=base;if(g.face&&typeof g.face==='object')f.face=g.face;if(g.roles&&typeof g.roles==='object')f.roles=g.roles;if(g.match!=null)f.match=num(g.match,40)}
+   if((f.items&&f.items.length)||f.bg||f.base){try{await PDB.put(entry.id,f);entry.files={items:(f.items||[]).length,bg:!!f.bg,base:!!f.base}}catch(err){}}}
+  ps.push(entry);added++}
+ if(added&&!lsSet(LS_PRESETS,ps)){presetMsg('Could not import. The browser storage may be full or blocked.');return}
+ renderPresets();
+ presetMsg(added?'📥 Imported '+added+' preset'+(added===1?'':'s')+'.'+(same?' '+same+' you already had were skipped.':'')+(full?' '+full+" didn't fit (you can keep up to "+MAX_PRESETS+').':''):same?'You already have all of these presets.':full?'Your presets are full ('+MAX_PRESETS+'). Delete some first.':'No presets found in that file.')};
 // 🏷️ Auto names for Random Monke, e.g. "Angel Teal Monke & Pup".
 let lastAutoName='';
 function toHsl(h){
