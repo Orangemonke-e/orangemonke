@@ -706,7 +706,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v123 <span class="tag new">New</span><span class="date" data-time="2026-11-21T15:52:03Z">21 Nov 2026</span></summary>
+ <details class="release" open><summary>v124 <span class="tag new">New</span><span class="date" data-time="2026-11-22T19:55:34Z">22 Nov 2026</span></summary>
+  <h3>Changed</h3>
+  <ul>
+   <li>🎙️ The Live PNGtuber no longer makes your mic lag in OBS. It only listens to your mic now, with no sound output at all, so OBS doesn't add extra audio delay. It also works out how loud you are on the browser's audio thread, so it stays smooth.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v123<span class="date" data-time="2026-11-21T15:52:03Z">21 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🎥 Making-of videos in the gallery: after recording, watch it back, then post it with your icon. Anyone can tap ▶️ Watch how it was made on your icon to see how you made it.</li>
@@ -5156,6 +5162,19 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  addEventListener('hashchange',()=>setTimeout(fromDesign,50));
  // ── mic ── (the sound is checked on the audio thread, so it keeps working when this tab is in the background)
  let ac=null,stream=null,proc=null,micOn=false;
+ // 🎙️ Listening only, never playing: the audio has no output device ("none"), so OBS doesn't see this page as a
+ // sound source. (A silent one still makes OBS add audio delay to everything, including your mic.)
+ function newListenCtx(){const AC=window.AudioContext||window.webkitAudioContext;try{return new AC({sinkId:{type:'none'},latencyHint:'interactive'})}catch(e){return new AC({latencyHint:'interactive'})}}
+ // How loud you are, worked out on the browser's audio thread (so a busy page can't make it stutter). Older browsers
+ // fall back to the old way.
+ const LEVEL_WORKLET='registerProcessor("monke-level",class extends AudioWorkletProcessor{constructor(){super();this.s=0;this.n=0}process(i){const d=i[0]&&i[0][0];if(d){for(let k=0;k<d.length;k++)this.s+=d[k]*d[k];this.n+=d.length;if(this.n>=1024){this.port.postMessage(Math.sqrt(this.s/this.n));this.s=0;this.n=0}}return true}})';
+ async function levelNode(ac,src){const out=v=>hear(Math.min(1,v*6));
+  try{if(!ac._lw){const u=URL.createObjectURL(new Blob([LEVEL_WORKLET],{type:'application/javascript'}));await ac.audioWorklet.addModule(u);URL.revokeObjectURL(u);ac._lw=1}
+   const n=new AudioWorkletNode(ac,'monke-level',{numberOfInputs:1,numberOfOutputs:0});n.port.onmessage=e=>out(e.data);src.connect(n);
+   return{disconnect(){try{src.disconnect()}catch(e){}n.port.onmessage=null}}}
+  catch(e){const p=ac.createScriptProcessor(1024,1,1),mute=ac.createGain();mute.gain.value=0;
+   p.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i++)s+=d[i]*d[i];out(Math.sqrt(s/d.length))};
+   src.connect(p);p.connect(mute);mute.connect(ac.destination);return{disconnect(){try{src.disconnect();p.disconnect()}catch(e){}}}}}
  let lvl=0,env=0,senv=0,open=false,since=0,talkT=0,seed=0,scream=false,screamT=0,loudest=false,loudT=0;
  const mth=()=>+$('liveMax').value/100; // 😱 the loudest face (100 = never)
  const sth=()=>+$('liveScream').value/100; // 100 = never scream
@@ -5172,10 +5191,8 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  async function startMic(auto){
   try{if(stream)stream.getTracks().forEach(t=>t.stop());if(proc){proc.disconnect();proc=null}
    const dev=$('liveDevice').value;stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:dev?{exact:dev}:undefined,echoCancellation:false,noiseSuppression:true,autoGainControl:false}}) // no auto gain: it turns the mic down during a long scream;
-   ac=ac||new (window.AudioContext||window.webkitAudioContext)();await ac.resume();
-   const src=ac.createMediaStreamSource(stream),mute=ac.createGain();mute.gain.value=0;proc=ac.createScriptProcessor(1024,1,1);
-   proc.onaudioprocess=e=>{const d=e.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<d.length;i++)s+=d[i]*d[i];hear(Math.min(1,Math.sqrt(s/d.length)*6))};
-   src.connect(proc);proc.connect(mute);mute.connect(ac.destination);micOn=true;
+   ac=ac||newListenCtx();await ac.resume();
+   const src=ac.createMediaStreamSource(stream);proc=await levelNode(ac,src);micOn=true;
    $('liveMic').textContent='🎙️ Mic is on';$('liveMic').classList.remove('primary');$('liveTip').textContent='Talk into your mic and your monke talks with you. Press H to hide or show the controls.';
    const ds=await navigator.mediaDevices.enumerateDevices(),sel=$('liveDevice'),cur=sel.value;sel.innerHTML='<option value="">Default mic</option>';
    ds.filter(d=>d.kind==='audioinput'&&d.deviceId&&d.deviceId!=='default').forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||'Mic '+(i+1);sel.appendChild(o)});sel.value=cur;
