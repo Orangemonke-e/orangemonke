@@ -706,7 +706,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v124 <span class="tag new">New</span><span class="date" data-time="2026-11-22T19:55:34Z">22 Nov 2026</span></summary>
+ <details class="release" open><summary>v125 <span class="tag new">New</span><span class="date" data-time="2026-11-22T19:58:55Z">22 Nov 2026</span></summary>
+  <h3>Changed</h3>
+  <ul>
+   <li>🎙️ The Live PNGtuber is much lighter on your computer, so it shouldn't slow down your mic or other apps any more. It only redraws your monke when something changes (not at all while you're quiet), at most 30 times a second, and never bigger than the art itself.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v124<span class="date" data-time="2026-11-22T19:55:34Z">22 Nov 2026</span></summary>
   <h3>Changed</h3>
   <ul>
    <li>🎙️ The Live PNGtuber no longer makes your mic lag in OBS. It only listens to your mic now, with no sound output at all, so OBS doesn't add extra audio delay. It also works out how loud you are on the browser's audio thread, so it stays smooth.</li>
@@ -5260,16 +5266,24 @@ if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.registe
  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{const t=$(b.dataset.copy);try{await navigator.clipboard.writeText(t.value);b.textContent='Copied!'}catch(e){t.select();document.execCommand('copy');b.textContent='Copied!'}setTimeout(()=>b.textContent='Copy',1500)});
  connect(); // the OBS copy listens even if it has no mic of its own
  // ── animation ──
- function size(){const d=devicePixelRatio||1,S=Math.floor(Math.min(innerWidth,innerHeight));if(cv.width!==S*d){cv.width=cv.height=S*d;cv.style.width=cv.style.height=S+'px'}return S*d}
- function tick(now){requestAnimationFrame(tick);const S=size(),t=th();
+ // Light on your computer: never bigger than the art (1024), and only redrawn when something changes (at most 30
+ // times a second), so it doesn't slow down other apps, like your mic in Discord.
+ function size(){const d=devicePixelRatio||1,C=Math.floor(Math.min(innerWidth,innerHeight)),S=Math.min(1024,Math.round(C*d));if(cv.width!==S){cv.width=cv.height=S}if(cv.style.width!==C+'px')cv.style.width=cv.style.height=C+'px';return S}
+ const setText=(id,v)=>{const e=$(id);if(e.textContent!==v)e.textContent=v},setStyle=(id,k,v)=>{const e=$(id);if(e.style[k]!==v)e.style[k]=v};
+ let lastKey='',lastDraw=0;
+ function tick(now){requestAnimationFrame(tick);if(now-lastDraw<33)return;const S=size(),t=th();
   // no mic here (OBS)? use the mouth sent from your other window
   const rem=!micOn&&now-remote.t<1500,o=micOn?open:rem&&remote.open,sc=o&&(micOn?scream:rem&&remote.scream),lx=sc&&(micOn?loudest:rem&&remote.loudest),e=micOn?env:rem?remote.env:0,talking=micOn?now-talkT<250:rem&&e>t*.8;
   if(rem&&o&&!tick.o)seed++;tick.o=o;
-  $('liveLevel').style.width=Math.round((micOn?lvl:e)*100)+'%';$('liveMark').style.left=Math.round(t*100)+'%';$('liveMark2').style.left=Math.min(99,Math.round(sth()*100))+'%';$('liveScreamVal').textContent=$('liveScream').value>=100?'(never)':$('liveScream').value;$('liveMark3').style.left=Math.min(99,Math.round(mth()*100))+'%';$('liveMaxVal').textContent=$('liveMax').value>=100?'(never)':$('liveMax').value;$('liveSensVal').textContent=$('liveSens').value;
-  cx.clearRect(0,0,S,S);if(!L)return;
-  const bg=$('liveBg').value;if(bg==='green'){cx.fillStyle='#00ff00';cx.fillRect(0,0,S,S)}else if(bg==='design'&&!L.clearBg)cx.drawImage(L.bg,0,0,S,S);
-  const lv=+$('liveShake').value,k=talking?lv*Math.min(2.2,.6+(e-t)*6):0,r=n=>{const x=Math.sin((seed*7.13+now*.02)*1.7+n*78.233)*43758.5453;return (x-Math.floor(x))*2-1};
+  if(!$('liveUi').hidden){setStyle('liveLevel','width',Math.round((micOn?lvl:e)*100)+'%');setStyle('liveMark','left',Math.round(t*100)+'%');setStyle('liveMark2','left',Math.min(99,Math.round(sth()*100))+'%');setText('liveScreamVal',$('liveScream').value>=100?'(never)':$('liveScream').value);setStyle('liveMark3','left',Math.min(99,Math.round(mth()*100))+'%')}
+  if(!L){if(lastKey!=='none'){cx.clearRect(0,0,S,S);lastKey='none'}return}
+  const bg=$('liveBg').value,lv=+$('liveShake').value,k=talking?lv*Math.min(2.2,.6+(e-t)*6):0,r=n=>{const x=Math.sin((seed*7.13+now*.02)*1.7+n*78.233)*43758.5453;return (x-Math.floor(x))*2-1};
   const dx=r(1)*S*.008*k,dy=Math.max(-S*.045,r(2)*S*.005*k-(o&&lv?S*.014*Math.min(1.6,k||1):0)),rot=r(3)*.018*k;
+  if(tick.L!==L){tick.L=L;tick.n=(tick.n||0)+1}
+  const key=[S,bg,o,sc,lx,dx.toFixed(1),dy.toFixed(1),rot.toFixed(4),tick.n,!!L.clearBg].join('|');
+  if(key===lastKey)return; // nothing has changed: keep the picture that's already there
+  lastKey=key;lastDraw=now;cx.clearRect(0,0,S,S);
+  if(bg==='green'){cx.fillStyle='#00ff00';cx.fillRect(0,0,S,S)}else if(bg==='design'&&!L.clearBg)cx.drawImage(L.bg,0,0,S,S);
   drawSegs(cx,L.segs,S,o&&L.can?(lx?'max':sc?'scream':'open'):'closed',dx,dy,rot);cv.dataset.face=o?(lx?'max':sc?'scream':'open'):'closed'}
  requestAnimationFrame(tick);
 })();
