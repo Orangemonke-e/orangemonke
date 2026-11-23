@@ -71,6 +71,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .notes-box{background:#171922cc;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 55px #0004;padding:20px 22px}
 .notes-box>h2{font-size:16px;margin:0 0 4px}.notes-box>.hint{margin:0 0 14px}
 .release{border-top:1px solid var(--line);padding:12px 0}.release:first-of-type{border-top:0}
+.release[hidden],.release h3[hidden],.release ul[hidden]{display:none!important} /* some phone browsers show hidden <details> anyway */
 .release summary{cursor:pointer;font-weight:650;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .release summary::-webkit-details-marker{display:none}
 .release summary::before{content:"▸";color:var(--accent);transition:.15s}.release[open] summary::before{transform:rotate(90deg)}
@@ -709,7 +710,13 @@ footer{text-align:center;color:#73798a;font-size:11px;padding:0 16px 25px}
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v126 <span class="tag new">New</span><span class="date" data-time="2026-11-23T15:47:55Z">23 Nov 2026</span></summary>
+ <details class="release" open><summary>v127 <span class="tag new">New</span><span class="date" data-time="2026-11-23T21:20:51Z">23 Nov 2026</span></summary>
+  <h3>Changed</h3>
+  <ul>
+   <li>📝 Fixed some phones showing every update note instead of just the 3 newest.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v126<span class="date" data-time="2026-11-23T15:47:55Z">23 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🏠 Monke Icon Maker is moving to its own website, orangemonke.co.uk, soon! A banner at the top has a button to export your presets now, so you can import them on the new site.</li>
