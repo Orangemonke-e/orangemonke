@@ -719,7 +719,14 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v130 <span class="tag new">New</span><span class="date" data-time="2026-11-26T18:23:52Z">26 Nov 2026</span></summary>
+ <details class="release" open><summary>v131 <span class="tag new">New</span><span class="date" data-time="2026-11-26T18:27:25Z">26 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🏠 Monke Icon Maker has its own website now: orangemonke.co.uk! The old address takes you here automatically.</li>
+   <li>Coming from the old address? Sign in again, then tap 📥 Import my presets at the top to bring back the presets you exported.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v130<span class="date" data-time="2026-11-26T18:23:52Z">26 Nov 2026</span></summary>
   <h3>Changed</h3>
   <ul>
    <li>📖 Your icon and the controls are now the same width, so the gap between them is always in the middle of the screen. On folding phones like the iPhone Duo, the fold lands in the gap instead of cutting through your icon.</li>
@@ -3555,6 +3562,14 @@ $('presetName').addEventListener('keydown',e=>{if(e.key==='Enter')$('presetSave'
 // 🏠 Moving to orangemonke.co.uk: shown on the old address only (so it disappears by itself after the move).
 (()=>{const KEY='mim_move_hide',b=$('moveBanner');if(LIVE||!b)return;
  const old=/\.github\.io$/i.test(location.hostname)||/[?&]movebanner\b/.test(location.search);
+ // on the new address: a welcome for people coming over from the old one (once, until the end of the year)
+ const fresh=/(^|\.)orangemonke\.co\.uk$/i.test(location.hostname)||/[?&]welcomebanner\b/.test(location.search);
+ if(fresh&&Date.now()<Date.UTC(2027,0,1)){let seen=null;try{seen=localStorage.getItem('mim_welcome_new')}catch(e){}
+  if(seen)return;b.querySelector('span').innerHTML='🏠 <b>Welcome to Monke Icon Maker\'s new home, orangemonke.co.uk!</b> Used the old address? Sign in again, and use 📥 Import presets in 💾 Presets to bring back the presets you exported.';
+  $('moveExport').textContent='📥 Import my presets';$('moveExport').onclick=()=>{
+   const inp=$('presetImport'),done=()=>{inp.removeEventListener('change',done);const m=$('presetMsg'),t0=Date.now(),wait=setInterval(()=>{const t=m.textContent;if(!/Importing/.test(t)||Date.now()-t0>15000){clearInterval(wait);if(t)toast(t);if(/Imported/.test(t)){b.hidden=true;try{localStorage.setItem('mim_welcome_new','1')}catch(e){}}}},300)};
+   inp.addEventListener('change',done);inp.click()};
+  b.hidden=false;$('moveHide').setAttribute('aria-label','Hide this message');$('moveHide').onclick=()=>{b.hidden=true;try{localStorage.setItem('mim_welcome_new','1')}catch(e){}};return}
  let hid=0;try{hid=+localStorage.getItem(KEY)||0}catch(e){}
  if(!old||Date.now()-hid<864e5)return;b.hidden=false;
  $('moveHide').onclick=()=>{b.hidden=true;try{localStorage.setItem(KEY,Date.now())}catch(e){}};
