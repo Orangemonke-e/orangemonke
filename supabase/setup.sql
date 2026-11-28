@@ -1152,6 +1152,35 @@ drop policy if exists "Delete your own videos, or any as admin" on storage.objec
 create policy "Delete your own videos, or any as admin" on storage.objects for delete to authenticated
   using (bucket_id = 'videos' and ((storage.foldername(name))[1] = auth.uid()::text or public.is_admin()));
 
+-- ───────────────────────── 🟢 Last online, admins only (update-27) ─────────────────────────
+create table if not exists public.last_seen (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  seen_at timestamptz not null default now()
+);
+alter table public.last_seen enable row level security;
+drop policy if exists "Admins see when people were online" on public.last_seen;
+create policy "Admins see when people were online" on public.last_seen for select to authenticated
+  using (public.is_admin() or user_id = auth.uid());
+revoke all on public.last_seen from anon, authenticated;
+grant select on public.last_seen to authenticated;
+
+-- "I'm here": only ever updates your own time, and only if the last one is more than 2 minutes old.
+create or replace function public.touch_last_seen() returns void
+language sql security definer set search_path = public as $$
+  insert into public.last_seen (user_id, seen_at)
+  select auth.uid(), now() where auth.uid() is not null and exists (select 1 from public.profiles where id = auth.uid())
+  on conflict (user_id) do update set seen_at = excluded.seen_at
+  where public.last_seen.seen_at < now() - interval '2 minutes';
+$$;
+revoke execute on function public.touch_last_seen() from public, anon;
+grant execute on function public.touch_last_seen() to authenticated;
+
+-- Start everyone off with the last time they signed in, so there's something to see straight away.
+insert into public.last_seen (user_id, seen_at)
+select u.id, u.last_sign_in_at from auth.users u join public.profiles p on p.id = u.id
+where u.last_sign_in_at is not null
+on conflict (user_id) do nothing;
+
 -- ───────────────────────── Make yourself admin ─────────────────────────
 -- After you've created your own account on the site, run this line once (with your username):
 --   update public.profiles set is_admin = true where username = 'your_username';

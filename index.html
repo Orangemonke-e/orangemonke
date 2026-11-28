@@ -259,7 +259,7 @@ footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration
 .bdg .bar{height:4px;border-radius:9px;background:#ffffff1a;margin-top:4px;overflow:hidden}.bdg .bar i{display:block;height:100%;background:var(--accent)}
 .cm-acts{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}.cm-acts .btn{padding:6px 10px}
 .cm-head{display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}.cm-head img{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none}
-.cm-info{flex:1;min-width:0}.cm-info h2{font-size:16px;margin:0 0 2px;overflow-wrap:anywhere}.cm-by{font-size:12px;color:var(--muted)}
+.cm-info{flex:1;min-width:0}.cm-info h2{font-size:16px;margin:0 0 2px;overflow-wrap:anywhere}.cm-by{font-size:12px;color:var(--muted)}.pf-seen{white-space:nowrap}
 .cm-list{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:8px 2px;min-height:90px}
 .cm{display:flex;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}.cm:last-child{border-bottom:0}.cm .avatar{width:32px;height:32px}
 .cm-main{flex:1;min-width:0}.cm-who{font-size:13px;font-weight:650}.cm-who small{font-weight:400;color:var(--muted);margin-left:6px}
@@ -719,7 +719,13 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area
 </div>
 <section class="notes" id="update-notes"><div class="notes-box">
  <h2>📝 Update notes</h2><p class="hint">What's new and what's been patched. Newest first.</p>
- <details class="release" open><summary>v131 <span class="tag new">New</span><span class="date" data-time="2026-11-26T18:27:25Z">26 Nov 2026</span></summary>
+ <details class="release" open><summary>v132 <span class="tag new">New</span><span class="date" data-time="2026-11-28T08:30:20Z">28 Nov 2026</span></summary>
+  <h3>Added</h3>
+  <ul>
+   <li>🛡️ Admins can now see when an account was last online, to help keep the site safe. Nobody else can see it.</li>
+  </ul>
+ </details>
+ <details class="release"><summary>v131<span class="date" data-time="2026-11-26T18:27:25Z">26 Nov 2026</span></summary>
   <h3>Added</h3>
   <ul>
    <li>🏠 Monke Icon Maker has its own website now: orangemonke.co.uk! The old address takes you here automatically.</li>
@@ -4127,11 +4133,16 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
  document.addEventListener('click',e=>{const pop=$('inboxPop');if(!pop.hidden&&!pop.contains(e.target)&&!$('inboxBtn').contains(e.target))closeInbox()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('inboxPop').hidden)closeInbox()});
  // ── Accounts ──
+ // 🟢 Last online: while you use the site signed in, note the time every few minutes (only admins can see it)
+ let seenAt=0;
+ function touchSeen(){if(!me||!sb)return;const t=Date.now();if(t-seenAt<120000)return;seenAt=t;sb.rpc('touch_last_seen').then(()=>{},()=>{})}
+ setInterval(()=>{if(document.visibilityState==='visible')touchSeen()},180000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')touchSeen()});
  async function setUser(user,quiet){
   const id=user?user.id:null;if(id===(me&&me.id)&&!quiet)return;me=user||null;profile=null;reported=new Set();rMine.clear();myLikes.clear();
   if(me){let pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();if(noPicsYet(pq.error))pq=await sb.from('profiles').select(profileFields()).eq('id',me.id).maybeSingle();profile=pq.data||null;
    const r=await sb.from('reports').select('post_id').eq('reporter_id',me.id);if(r.data)r.data.forEach(x=>reported.add(x.post_id))}
-  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();inboxUser();if(!quiet&&me)setTimeout(checkMyBadges,3000);
+  renderAcct();if(!quiet)loadPosts(true);if(cmPost)openComments(cmPost);linkPush();inboxUser();touchSeen();if(!quiet&&me)setTimeout(checkMyBadges,3000);
  }
  function renderAcct(){
   const bar=$('acctBar');bar.innerHTML='';$('hdrSignIn').hidden=!!me||LIVE;
@@ -4773,6 +4784,10 @@ const SUPABASE_JS='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.115.0/di
   if(pfUser!==userId)return;const pr=r.data;if(!pr){$('pfName').textContent='Profile not found';return}
   $('pfAvatar').src=avatarUrl(pr.avatar_path);$('pfName').textContent=pr.display_name;if(pr.is_admin)$('pfName').appendChild(el('span','admin-tag','Admin'));
   $('pfUser').textContent='@'+pr.username+(pr.banned?' · banned':'');
+  // 🛡️ admins see when someone was last online
+  if(profile&&profile.is_admin&&!(me&&me.id===userId))sb.from('last_seen').select('seen_at').eq('user_id',userId).maybeSingle().then(({data,error})=>{if(pfUser!==userId||error)return;
+   const s=el('span','pf-seen'),t=data&&data.seen_at,mins=t?(Date.now()-new Date(t))/60000:0;
+   s.textContent=!t?' · 🛡️ Never seen online':mins<5?' · 🟢 Online now':' · 🛡️ Last online '+ago(t);if(t)s.title=new Date(t).toLocaleString();s.title=(s.title?s.title+' · ':'')+'Only admins can see this';$('pfUser').appendChild(s)});
   const mineP=me&&me.id===userId;
   if(followsOn){const b=$('pfBio');b.textContent=pr.bio||(mineP?'You haven\'t written a description yet.':'No description yet.');b.classList.toggle('empty',!pr.bio)}
   // their icons
